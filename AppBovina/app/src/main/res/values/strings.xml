@@ -1,3 +1,6 @@
 <resources>
     <string name="app_name">AppBovina</string>
+    <string name="pesaje_service_channel_name">Servicio de pesaje</string>
+    <string name="pesaje_service_notification_title">Servicio de pesaje activo</string>
+    <string name="pesaje_service_notification_text">Escuchando POST /registro-peso en el puerto %1$d</string>
 </resources>
