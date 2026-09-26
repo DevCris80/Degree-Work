@@ -12,4 +12,7 @@ interface RegistroDao {
 
     @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal ORDER BY timestamp DESC")
     fun observeByAnimal(idAnimal: String): Flow<List<Registro>>
+
+    @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal ORDER BY timestamp DESC LIMIT 1")
+    fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?>
 }

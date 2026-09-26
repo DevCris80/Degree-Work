@@ -9,7 +9,10 @@ data class Animal(
     val nombre: String,
     val raza: String,
     val sexo: String,
-    val edad: Int,
+    val etapa: String,
+    val edadAnios: Int,
+    val edadMeses: Int,
     val proposito: String,
+    val fotoUri: String? = null,
     val sincronizado: Boolean = false,
 )

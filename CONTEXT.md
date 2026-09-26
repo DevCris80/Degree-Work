@@ -21,3 +21,11 @@ _Avoid_: Evento, medición
 
 **sincronizado**:
 Campo booleano presente en toda entidad, reservado para una futura sincronización con Supabase. No se implementa en esta iteración — existe únicamente para evitar una migración de esquema posterior.
+
+**Usuario**:
+La persona que opera la app, identificada por `idUsuario` y asociada a un `PerfilFinca` mediante `idPerfilFinca`; tiene un `rol` que distingue su función. Definido en el diagrama ER (`docs/diagramas/diagrama-relaciones-trazabilidad-bovina.md`); el código actual todavía no lo separa de `PerfilFinca`.
+_Avoid_: Ganadero (como nombre de entidad de datos — sigue siendo el término de cara al usuario en la UI)
+
+**PerfilFinca**:
+La finca a la que pertenecen un `Usuario` y sus `Animal`, identificada por `idPerfilFinca`, con `nombreFinca`, `latitud` y `longitud`. No incluye el nombre del usuario — ese dato vive en `Usuario`. Definido en el diagrama ER; el código actual (`PerfilFinca.kt`) todavía guarda `nombreGanadero` aquí, pendiente de separarse.
+_Avoid_: guardar identidad de usuario en esta entidad

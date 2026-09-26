@@ -37,9 +37,11 @@ class AnimalDaoTest {
             idAnimal = UUID.randomUUID().toString(),
             nombre = "Manchas",
             raza = "Holstein",
-            sexo = "hembra",
-            edad = 3,
-            proposito = "leche",
+            sexo = "Hembra",
+            etapa = "Vaca",
+            edadAnios = 3,
+            edadMeses = 0,
+            proposito = "Leche",
         )
 
         dao.insert(animal)

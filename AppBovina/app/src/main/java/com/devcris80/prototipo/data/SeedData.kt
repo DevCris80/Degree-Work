@@ -17,9 +17,11 @@ suspend fun AppDatabase.seedTestDataIfEmpty() {
             idAnimal = idAnimal,
             nombre = "Animal de prueba",
             raza = "Holstein",
-            sexo = "hembra",
-            edad = 2,
-            proposito = "leche",
+            sexo = "Hembra",
+            etapa = "Vaca",
+            edadAnios = 2,
+            edadMeses = 0,
+            proposito = "Leche",
         ),
     )
     chapetaDao().insert(

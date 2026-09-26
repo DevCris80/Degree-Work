@@ -6,8 +6,8 @@ import androidx.room.Room
 import androidx.room.RoomDatabase
 
 @Database(
-    entities = [Animal::class, Evento::class, Registro::class, Chapeta::class],
-    version = 1,
+    entities = [Animal::class, Evento::class, Registro::class, Chapeta::class, PerfilFinca::class],
+    version = 2,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -15,6 +15,7 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun eventoDao(): EventoDao
     abstract fun registroDao(): RegistroDao
     abstract fun chapetaDao(): ChapetaDao
+    abstract fun perfilFincaDao(): PerfilFincaDao
 
     companion object {
         @Volatile
@@ -26,7 +27,12 @@ abstract class AppDatabase : RoomDatabase() {
                     context.applicationContext,
                     AppDatabase::class.java,
                     "app-bovina.db",
-                ).build().also { instance = it }
+                )
+                    // Prototipo: aún no hay datos reales de usuarios en campo que proteger,
+                    // así que se prioriza iterar el esquema sobre escribir migraciones.
+                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    .build()
+                    .also { instance = it }
             }
     }
 }

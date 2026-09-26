@@ -10,10 +10,13 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -23,12 +26,17 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.devcris80.prototipo.data.AppDatabase
-import com.devcris80.prototipo.ui.screens.AnimalDetailScreen
-import com.devcris80.prototipo.ui.screens.AnimalFormScreen
-import com.devcris80.prototipo.ui.screens.AnimalListScreen
+import com.devcris80.prototipo.domain.AsociacionChapetaResolver
+import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
+import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
+import com.devcris80.prototipo.ui.screens.LoginScreen
+import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
+import com.devcris80.prototipo.ui.screens.RegistroScreen
 import com.devcris80.prototipo.ui.screens.ServiceStatusScreen
 import kotlinx.coroutines.launch
+
+private val RUTAS_CON_NAV_INFERIOR = setOf(Rutas.ListaAnimales.ruta, Rutas.EstadoServicio.ruta)
 
 @Composable
 fun AppNavHost(database: AppDatabase) {
@@ -36,52 +44,97 @@ fun AppNavHost(database: AppDatabase) {
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
+    val chapetaResolver = remember { AsociacionChapetaResolver(database.chapetaDao()) }
+
+    var perfilCargado by remember { mutableStateOf(false) }
+    var tienePerfil by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) {
+        tienePerfil = database.perfilFincaDao().getOnce() != null
+        perfilCargado = true
+    }
+    if (!perfilCargado) return
 
     Scaffold(
         bottomBar = {
-            NavigationBar {
-                NavigationBarItem(
-                    selected = currentRoute == Rutas.ListaAnimales.ruta,
-                    onClick = {
-                        navController.navigate(Rutas.ListaAnimales.ruta) {
-                            popUpTo(Rutas.ListaAnimales.ruta) { inclusive = true }
-                        }
-                    },
-                    icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Animales") },
-                    label = { Text("Animales") },
-                )
-                NavigationBarItem(
-                    selected = currentRoute == Rutas.EstadoServicio.ruta,
-                    onClick = {
-                        navController.navigate(Rutas.EstadoServicio.ruta) {
-                            popUpTo(Rutas.ListaAnimales.ruta)
-                        }
-                    },
-                    icon = { Icon(Icons.Filled.Settings, contentDescription = "Servicio") },
-                    label = { Text("Servicio") },
-                )
+            if (currentRoute in RUTAS_CON_NAV_INFERIOR) {
+                NavigationBar {
+                    NavigationBarItem(
+                        selected = currentRoute == Rutas.ListaAnimales.ruta,
+                        onClick = {
+                            navController.navigate(Rutas.ListaAnimales.ruta) {
+                                popUpTo(Rutas.ListaAnimales.ruta) { inclusive = true }
+                            }
+                        },
+                        icon = { Icon(Icons.AutoMirrored.Filled.List, contentDescription = "Animales") },
+                        label = { Text("Animales") },
+                    )
+                    NavigationBarItem(
+                        selected = currentRoute == Rutas.EstadoServicio.ruta,
+                        onClick = {
+                            navController.navigate(Rutas.EstadoServicio.ruta) {
+                                popUpTo(Rutas.ListaAnimales.ruta)
+                            }
+                        },
+                        icon = { Icon(Icons.Filled.Settings, contentDescription = "Conexión") },
+                        label = { Text("Conexión") },
+                    )
+                }
             }
         },
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = Rutas.ListaAnimales.ruta,
+            startDestination = if (tienePerfil) Rutas.ListaAnimales.ruta else Rutas.Registro.ruta,
             modifier = Modifier.padding(innerPadding),
         ) {
+            composable(Rutas.Registro.ruta) {
+                RegistroScreen(
+                    onCrearCuenta = { perfil ->
+                        scope.launch {
+                            database.perfilFincaDao().guardar(perfil)
+                            navController.navigate(Rutas.ListaAnimales.ruta) {
+                                popUpTo(Rutas.Registro.ruta) { inclusive = true }
+                            }
+                        }
+                    },
+                    onIrALogin = { navController.navigate(Rutas.Login.ruta) },
+                )
+            }
+            composable(Rutas.Login.ruta) {
+                LoginScreen(
+                    onIniciarSesion = {
+                        navController.navigate(Rutas.ListaAnimales.ruta) {
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
+                        }
+                    },
+                    onCrearCuentaNueva = { navController.navigate(Rutas.Registro.ruta) },
+                )
+            }
             composable(Rutas.ListaAnimales.ruta) {
                 val animales = remember { database.animalDao().observeAll() }
-                AnimalListScreen(
+                val perfilFinca = remember { database.perfilFincaDao().observe() }
+                val chapetasActivas = remember { database.chapetaDao().observeActivas() }
+                ListaAnimalesScreen(
+                    perfilFinca = perfilFinca,
                     animales = animales,
+                    chapetasActivas = chapetasActivas,
+                    obtenerUltimoRegistro = { idAnimal -> database.registroDao().observeUltimoByAnimal(idAnimal) },
                     onAnimalClick = { animal -> navController.navigate(Rutas.DetalleAnimal.crear(animal.idAnimal)) },
                     onNuevoAnimalClick = { navController.navigate(Rutas.NuevoAnimal.ruta) },
                 )
             }
             composable(Rutas.NuevoAnimal.ruta) {
-                AnimalFormScreen(
-                    onGuardar = { animal ->
-                        scope.launch { database.animalDao().insert(animal) }
+                RegistrarAnimalScreen(
+                    onGuardar = { animal, idChip ->
+                        scope.launch {
+                            database.animalDao().insert(animal)
+                            if (!idChip.isNullOrBlank()) {
+                                chapetaResolver.asociar(animal.idAnimal, idChip)
+                            }
+                        }
                         navController.popBackStack()
                     },
+                    onCancelar = { navController.popBackStack() },
                 )
             }
             composable(
@@ -94,10 +147,11 @@ fun AppNavHost(database: AppDatabase) {
                 val eventos = remember(idAnimal) { database.eventoDao().observeByAnimal(idAnimal) }
                 val registros = remember(idAnimal) { database.registroDao().observeByAnimal(idAnimal) }
                 animal?.let { animalActual ->
-                    AnimalDetailScreen(
+                    DetalleAnimalScreen(
                         animal = animalActual,
                         eventos = eventos,
                         registros = registros,
+                        onVolver = { navController.popBackStack() },
                         onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
                     )
                 }
