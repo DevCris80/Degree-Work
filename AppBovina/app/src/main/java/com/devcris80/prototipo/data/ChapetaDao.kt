@@ -19,6 +19,9 @@ interface ChapetaDao {
     @Query("SELECT * FROM chapeta WHERE idAnimal = :idAnimal AND fechaDesasociacion IS NULL LIMIT 1")
     suspend fun findActivaByAnimal(idAnimal: String): Chapeta?
 
+    @Query("SELECT * FROM chapeta WHERE idAnimal = :idAnimal AND fechaDesasociacion IS NULL LIMIT 1")
+    fun observeActivaByAnimal(idAnimal: String): Flow<Chapeta?>
+
     @Query("UPDATE chapeta SET fechaDesasociacion = :fecha WHERE idChapeta = :idChapeta")
     suspend fun desasociar(idChapeta: String, fecha: Long)
 }

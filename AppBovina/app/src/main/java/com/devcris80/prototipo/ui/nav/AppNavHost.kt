@@ -186,8 +186,12 @@ fun AppNavHost(database: AppDatabase) {
                         registros = registros,
                         onVolver = { navController.popBackStack() },
                         onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
+                        chapetaActiva = remember(idAnimal) { database.chapetaDao().observeActivaByAnimal(idAnimal) },
                         onDarDeBaja = {
                             scope.launch { database.animalDao().darDeBaja(idAnimal, System.currentTimeMillis()) }
+                        },
+                        onLiberarChapeta = { idChapeta ->
+                            scope.launch { database.chapetaDao().desasociar(idChapeta, System.currentTimeMillis()) }
                         },
                     )
                 }

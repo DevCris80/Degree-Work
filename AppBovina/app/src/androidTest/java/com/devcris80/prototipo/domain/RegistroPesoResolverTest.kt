@@ -79,6 +79,34 @@ class RegistroPesoResolverTest {
     }
 
     @Test
+    fun conCodigoLiberado_noCreaRegistroYRetornaError() = runTest {
+        val idAnimal = UUID.randomUUID().toString()
+        val idChapeta = UUID.randomUUID().toString()
+        db.perfilFincaDao().guardar(PerfilFinca(nombreFinca = "Finca test"))
+        db.animalDao().insert(
+            Animal(
+                idAnimal = idAnimal,
+                idPerfilFinca = PERFIL_FINCA_ID,
+                nombre = "Manchas",
+                raza = "Holstein",
+                sexo = "Hembra",
+                etapa = "Vaca",
+                fechaNacimiento = 1_700_000_000_000L,
+                proposito = "Leche",
+            ),
+        )
+        db.chapetaDao().insert(
+            Chapeta(idChapeta = idChapeta, codigo = "TEST001", idAnimal = idAnimal, fechaAsociacion = 1L),
+        )
+        db.chapetaDao().desasociar(idChapeta, 2L)
+
+        val resultado = resolver.registrarPeso(codigo = "TEST001", peso = 80f)
+
+        assertTrue(resultado is RegistroPesoResultado.Error)
+        assertEquals(0, db.registroDao().observeByAnimal(idAnimal).first().size)
+    }
+
+    @Test
     fun conIdChipDesconocido_noCreaRegistroYRetornaError() = runTest {
         val resultado = resolver.registrarPeso(codigo = "NO-EXISTE", peso = 50f)
 

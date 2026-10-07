@@ -42,6 +42,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.data.Animal
+import com.devcris80.prototipo.data.Chapeta
 import com.devcris80.prototipo.data.Evento
 import com.devcris80.prototipo.data.Registro
 import com.devcris80.prototipo.ui.components.FotoAnimal
@@ -61,14 +62,18 @@ fun DetalleAnimalScreen(
     registros: Flow<List<Registro>>,
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
+    chapetaActiva: Flow<Chapeta?>,
     onDarDeBaja: () -> Unit,
+    onLiberarChapeta: (idChapeta: String) -> Unit,
     onEditarClick: () -> Unit = {},
 ) {
     val listaEventos by eventos.collectAsState(initial = emptyList())
     val listaRegistros by registros.collectAsState(initial = emptyList())
+    val chapeta by chapetaActiva.collectAsState(initial = null)
     val formatoFecha = remember(animal.idAnimal) { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     var tabSeleccionada by remember { mutableIntStateOf(0) }
     var confirmarBaja by remember { mutableStateOf(false) }
+    var confirmarLiberacion by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -242,6 +247,17 @@ fun DetalleAnimalScreen(
                 }
             }
             item {
+                chapeta?.let { chapetaActual ->
+                    OutlinedButton(
+                        onClick = { confirmarLiberacion = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Liberar chapeta (${chapetaActual.codigo})")
+                    }
+                }
+            }
+            item {
                 val fechaBaja = animal.fechaBaja
                 if (fechaBaja != null) {
                     Text(
@@ -259,6 +275,27 @@ fun DetalleAnimalScreen(
                     }
                 }
             }
+        }
+    }
+
+    chapeta?.let { chapetaActual ->
+        if (confirmarLiberacion) {
+            AlertDialog(
+                onDismissRequest = { confirmarLiberacion = false },
+                title = { Text("¿Liberar la chapeta de ${animal.nombre}?") },
+                text = {
+                    Text("La chapeta ${chapetaActual.codigo} dejará de identificar a este animal. Sus pesajes anteriores se conservan.")
+                },
+                confirmButton = {
+                    TextButton(onClick = {
+                        confirmarLiberacion = false
+                        onLiberarChapeta(chapetaActual.idChapeta)
+                    }) { Text("Liberar") }
+                },
+                dismissButton = {
+                    TextButton(onClick = { confirmarLiberacion = false }) { Text("Cancelar") }
+                },
+            )
         }
     }
 
