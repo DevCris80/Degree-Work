@@ -42,9 +42,11 @@ import com.devcris80.prototipo.data.Animal
 import com.devcris80.prototipo.data.Chapeta
 import com.devcris80.prototipo.data.PerfilFinca
 import com.devcris80.prototipo.data.Registro
+import com.devcris80.prototipo.data.Usuario
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.formatearEdad
 import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.TimeUnit
 
@@ -53,6 +55,7 @@ private val PROPOSITOS_FILTRO = listOf("Todos", "Leche", "Carne", "Doble Propós
 @Composable
 fun ListaAnimalesScreen(
     perfilFinca: Flow<PerfilFinca?>,
+    usuario: Flow<Usuario?>,
     animales: Flow<List<Animal>>,
     chapetasActivas: Flow<List<Chapeta>>,
     obtenerUltimoRegistro: (idAnimal: String) -> Flow<Registro?>,
@@ -60,6 +63,7 @@ fun ListaAnimalesScreen(
     onNuevoAnimalClick: () -> Unit,
 ) {
     val perfil by perfilFinca.collectAsState(initial = null)
+    val usuarioActual by usuario.collectAsState(initial = null)
     val lista by animales.collectAsState(initial = emptyList())
     val chapetas by chapetasActivas.collectAsState(initial = emptyList())
     val chipsPorAnimal = remember(chapetas) { chapetas.associateBy({ it.idAnimal }, { it.idChip }) }
@@ -121,7 +125,7 @@ fun ListaAnimalesScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "Buenos días, ${perfil?.nombreGanadero.orEmpty()}",
+                                    text = "Buenos días, ${usuarioActual?.nombre.orEmpty()}",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 )
@@ -222,6 +226,12 @@ private fun TarjetaAnimal(
                 )
                 Text(
                     text = "${animal.raza} · ${animal.etapa}",
+                    style = MaterialTheme.typography.bodySmall,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+                Text(
+                    text = "Edad: ${formatearEdad(animal.fechaNacimiento)}" +
+                        if (animal.fechaNacimientoEsEstimada) " (estimada)" else "",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

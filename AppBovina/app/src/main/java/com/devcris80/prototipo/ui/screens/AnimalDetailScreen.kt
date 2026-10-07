@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Edit
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -23,7 +24,9 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.Tab
 import androidx.compose.material3.TabRow
 import androidx.compose.material3.Text
@@ -32,6 +35,7 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
@@ -43,6 +47,7 @@ import com.devcris80.prototipo.data.Registro
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.formatearEdad
 import kotlinx.coroutines.flow.Flow
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -56,12 +61,14 @@ fun DetalleAnimalScreen(
     registros: Flow<List<Registro>>,
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
+    onDarDeBaja: () -> Unit,
     onEditarClick: () -> Unit = {},
 ) {
     val listaEventos by eventos.collectAsState(initial = emptyList())
     val listaRegistros by registros.collectAsState(initial = emptyList())
     val formatoFecha = remember(animal.idAnimal) { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     var tabSeleccionada by remember { mutableIntStateOf(0) }
+    var confirmarBaja by remember { mutableStateOf(false) }
 
     Scaffold(
         topBar = {
@@ -121,7 +128,11 @@ fun DetalleAnimalScreen(
                         FilaDato("Raza", animal.raza)
                         FilaDato("Sexo", animal.sexo)
                         FilaDato("Etapa", animal.etapa)
-                        FilaDato("Edad", "${animal.edadAnios} años, ${animal.edadMeses} meses")
+                        FilaDato(
+                            "Edad",
+                            formatearEdad(animal.fechaNacimiento) +
+                                if (animal.fechaNacimientoEsEstimada) " (estimada)" else "",
+                        )
                         FilaDato("Destino", animal.proposito)
                     }
                 }
@@ -230,7 +241,44 @@ fun DetalleAnimalScreen(
                     Text(" Registrar Pesaje o Evento")
                 }
             }
+            item {
+                val fechaBaja = animal.fechaBaja
+                if (fechaBaja != null) {
+                    Text(
+                        text = "Dado de baja el ${formatoFecha.format(Date(fechaBaja))}. Su historial se conserva.",
+                        style = MaterialTheme.typography.bodyMedium,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                } else {
+                    OutlinedButton(
+                        onClick = { confirmarBaja = true },
+                        modifier = Modifier.fillMaxWidth(),
+                        shape = RoundedCornerShape(12.dp),
+                    ) {
+                        Text("Dar de baja")
+                    }
+                }
+            }
         }
+    }
+
+    if (confirmarBaja) {
+        AlertDialog(
+            onDismissRequest = { confirmarBaja = false },
+            title = { Text("¿Dar de baja a ${animal.nombre}?") },
+            text = {
+                Text("El animal dejará de aparecer en la lista. Su historial de pesajes y eventos se conserva.")
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarBaja = false
+                    onDarDeBaja()
+                }) { Text("Dar de baja") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarBaja = false }) { Text("Cancelar") }
+            },
+        )
     }
 }
 

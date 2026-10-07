@@ -22,5 +22,6 @@ data class Registro(
     val idAnimal: String,
     val peso: Float,
     val timestamp: Long,
+    val fechaBaja: Long? = null,
     val sincronizado: Boolean = false,
 )

@@ -28,15 +28,16 @@ class EventoDaoTest {
         animalDao = db.animalDao()
         eventoDao = db.eventoDao()
         idAnimal = UUID.randomUUID().toString()
+        db.perfilFincaDao().guardar(PerfilFinca(nombreFinca = "Finca test"))
         animalDao.insert(
             Animal(
                 idAnimal = idAnimal,
+                idPerfilFinca = PERFIL_FINCA_ID,
                 nombre = "Manchas",
                 raza = "Holstein",
                 sexo = "Hembra",
                 etapa = "Vaca",
-                edadAnios = 3,
-                edadMeses = 0,
+                fechaNacimiento = 1_700_000_000_000L,
                 proposito = "Leche",
             ),
         )

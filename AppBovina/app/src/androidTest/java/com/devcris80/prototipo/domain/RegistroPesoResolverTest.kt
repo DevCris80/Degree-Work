@@ -6,6 +6,8 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.devcris80.prototipo.data.Animal
 import com.devcris80.prototipo.data.AppDatabase
 import com.devcris80.prototipo.data.Chapeta
+import com.devcris80.prototipo.data.PERFIL_FINCA_ID
+import com.devcris80.prototipo.data.PerfilFinca
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -42,15 +44,16 @@ class RegistroPesoResolverTest {
     @Test
     fun conIdChipConocido_creaRegistroAsociadoAlAnimalCorrecto() = runTest {
         val idAnimal = UUID.randomUUID().toString()
+        db.perfilFincaDao().guardar(PerfilFinca(nombreFinca = "Finca test"))
         db.animalDao().insert(
             Animal(
                 idAnimal = idAnimal,
+                idPerfilFinca = PERFIL_FINCA_ID,
                 nombre = "Manchas",
                 raza = "Holstein",
                 sexo = "Hembra",
                 etapa = "Vaca",
-                edadAnios = 3,
-                edadMeses = 0,
+                fechaNacimiento = 1_700_000_000_000L,
                 proposito = "Leche",
             ),
         )

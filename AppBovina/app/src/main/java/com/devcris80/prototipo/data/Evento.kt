@@ -23,5 +23,6 @@ data class Evento(
     val tipoEvento: String,
     val fecha: Long,
     val detalle: String,
+    val fechaBaja: Long? = null,
     val sincronizado: Boolean = false,
 )

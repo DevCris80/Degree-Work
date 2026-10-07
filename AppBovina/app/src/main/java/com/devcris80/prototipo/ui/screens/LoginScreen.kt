@@ -28,6 +28,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -37,17 +38,21 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
+import com.devcris80.prototipo.data.Usuario
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun LoginScreen(
+    usuario: Flow<Usuario?>,
     onIniciarSesion: () -> Unit,
     onCrearCuentaNueva: () -> Unit,
 ) {
+    val usuarioActual by usuario.collectAsState(initial = null)
     var correo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
@@ -76,6 +81,14 @@ fun LoginScreen(
                 )
             }
             PillBadge(texto = "MIGANADO")
+            usuarioActual?.let { usuarioLogin ->
+                Text(
+                    text = "Hola, ${usuarioLogin.nombre}",
+                    style = MaterialTheme.typography.bodyLarge,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                )
+            }
             Text(
                 text = "Iniciar sesión",
                 style = MaterialTheme.typography.headlineLarge,

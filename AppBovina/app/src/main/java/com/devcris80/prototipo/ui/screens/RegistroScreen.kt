@@ -35,7 +35,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.PerfilFinca
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.PillBadge
@@ -44,7 +43,7 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 
 @Composable
 fun RegistroScreen(
-    onCrearCuenta: (PerfilFinca) -> Unit,
+    onCrearCuenta: (nombreUsuario: String, nombreFinca: String) -> Unit,
     onIrALogin: () -> Unit,
 ) {
     var nombreGanadero by remember { mutableStateOf("") }
@@ -139,14 +138,7 @@ fun RegistroScreen(
             )
 
             Button(
-                onClick = {
-                    onCrearCuenta(
-                        PerfilFinca(
-                            nombreGanadero = nombreGanadero,
-                            nombreFinca = nombreFinca,
-                        ),
-                    )
-                },
+                onClick = { onCrearCuenta(nombreGanadero, nombreFinca) },
                 enabled = puedeCrear,
                 modifier = Modifier
                     .fillMaxWidth()

@@ -10,6 +10,6 @@ interface EventoDao {
     @Insert
     suspend fun insert(evento: Evento)
 
-    @Query("SELECT * FROM evento WHERE idAnimal = :idAnimal ORDER BY fecha DESC")
+    @Query("SELECT * FROM evento WHERE idAnimal = :idAnimal AND fechaBaja IS NULL ORDER BY fecha DESC")
     fun observeByAnimal(idAnimal: String): Flow<List<Evento>>
 }

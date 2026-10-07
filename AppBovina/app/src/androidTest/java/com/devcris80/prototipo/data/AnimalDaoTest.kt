@@ -7,6 +7,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -31,22 +32,38 @@ class AnimalDaoTest {
         db.close()
     }
 
-    @Test
-    fun insertYObserveAll_devuelveElAnimalInsertado() = runTest {
-        val animal = Animal(
+    private suspend fun crearAnimal(nombre: String): Animal {
+        db.perfilFincaDao().guardar(PerfilFinca(nombreFinca = "Finca test"))
+        return Animal(
             idAnimal = UUID.randomUUID().toString(),
-            nombre = "Manchas",
+            idPerfilFinca = PERFIL_FINCA_ID,
+            nombre = nombre,
             raza = "Holstein",
             sexo = "Hembra",
             etapa = "Vaca",
-            edadAnios = 3,
-            edadMeses = 0,
+            fechaNacimiento = 1_700_000_000_000L,
             proposito = "Leche",
         )
+    }
+
+    @Test
+    fun insertYObserveActivos_devuelveElAnimalInsertado() = runTest {
+        val animal = crearAnimal("Manchas")
 
         dao.insert(animal)
 
-        val animales = dao.observeAll().first()
+        val animales = dao.observeActivos().first()
         assertEquals(listOf(animal), animales)
+    }
+
+    @Test
+    fun darDeBaja_ocultaElAnimalDeObserveActivos_sinBorrarlo() = runTest {
+        val animal = crearAnimal("Manchas")
+        dao.insert(animal)
+
+        dao.darDeBaja(animal.idAnimal, 1_800_000_000_000L)
+
+        assertTrue(dao.observeActivos().first().isEmpty())
+        assertEquals(1_800_000_000_000L, dao.observeById(animal.idAnimal).first()?.fechaBaja)
     }
 }

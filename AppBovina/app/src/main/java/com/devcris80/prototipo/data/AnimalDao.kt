@@ -10,12 +10,15 @@ interface AnimalDao {
     @Insert
     suspend fun insert(animal: Animal)
 
-    @Query("SELECT * FROM animal ORDER BY nombre ASC")
-    fun observeAll(): Flow<List<Animal>>
+    @Query("SELECT * FROM animal WHERE fechaBaja IS NULL ORDER BY nombre ASC")
+    fun observeActivos(): Flow<List<Animal>>
 
     @Query("SELECT * FROM animal ORDER BY nombre ASC")
     suspend fun getAllOnce(): List<Animal>
 
     @Query("SELECT * FROM animal WHERE idAnimal = :idAnimal")
     fun observeById(idAnimal: String): Flow<Animal?>
+
+    @Query("UPDATE animal SET fechaBaja = :fecha WHERE idAnimal = :idAnimal")
+    suspend fun darDeBaja(idAnimal: String, fecha: Long)
 }

@@ -6,7 +6,7 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "animal",
+    tableName = "usuario",
     foreignKeys = [
         ForeignKey(
             entity = PerfilFinca::class,
@@ -17,17 +17,10 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("idPerfilFinca")],
 )
-data class Animal(
-    @PrimaryKey val idAnimal: String,
+data class Usuario(
+    @PrimaryKey val idUsuario: String,
     val idPerfilFinca: String,
     val nombre: String,
-    val raza: String,
-    val sexo: String,
-    val etapa: String,
-    val fechaNacimiento: Long,
-    val fechaNacimientoEsEstimada: Boolean = false,
-    val proposito: String,
-    val fotoUri: String? = null,
-    val fechaBaja: Long? = null,
+    val rol: String = "Ganadero",
     val sincronizado: Boolean = false,
 )

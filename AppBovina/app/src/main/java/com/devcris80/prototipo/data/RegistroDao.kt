@@ -10,9 +10,9 @@ interface RegistroDao {
     @Insert
     suspend fun insert(registro: Registro)
 
-    @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal ORDER BY timestamp DESC")
+    @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal AND fechaBaja IS NULL ORDER BY timestamp DESC")
     fun observeByAnimal(idAnimal: String): Flow<List<Registro>>
 
-    @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal ORDER BY timestamp DESC LIMIT 1")
+    @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal AND fechaBaja IS NULL ORDER BY timestamp DESC LIMIT 1")
     fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?>
 }

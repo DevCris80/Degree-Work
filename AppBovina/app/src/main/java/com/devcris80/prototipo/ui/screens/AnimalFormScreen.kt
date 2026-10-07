@@ -13,17 +13,19 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.DatePicker
+import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -40,6 +42,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
+import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -49,6 +52,7 @@ import androidx.compose.runtime.setValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
+import androidx.compose.material3.SelectableDates
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -56,6 +60,7 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.data.Animal
+import com.devcris80.prototipo.data.PERFIL_FINCA_ID
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.FotoAnimal
@@ -63,6 +68,9 @@ import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.crearArchivoFotoUri
 import kotlinx.coroutines.launch
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 import java.util.UUID
 
 private val RAZAS = listOf(
@@ -92,9 +100,11 @@ fun RegistrarAnimalScreen(
     var razaExpandida by remember { mutableStateOf(false) }
     var sexo by remember { mutableStateOf("") }
     var etapa by remember { mutableStateOf("") }
-    var edadAnios by remember { mutableStateOf(0) }
-    var edadMeses by remember { mutableStateOf(0) }
+    var fechaNacimiento by remember { mutableStateOf<Long?>(null) }
+    var fechaNacimientoEsEstimada by remember { mutableStateOf(false) }
+    var mostrarSelectorFecha by remember { mutableStateOf(false) }
     var proposito by remember { mutableStateOf("") }
+    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
 
     val tomarFotoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
@@ -112,7 +122,7 @@ fun RegistrarAnimalScreen(
     }
 
     val puedeGuardar = nombre.isNotBlank() && raza.isNotBlank() &&
-        sexo.isNotBlank() && etapa.isNotBlank() && proposito.isNotBlank()
+        sexo.isNotBlank() && etapa.isNotBlank() && fechaNacimiento != null && proposito.isNotBlank()
 
     Scaffold(
         topBar = {
@@ -246,25 +256,50 @@ fun RegistrarAnimalScreen(
                 }
             }
 
-            Text("Edad estimada", style = MaterialTheme.typography.labelLarge)
-            Row(
-                modifier = Modifier.fillMaxWidth(),
-                horizontalArrangement = Arrangement.spacedBy(16.dp),
+            Text("Fecha de nacimiento", style = MaterialTheme.typography.labelLarge)
+            OutlinedButton(
+                onClick = { mostrarSelectorFecha = true },
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .height(BovinaMinFieldHeight),
+                shape = RoundedCornerShape(12.dp),
             ) {
-                ContadorNumerico(
-                    etiqueta = "Años",
-                    valor = edadAnios,
-                    onDecrementar = { if (edadAnios > 0) edadAnios-- },
-                    onIncrementar = { edadAnios++ },
-                    modifier = Modifier.weight(1f),
+                Icon(Icons.Filled.CalendarMonth, contentDescription = null)
+                Text(
+                    text = fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
+                    modifier = Modifier.padding(start = 8.dp),
                 )
-                ContadorNumerico(
-                    etiqueta = "Meses",
-                    valor = edadMeses,
-                    onDecrementar = { if (edadMeses > 0) edadMeses-- },
-                    onIncrementar = { if (edadMeses < 11) edadMeses++ },
-                    modifier = Modifier.weight(1f),
+            }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Checkbox(
+                    checked = fechaNacimientoEsEstimada,
+                    onCheckedChange = { fechaNacimientoEsEstimada = it },
                 )
+                Text("Fecha estimada", style = MaterialTheme.typography.bodyMedium)
+            }
+
+            if (mostrarSelectorFecha) {
+                val selectorState = rememberDatePickerState(
+                    initialSelectedDateMillis = fechaNacimiento ?: System.currentTimeMillis(),
+                    selectableDates = object : SelectableDates {
+                        override fun isSelectableDate(utcTimeMillis: Long): Boolean =
+                            utcTimeMillis <= System.currentTimeMillis()
+                    },
+                )
+                DatePickerDialog(
+                    onDismissRequest = { mostrarSelectorFecha = false },
+                    confirmButton = {
+                        TextButton(onClick = {
+                            fechaNacimiento = selectorState.selectedDateMillis
+                            mostrarSelectorFecha = false
+                        }) { Text("Aceptar") }
+                    },
+                    dismissButton = {
+                        TextButton(onClick = { mostrarSelectorFecha = false }) { Text("Cancelar") }
+                    },
+                ) {
+                    DatePicker(state = selectorState)
+                }
             }
 
             Text("Propósito productivo", style = MaterialTheme.typography.labelLarge)
@@ -286,15 +321,17 @@ fun RegistrarAnimalScreen(
                     .height(BovinaMinFieldHeight),
                 shape = RoundedCornerShape(12.dp),
                 onClick = {
+                    val fecha = fechaNacimiento ?: return@Button
                     onGuardar(
                         Animal(
                             idAnimal = UUID.randomUUID().toString(),
+                            idPerfilFinca = PERFIL_FINCA_ID,
                             nombre = nombre,
                             raza = raza,
                             sexo = sexo,
                             etapa = etapa,
-                            edadAnios = edadAnios,
-                            edadMeses = edadMeses,
+                            fechaNacimiento = fecha,
+                            fechaNacimientoEsEstimada = fechaNacimientoEsEstimada,
                             proposito = proposito,
                             fotoUri = fotoUri,
                         ),
@@ -344,33 +381,3 @@ private fun TarjetaSeleccionable(
     }
 }
 
-@Composable
-private fun ContadorNumerico(
-    etiqueta: String,
-    valor: Int,
-    onDecrementar: () -> Unit,
-    onIncrementar: () -> Unit,
-    modifier: Modifier = Modifier,
-) {
-    Card(modifier = modifier, shape = RoundedCornerShape(12.dp)) {
-        Column(
-            modifier = Modifier.padding(12.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-        ) {
-            Text(
-                text = etiqueta,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                IconButton(onClick = onDecrementar) {
-                    Icon(Icons.Filled.Remove, contentDescription = "Restar $etiqueta")
-                }
-                Text(text = valor.toString(), style = MaterialTheme.typography.headlineSmall)
-                IconButton(onClick = onIncrementar) {
-                    Icon(Icons.Filled.Add, contentDescription = "Sumar $etiqueta")
-                }
-            }
-        }
-    }
-}
