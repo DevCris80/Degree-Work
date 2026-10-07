@@ -87,6 +87,8 @@ private val PROPOSITOS = listOf("Leche", "Carne", "Doble Propósito")
 fun RegistrarAnimalScreen(
     onGuardar: (animal: Animal, idChip: String?) -> Unit,
     onCancelar: () -> Unit,
+    codigoPrecargado: String? = null,
+    avisoAnterior: String? = null,
 ) {
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -95,7 +97,7 @@ fun RegistrarAnimalScreen(
     var fotoUri by remember { mutableStateOf<String?>(null) }
     var fotoTempUri by remember { mutableStateOf<Uri?>(null) }
     var nombre by remember { mutableStateOf("") }
-    var idChip by remember { mutableStateOf("") }
+    var idChip by remember { mutableStateOf(codigoPrecargado.orEmpty()) }
     var raza by remember { mutableStateOf("") }
     var razaExpandida by remember { mutableStateOf(false) }
     var sexo by remember { mutableStateOf("") }
@@ -105,6 +107,18 @@ fun RegistrarAnimalScreen(
     var mostrarSelectorFecha by remember { mutableStateOf(false) }
     var proposito by remember { mutableStateOf("") }
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+
+    val nfcAction: @Composable () -> Unit = {
+        IconButton(onClick = {
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    "Escaneo NFC disponible cuando haya tags físicos (Fase 3).",
+                )
+            }
+        }) {
+            Icon(Icons.Filled.Nfc, contentDescription = "Escanear con NFC")
+        }
+    }
 
     val tomarFotoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
@@ -149,6 +163,9 @@ fun RegistrarAnimalScreen(
                 texto = "Complete los datos del animal. Podrá editarlos más adelante desde su ficha.",
                 icon = Icons.Filled.Info,
             )
+            avisoAnterior?.let { aviso ->
+                BannerInformativo(texto = aviso, icon = Icons.Filled.Info)
+            }
 
             FotoAnimal(
                 fotoUri = fotoUri,
@@ -189,17 +206,8 @@ fun RegistrarAnimalScreen(
                 value = idChip,
                 onValueChange = { idChip = it },
                 icon = Icons.Filled.Numbers,
-                trailingAction = {
-                    IconButton(onClick = {
-                        scope.launch {
-                            snackbarHostState.showSnackbar(
-                                "Escaneo NFC disponible cuando haya tags físicos (Fase 3).",
-                            )
-                        }
-                    }) {
-                        Icon(Icons.Filled.Nfc, contentDescription = "Escanear con NFC")
-                    }
-                },
+                readOnly = codigoPrecargado != null,
+                trailingAction = if (codigoPrecargado != null) null else nfcAction,
             )
 
             ExposedDropdownMenuBox(

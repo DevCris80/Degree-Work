@@ -19,6 +19,9 @@ interface AnimalDao {
     @Query("SELECT * FROM animal WHERE idAnimal = :idAnimal")
     fun observeById(idAnimal: String): Flow<Animal?>
 
+    @Query("SELECT * FROM animal WHERE idAnimal = :idAnimal")
+    suspend fun findById(idAnimal: String): Animal?
+
     @Query("UPDATE animal SET fechaBaja = :fecha WHERE idAnimal = :idAnimal")
     suspend fun darDeBaja(idAnimal: String, fecha: Long)
 }

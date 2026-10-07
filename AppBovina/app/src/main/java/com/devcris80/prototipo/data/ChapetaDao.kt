@@ -13,6 +13,9 @@ interface ChapetaDao {
     @Query("SELECT * FROM chapeta WHERE codigo = :codigo AND fechaDesasociacion IS NULL LIMIT 1")
     suspend fun findActivaByCodigo(codigo: String): Chapeta?
 
+    @Query("SELECT * FROM chapeta WHERE codigo = :codigo ORDER BY fechaAsociacion DESC LIMIT 1")
+    suspend fun findUltimaByCodigo(codigo: String): Chapeta?
+
     @Query("SELECT * FROM chapeta WHERE fechaDesasociacion IS NULL")
     fun observeActivas(): Flow<List<Chapeta>>
 

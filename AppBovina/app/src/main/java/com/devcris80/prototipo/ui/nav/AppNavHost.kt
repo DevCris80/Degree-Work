@@ -32,6 +32,7 @@ import com.devcris80.prototipo.data.PERFIL_FINCA_ID
 import com.devcris80.prototipo.data.PerfilFinca
 import com.devcris80.prototipo.data.Usuario
 import com.devcris80.prototipo.domain.AsociacionChapetaResolver
+import com.devcris80.prototipo.domain.DestinoEscaneoResolver
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
@@ -56,6 +57,9 @@ fun AppNavHost(database: AppDatabase) {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
     val chapetaResolver = remember { AsociacionChapetaResolver(database.chapetaDao()) }
+    val destinoEscaneoResolver = remember {
+        DestinoEscaneoResolver(database.chapetaDao(), database.animalDao())
+    }
 
     var perfilCargado by remember { mutableStateOf(false) }
     var tienePerfil by remember { mutableStateOf(false) }
@@ -153,11 +157,19 @@ fun AppNavHost(database: AppDatabase) {
                     chapetasActivas = chapetasActivas,
                     obtenerUltimoRegistro = { idAnimal -> database.registroDao().observeUltimoByAnimal(idAnimal) },
                     onAnimalClick = { animal -> navController.navigate(Rutas.DetalleAnimal.crear(animal.idAnimal)) },
-                    onNuevoAnimalClick = { navController.navigate(Rutas.NuevoAnimal.ruta) },
+                    onNuevoAnimalClick = { navController.navigate(Rutas.NuevoAnimal.crear()) },
                 )
             }
-            composable(Rutas.NuevoAnimal.ruta) {
+            composable(
+                route = Rutas.NuevoAnimal.ruta,
+                arguments = listOf(
+                    navArgument("codigo") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("aviso") { type = NavType.StringType; nullable = true; defaultValue = null },
+                ),
+            ) { entry ->
                 RegistrarAnimalScreen(
+                    codigoPrecargado = entry.arguments?.getString("codigo"),
+                    avisoAnterior = entry.arguments?.getString("aviso"),
                     onGuardar = { animal, idChip ->
                         scope.launch {
                             database.animalDao().insert(animal)
@@ -210,7 +222,14 @@ fun AppNavHost(database: AppDatabase) {
                 )
             }
             composable(Rutas.Escanear.ruta) {
-                EscanearScreen()
+                EscanearScreen(
+                    resolverDestino = { codigo -> destinoEscaneoResolver.resolver(codigo) },
+                    onAbrirAnimal = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
+                    onRegistrar = { codigo, aviso -> navController.navigate(Rutas.NuevoAnimal.crear(codigo, aviso)) },
+                    onLiberarChapeta = { idChapeta ->
+                        database.chapetaDao().desasociar(idChapeta, System.currentTimeMillis())
+                    },
+                )
             }
             composable(Rutas.EstadoServicio.ruta) {
                 ServiceStatusScreen()
