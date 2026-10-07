@@ -15,10 +15,11 @@ import androidx.room.PrimaryKey
             onDelete = ForeignKey.CASCADE,
         ),
     ],
-    indices = [Index("idAnimal")],
+    indices = [Index("idAnimal"), Index("codigo")],
 )
 data class Chapeta(
-    @PrimaryKey val idChip: String,
+    @PrimaryKey val idChapeta: String,
+    val codigo: String,
     val idAnimal: String,
     val fechaAsociacion: Long,
     val fechaDesasociacion: Long? = null,

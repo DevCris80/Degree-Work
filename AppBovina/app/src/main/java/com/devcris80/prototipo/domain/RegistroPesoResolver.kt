@@ -20,8 +20,8 @@ class RegistroPesoResolver(
     private val registroDao: RegistroDao,
     private val clock: () -> Long = { System.currentTimeMillis() },
 ) {
-    suspend fun registrarPeso(idChip: String, peso: Float): RegistroPesoResultado {
-        val chapeta = chapetaDao.findByIdChip(idChip)
+    suspend fun registrarPeso(codigo: String, peso: Float): RegistroPesoResultado {
+        val chapeta = chapetaDao.findActivaByCodigo(codigo)
             ?: return RegistroPesoResultado.Error("chip no asociado")
 
         val registro = Registro(

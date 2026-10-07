@@ -4,10 +4,11 @@ import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
+import androidx.sqlite.db.SupportSQLiteDatabase
 
 @Database(
     entities = [Animal::class, Evento::class, Registro::class, Chapeta::class, PerfilFinca::class, Usuario::class],
-    version = 3,
+    version = 4,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -19,6 +20,16 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun usuarioDao(): UsuarioDao
 
     companion object {
+        // Room no declara índices parciales: una sola Chapeta activa por codigo se garantiza aquí.
+        val CALLBACK_INDICES_CHAPETA = object : RoomDatabase.Callback() {
+            override fun onOpen(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    "CREATE UNIQUE INDEX IF NOT EXISTS index_chapeta_codigo_activa " +
+                        "ON chapeta(codigo) WHERE fechaDesasociacion IS NULL",
+                )
+            }
+        }
+
         @Volatile
         private var instance: AppDatabase? = null
 
@@ -32,6 +43,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // Prototipo: aún no hay datos reales de usuarios en campo que proteger,
                     // así que se prioriza iterar el esquema sobre escribir migraciones.
                     .fallbackToDestructiveMigration(dropAllTables = true)
+                    .addCallback(CALLBACK_INDICES_CHAPETA)
                     .build()
                     .also { instance = it }
             }

@@ -31,7 +31,8 @@ suspend fun AppDatabase.seedTestDataIfEmpty() {
     )
     chapetaDao().insert(
         Chapeta(
-            idChip = SEED_CHIP_ID,
+            idChapeta = UUID.randomUUID().toString(),
+            codigo = SEED_CHIP_ID,
             idAnimal = idAnimal,
             fechaAsociacion = System.currentTimeMillis(),
         ),

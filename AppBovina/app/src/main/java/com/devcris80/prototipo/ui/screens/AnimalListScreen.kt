@@ -66,7 +66,7 @@ fun ListaAnimalesScreen(
     val usuarioActual by usuario.collectAsState(initial = null)
     val lista by animales.collectAsState(initial = emptyList())
     val chapetas by chapetasActivas.collectAsState(initial = emptyList())
-    val chipsPorAnimal = remember(chapetas) { chapetas.associateBy({ it.idAnimal }, { it.idChip }) }
+    val chipsPorAnimal = remember(chapetas) { chapetas.associateBy({ it.idAnimal }, { it.codigo }) }
 
     var busqueda by remember { mutableStateOf("") }
     var filtroProposito by remember { mutableStateOf("Todos") }

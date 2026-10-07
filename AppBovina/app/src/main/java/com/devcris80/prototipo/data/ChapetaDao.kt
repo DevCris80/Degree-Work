@@ -10,8 +10,8 @@ interface ChapetaDao {
     @Insert
     suspend fun insert(chapeta: Chapeta)
 
-    @Query("SELECT * FROM chapeta WHERE idChip = :idChip LIMIT 1")
-    suspend fun findByIdChip(idChip: String): Chapeta?
+    @Query("SELECT * FROM chapeta WHERE codigo = :codigo AND fechaDesasociacion IS NULL LIMIT 1")
+    suspend fun findActivaByCodigo(codigo: String): Chapeta?
 
     @Query("SELECT * FROM chapeta WHERE fechaDesasociacion IS NULL")
     fun observeActivas(): Flow<List<Chapeta>>
@@ -19,6 +19,6 @@ interface ChapetaDao {
     @Query("SELECT * FROM chapeta WHERE idAnimal = :idAnimal AND fechaDesasociacion IS NULL LIMIT 1")
     suspend fun findActivaByAnimal(idAnimal: String): Chapeta?
 
-    @Query("UPDATE chapeta SET fechaDesasociacion = :fecha WHERE idChip = :idChip")
-    suspend fun desasociar(idChip: String, fecha: Long)
+    @Query("UPDATE chapeta SET fechaDesasociacion = :fecha WHERE idChapeta = :idChapeta")
+    suspend fun desasociar(idChapeta: String, fecha: Long)
 }

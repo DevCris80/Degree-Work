@@ -28,7 +28,7 @@ class RegistroPesoResolverTest {
         db = Room.inMemoryDatabaseBuilder(
             ApplicationProvider.getApplicationContext(),
             AppDatabase::class.java,
-        ).allowMainThreadQueries().build()
+        ).addCallback(AppDatabase.CALLBACK_INDICES_CHAPETA).allowMainThreadQueries().build()
         resolver = RegistroPesoResolver(
             chapetaDao = db.chapetaDao(),
             registroDao = db.registroDao(),
@@ -59,13 +59,14 @@ class RegistroPesoResolverTest {
         )
         db.chapetaDao().insert(
             Chapeta(
-                idChip = "TEST001",
+                idChapeta = UUID.randomUUID().toString(),
+                codigo = "TEST001",
                 idAnimal = idAnimal,
                 fechaAsociacion = 1L,
             ),
         )
 
-        val resultado = resolver.registrarPeso(idChip = "TEST001", peso = 123.45f)
+        val resultado = resolver.registrarPeso(codigo = "TEST001", peso = 123.45f)
 
         assertTrue(resultado is RegistroPesoResultado.Exito)
         val exito = resultado as RegistroPesoResultado.Exito
@@ -79,7 +80,7 @@ class RegistroPesoResolverTest {
 
     @Test
     fun conIdChipDesconocido_noCreaRegistroYRetornaError() = runTest {
-        val resultado = resolver.registrarPeso(idChip = "NO-EXISTE", peso = 50f)
+        val resultado = resolver.registrarPeso(codigo = "NO-EXISTE", peso = 50f)
 
         assertTrue(resultado is RegistroPesoResultado.Error)
         val registros = db.registroDao().observeByAnimal("cualquier-id").first()
