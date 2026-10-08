@@ -20,5 +20,6 @@ class RoomAnimalRepository(
 
     override suspend fun findById(idAnimal: String): Animal? = animalDao.findById(idAnimal)?.toDomain()
 
-    override suspend fun darDeBaja(idAnimal: String, fecha: Long) = animalDao.darDeBaja(idAnimal, fecha)
+    override suspend fun darDeBaja(idAnimal: String, fecha: Long) =
+        animalDao.darDeBaja(idAnimal, fecha, fechaModificacion = clock())
 }
