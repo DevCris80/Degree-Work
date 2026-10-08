@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.normalizarCodigo
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import java.util.UUID
@@ -19,7 +20,8 @@ class RegistrarPesaje(
         data class CodigoSinChapetaActiva(val codigo: String) : Resultado
     }
 
-    suspend operator fun invoke(codigo: String, peso: Float): Resultado {
+    suspend operator fun invoke(codigoRecibido: String, peso: Float): Resultado {
+        val codigo = normalizarCodigo(codigoRecibido)
         val chapeta = chapetaRepository.findActivaByCodigo(codigo)
             ?: return Resultado.CodigoSinChapetaActiva(codigo)
 

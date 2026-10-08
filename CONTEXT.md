@@ -8,7 +8,7 @@ Sistema de trazabilidad de ganado bovino, offline-first, compuesto por una app A
 Un bovino individual registrado en el sistema, identificado por un `id_animal` (UUID).
 
 **Chapeta**:
-El identificador físico colocado en un `Animal`, identificado por su `codigo` (UID del tag NFC, en hexadecimal mayúsculas y sin separadores). Está **activa** mientras no tiene fecha de desasociación; un mismo `codigo` puede tener varias Chapetas en el tiempo, pero solo una activa a la vez. Se **libera** (se desasocia) explícitamente desde el Detalle de un `Animal`; liberarla nunca ocurre en silencio.
+El identificador físico colocado en un `Animal`, identificado por su `codigo` (el UID del tag NFC, en mayúsculas y sin separadores; normalmente hexadecimal, pero no se exige). Está **activa** mientras no tiene fecha de desasociación; un mismo `codigo` puede tener varias Chapetas en el tiempo, pero solo una activa a la vez. Se **libera** (se desasocia) explícitamente desde el Detalle de un `Animal`; liberarla nunca ocurre en silencio.
 _Avoid_: chip, etiqueta, id_chip (este último sobrevive solo como nombre de campo en el mensaje que envía el ESP32)
 
 **Evento**:

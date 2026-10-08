@@ -2,6 +2,7 @@ package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
+import com.devcris80.prototipo.domain.model.normalizarCodigo
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
@@ -22,7 +23,8 @@ class RegistrarAnimal(
         data class CodigoYaActivo(val codigo: String) : Resultado
     }
 
-    suspend operator fun invoke(animal: Animal, codigo: String?): Resultado = transaccion.ejecutar {
+    suspend operator fun invoke(animal: Animal, codigoIngresado: String?): Resultado = transaccion.ejecutar {
+        val codigo = codigoIngresado?.let(::normalizarCodigo)?.takeIf { it.isNotEmpty() }
         if (codigo != null && chapetaRepository.findActivaByCodigo(codigo) != null) {
             return@ejecutar Resultado.CodigoYaActivo(codigo)
         }

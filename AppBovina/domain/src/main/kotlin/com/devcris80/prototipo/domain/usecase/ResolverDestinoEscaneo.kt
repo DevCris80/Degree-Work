@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.domain.usecase
 
+import com.devcris80.prototipo.domain.model.normalizarCodigo
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 
@@ -19,7 +20,8 @@ class ResolverDestinoEscaneo(
     private val chapetaRepository: ChapetaRepository,
     private val animalRepository: AnimalRepository,
 ) {
-    suspend operator fun invoke(codigo: String): DestinoEscaneo {
+    suspend operator fun invoke(codigoLeido: String): DestinoEscaneo {
+        val codigo = normalizarCodigo(codigoLeido)
         val activa = chapetaRepository.findActivaByCodigo(codigo)
         if (activa != null) {
             val animal = animalRepository.findById(activa.idAnimal)
