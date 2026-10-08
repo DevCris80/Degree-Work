@@ -12,6 +12,7 @@ import kotlinx.coroutines.flow.map
 class RoomCuentaRepository(
     private val perfilFincaDao: PerfilFincaDao,
     private val usuarioDao: UsuarioDao,
+    private val clock: () -> Long = { System.currentTimeMillis() },
 ) : CuentaRepository {
     override fun observePerfilFinca(): Flow<PerfilFinca?> = perfilFincaDao.observe().map { it?.toDomain() }
 
@@ -19,7 +20,7 @@ class RoomCuentaRepository(
 
     // El id sigue siendo el fijo de PerfilFincaEntity hasta que #41 lo pase a UUID.
     override suspend fun crearPerfilFinca(nombreFinca: String): PerfilFinca {
-        val perfil = PerfilFincaEntity(nombreFinca = nombreFinca)
+        val perfil = PerfilFincaEntity(nombreFinca = nombreFinca, fechaModificacion = clock())
         perfilFincaDao.guardar(perfil)
         return perfil.toDomain()
     }
@@ -28,5 +29,5 @@ class RoomCuentaRepository(
 
     override suspend fun getUsuario(): Usuario? = usuarioDao.getOnce()?.toDomain()
 
-    override suspend fun insertUsuario(usuario: Usuario) = usuarioDao.insert(usuario.toEntity())
+    override suspend fun insertUsuario(usuario: Usuario) = usuarioDao.insert(usuario.toEntity(fechaModificacion = clock()))
 }

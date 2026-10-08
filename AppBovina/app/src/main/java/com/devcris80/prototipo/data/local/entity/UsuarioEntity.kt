@@ -23,4 +23,6 @@ data class UsuarioEntity(
     val nombre: String,
     val rol: String = "Ganadero",
     val sincronizado: Boolean = false,
+    // Con valor por defecto solo mientras el código viejo construya la entidad; lo quita #41.
+    val fechaModificacion: Long = System.currentTimeMillis(),
 )

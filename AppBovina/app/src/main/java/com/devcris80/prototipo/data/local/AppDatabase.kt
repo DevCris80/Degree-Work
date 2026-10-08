@@ -30,7 +30,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         UsuarioEntity::class,
         PesajePendienteEntity::class,
     ],
-    version = 7,
+    version = 8,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

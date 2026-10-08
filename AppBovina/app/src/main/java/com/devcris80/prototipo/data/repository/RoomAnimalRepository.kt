@@ -6,8 +6,11 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class RoomAnimalRepository(private val animalDao: AnimalDao) : AnimalRepository {
-    override suspend fun insert(animal: Animal) = animalDao.insert(animal.toEntity())
+class RoomAnimalRepository(
+    private val animalDao: AnimalDao,
+    private val clock: () -> Long = { System.currentTimeMillis() },
+) : AnimalRepository {
+    override suspend fun insert(animal: Animal) = animalDao.insert(animal.toEntity(fechaModificacion = clock()))
 
     override fun observeActivos(): Flow<List<Animal>> =
         animalDao.observeActivos().map { animales -> animales.map { it.toDomain() } }

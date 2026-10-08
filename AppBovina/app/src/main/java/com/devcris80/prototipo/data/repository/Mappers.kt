@@ -61,7 +61,7 @@ fun AnimalEntity.toDomain() = Animal(
     fechaBaja = fechaBaja,
 )
 
-fun Animal.toEntity() = AnimalEntity(
+fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
     idAnimal = idAnimal,
     idPerfilFinca = idPerfilFinca,
     nombre = nombre,
@@ -73,6 +73,7 @@ fun Animal.toEntity() = AnimalEntity(
     proposito = TEXTO_PROPOSITO.aTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    fechaModificacion = fechaModificacion,
 )
 
 fun ChapetaEntity.toDomain() = Chapeta(
@@ -83,12 +84,13 @@ fun ChapetaEntity.toDomain() = Chapeta(
     fechaDesasociacion = fechaDesasociacion,
 )
 
-fun Chapeta.toEntity() = ChapetaEntity(
+fun Chapeta.toEntity(fechaModificacion: Long) = ChapetaEntity(
     idChapeta = idChapeta,
     codigo = codigo,
     idAnimal = idAnimal,
     fechaAsociacion = fechaAsociacion,
     fechaDesasociacion = fechaDesasociacion,
+    fechaModificacion = fechaModificacion,
 )
 
 fun EventoEntity.toDomain() = Evento(
@@ -100,13 +102,14 @@ fun EventoEntity.toDomain() = Evento(
     fechaBaja = fechaBaja,
 )
 
-fun Evento.toEntity() = EventoEntity(
+fun Evento.toEntity(fechaModificacion: Long) = EventoEntity(
     idEvento = idEvento,
     idAnimal = idAnimal,
     tipoEvento = tipoEvento,
     fecha = fecha,
     detalle = detalle,
     fechaBaja = fechaBaja,
+    fechaModificacion = fechaModificacion,
 )
 
 fun RegistroEntity.toDomain() = Registro(
@@ -119,7 +122,7 @@ fun RegistroEntity.toDomain() = Registro(
     fechaBaja = fechaBaja,
 )
 
-fun Registro.toEntity() = RegistroEntity(
+fun Registro.toEntity(fechaModificacion: Long) = RegistroEntity(
     idRegistro = idRegistro,
     idAnimal = idAnimal,
     idUsuario = idUsuario,
@@ -127,6 +130,7 @@ fun Registro.toEntity() = RegistroEntity(
     peso = peso,
     timestamp = timestamp,
     fechaBaja = fechaBaja,
+    fechaModificacion = fechaModificacion,
 )
 
 fun PesajePendienteEntity.toDomain() = PesajePendiente(
@@ -164,9 +168,10 @@ fun UsuarioEntity.toDomain() = Usuario(
     rol = TEXTO_ROL.desdeTexto(rol),
 )
 
-fun Usuario.toEntity() = UsuarioEntity(
+fun Usuario.toEntity(fechaModificacion: Long) = UsuarioEntity(
     idUsuario = idUsuario,
     idPerfilFinca = idPerfilFinca,
     nombre = nombre,
     rol = TEXTO_ROL.aTexto(rol),
+    fechaModificacion = fechaModificacion,
 )

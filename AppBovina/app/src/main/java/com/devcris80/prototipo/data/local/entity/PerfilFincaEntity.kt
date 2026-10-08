@@ -9,4 +9,7 @@ const val PERFIL_FINCA_ID = "perfil_local"
 data class PerfilFincaEntity(
     @PrimaryKey val id: String = PERFIL_FINCA_ID,
     val nombreFinca: String,
+    val sincronizado: Boolean = false,
+    // Con valor por defecto solo mientras el código viejo construya la entidad; lo quita #41.
+    val fechaModificacion: Long = System.currentTimeMillis(),
 )
