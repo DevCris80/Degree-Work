@@ -6,4 +6,11 @@ data class Pesaje(
     val idLectura: String,
     val codigo: String,
     val peso: Float,
-)
+    /** Milisegundos entre la medición y su envío; 0 si el ESP32 lo envió al momento. */
+    val antiguedadMs: Long = 0,
+) {
+    companion object {
+        /** Ningún bovino pesa más que esto: un valor mayor es un error de la báscula. */
+        const val PESO_MAXIMO_KG = 1500f
+    }
+}

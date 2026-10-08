@@ -13,6 +13,9 @@ import java.util.UUID
  * Resuelve un Pesaje contra la Chapeta activa de su codigo y crea el Registro del Animal
  * correspondiente, a nombre del Usuario de este dispositivo. Recibir dos veces el mismo Pesaje
  * no crea nada nuevo: responde lo mismo que la primera vez (ver docs/adr/0003).
+ *
+ * La hora del Registro es la de la medición: el momento de recepción menos la antigüedad que
+ * reporta el ESP32. Nunca se usa un reloj enviado por el ESP32.
  */
 class RegistrarPesaje(
     private val chapetaRepository: ChapetaRepository,
@@ -24,21 +27,33 @@ class RegistrarPesaje(
     sealed interface Resultado {
         data class Registrado(val idRegistro: String) : Resultado
         data class CodigoSinChapetaActiva(val codigo: String) : Resultado
+        data class Invalido(val motivo: MotivoInvalido) : Resultado
 
         /** Todavía no se ha creado la cuenta en este dispositivo: no hay a nombre de quién guardar. */
         data object SinUsuario : Resultado
     }
 
-    suspend operator fun invoke(pesaje: Pesaje): Resultado = transaccion.ejecutar {
+    enum class MotivoInvalido { PESO_FUERA_DE_RANGO, ANTIGUEDAD_NEGATIVA }
+
+    suspend operator fun invoke(pesaje: Pesaje): Resultado {
+        // `!(peso > 0)` en vez de `peso <= 0` para rechazar también un peso que no sea un número.
+        if (!(pesaje.peso > 0f) || pesaje.peso > Pesaje.PESO_MAXIMO_KG) {
+            return Resultado.Invalido(MotivoInvalido.PESO_FUERA_DE_RANGO)
+        }
+        if (pesaje.antiguedadMs < 0) return Resultado.Invalido(MotivoInvalido.ANTIGUEDAD_NEGATIVA)
+        return transaccion.ejecutar { registrar(pesaje) }
+    }
+
+    private suspend fun registrar(pesaje: Pesaje): Resultado {
         val codigo = normalizarCodigo(pesaje.codigo)
 
         registroRepository.findByIdLectura(pesaje.idLectura)?.let { yaRegistrado ->
-            return@ejecutar Resultado.Registrado(yaRegistrado.idRegistro)
+            return Resultado.Registrado(yaRegistrado.idRegistro)
         }
 
-        val usuario = cuentaRepository.getUsuario() ?: return@ejecutar Resultado.SinUsuario
+        val usuario = cuentaRepository.getUsuario() ?: return Resultado.SinUsuario
         val chapeta = chapetaRepository.findActivaByCodigo(codigo)
-            ?: return@ejecutar Resultado.CodigoSinChapetaActiva(codigo)
+            ?: return Resultado.CodigoSinChapetaActiva(codigo)
 
         val registro = Registro(
             idRegistro = UUID.randomUUID().toString(),
@@ -46,9 +61,9 @@ class RegistrarPesaje(
             idUsuario = usuario.idUsuario,
             idLectura = pesaje.idLectura,
             peso = pesaje.peso,
-            timestamp = clock(),
+            timestamp = clock() - pesaje.antiguedadMs,
         )
         registroRepository.insert(registro)
-        Resultado.Registrado(registro.idRegistro)
+        return Resultado.Registrado(registro.idRegistro)
     }
 }
