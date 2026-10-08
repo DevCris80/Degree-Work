@@ -43,6 +43,10 @@ class PesajeHttpServer(
                     Response.Status.NOT_FOUND,
                     errorBody("chip no asociado"),
                 )
+                is RegistrarPesaje.Resultado.Invalido -> jsonResponse(
+                    Response.Status.BAD_REQUEST,
+                    errorBody(mensajeDe(resultado.motivo)),
+                )
                 RegistrarPesaje.Resultado.SinUsuario -> jsonResponse(
                     Response.Status.SERVICE_UNAVAILABLE,
                     errorBody("sin sesion activa"),
@@ -59,7 +63,14 @@ class PesajeHttpServer(
         idLectura = json.texto("id_lectura"),
         codigo = json.texto("id_chip"),
         peso = json.numero("peso").toFloat(),
+        antiguedadMs = if (json.has("antiguedad_ms")) json.numero("antiguedad_ms").toLong() else 0,
     )
+
+    private fun mensajeDe(motivo: RegistrarPesaje.MotivoInvalido): String = when (motivo) {
+        RegistrarPesaje.MotivoInvalido.PESO_FUERA_DE_RANGO ->
+            "peso: debe ser mayor que 0 y menor o igual a ${Pesaje.PESO_MAXIMO_KG.toInt()}"
+        RegistrarPesaje.MotivoInvalido.ANTIGUEDAD_NEGATIVA -> "antiguedad_ms: no puede ser negativo"
+    }
 
     private fun JSONObject.texto(campo: String): String {
         val valor = opt(campo) ?: throw CuerpoInvalido("$campo: falta")
