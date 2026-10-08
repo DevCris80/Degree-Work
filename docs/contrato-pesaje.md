@@ -47,8 +47,8 @@ Un `202` no es un error para el ESP32: el pesaje quedó guardado y alguien lo as
 ## Reglas
 
 - **Orden.** La app primero valida el cuerpo (`400`), después busca el `id_lectura` entre lo ya guardado, después comprueba que haya cuenta (`503`) y por último busca la Chapeta.
-- **Ningún pesaje válido se descarta.** Todo pesaje que pasa la validación y llega con una cuenta creada queda guardado, como registro del animal (`201`) o como pendiente (`202`).
-- **Idempotencia.** Si la app ya guardó un pesaje con ese `id_lectura`, responde lo mismo que la primera vez (`201` con el mismo `id_registro`, o `202` con el mismo `id_pesaje_pendiente` y motivo) y no guarda nada nuevo, aunque el código o el peso del reintento sean otros. Por eso reintentar siempre es seguro. Un reintento con el cuerpo inválido recibe `400`, como cualquier otro.
+- **Ningún pesaje válido se pierde.** Todo pesaje que pasa la validación y llega con una cuenta creada queda guardado, como registro del animal (`201`) o como pendiente (`202`).
+- **Idempotencia.** Si la app ya guardó un pesaje con ese `id_lectura`, responde lo mismo que la primera vez (`201` con el mismo `id_registro`, o `202` con el mismo `id_pesaje_pendiente` y motivo) y no guarda nada nuevo, aunque el código o el peso del reintento sean otros. Un pesaje que quedó pendiente sigue respondiendo ese mismo `202` después de que alguien lo concilie en la app. Por eso reintentar siempre es seguro. Un reintento con el cuerpo inválido recibe `400`, como cualquier otro.
 - **Nunca se crean animales ni chapetas** a partir de un pesaje. Un código desconocido solo produce un pesaje pendiente.
 - **Usuario.** Cada pesaje guardado, sea registro o pendiente, queda a nombre del Usuario del teléfono que lo recibió.
 

@@ -15,9 +15,12 @@ import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
+import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
+import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
+import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
@@ -47,8 +50,20 @@ class AppContainer(database: AppDatabase) {
         transaccion,
     )
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
-    val registrarAnimal = RegistrarAnimal(animalRepository, chapetaRepository, transaccion)
+    val registrarAnimal =
+        RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository)
     val crearCuenta = CrearCuenta(cuentaRepository, transaccion)
+    val observarPesajesPendientes =
+        ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository)
+    val asignarPesajesPendientes = AsignarPesajesPendientes(
+        pesajePendienteRepository,
+        animalRepository,
+        registroRepository,
+        cuentaRepository,
+        transaccion,
+    )
+    val descartarPesajePendiente =
+        DescartarPesajePendiente(pesajePendienteRepository, cuentaRepository, transaccion)
 }
