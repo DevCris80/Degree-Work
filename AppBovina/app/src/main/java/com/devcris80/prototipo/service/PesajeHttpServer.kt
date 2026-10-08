@@ -7,6 +7,8 @@ import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.runBlocking
 import org.json.JSONException
 import org.json.JSONObject
+import java.io.IOException
+import kotlin.math.floor
 
 /**
  * Adaptador HTTP delgado sobre RegistrarPesaje: lee el JSON de POST /pesaje, comprueba que
@@ -30,7 +32,12 @@ class PesajeHttpServer(
         } catch (e: JSONException) {
             return jsonResponse(Response.Status.BAD_REQUEST, errorBody("body: no es un objeto JSON valido"))
         } catch (e: CuerpoInvalido) {
-            return jsonResponse(Response.Status.BAD_REQUEST, errorBody(e.mensaje))
+            return jsonResponse(Response.Status.BAD_REQUEST, errorBody(e.message ?: "body invalido"))
+        } catch (e: ResponseException) {
+            return jsonResponse(Response.Status.BAD_REQUEST, errorBody("body: no se pudo leer"))
+        } catch (e: IOException) {
+            Log.e(TAG, "Error al leer POST $RUTA_PESAJE", e)
+            return jsonResponse(Response.Status.INTERNAL_ERROR, errorBody("error interno"))
         }
 
         return try {
@@ -63,13 +70,14 @@ class PesajeHttpServer(
         idLectura = json.texto("id_lectura"),
         codigo = json.texto("id_chip"),
         peso = json.numero("peso").toFloat(),
-        antiguedadMs = if (json.has("antiguedad_ms")) json.numero("antiguedad_ms").toLong() else 0,
+        // floor y no un truncado: -0.5 debe seguir siendo negativo para que el dominio lo rechace.
+        antiguedadMs = if (json.has("antiguedad_ms")) floor(json.numero("antiguedad_ms")).toLong() else 0,
     )
 
     private fun mensajeDe(motivo: RegistrarPesaje.MotivoInvalido): String = when (motivo) {
         RegistrarPesaje.MotivoInvalido.PESO_FUERA_DE_RANGO ->
             "peso: debe ser mayor que 0 y menor o igual a ${Pesaje.PESO_MAXIMO_KG.toInt()}"
-        RegistrarPesaje.MotivoInvalido.ANTIGUEDAD_NEGATIVA -> "antiguedad_ms: no puede ser negativo"
+        RegistrarPesaje.MotivoInvalido.ANTIGUEDAD_FUERA_DE_RANGO -> "antiguedad_ms: fuera de rango"
     }
 
     private fun JSONObject.texto(campo: String): String {
@@ -84,7 +92,7 @@ class PesajeHttpServer(
         return (valor as? Number)?.toDouble() ?: throw CuerpoInvalido("$campo: debe ser un numero")
     }
 
-    private class CuerpoInvalido(val mensaje: String) : Exception(mensaje)
+    private class CuerpoInvalido(mensaje: String) : Exception(mensaje)
 
     private fun errorBody(mensaje: String): String =
         JSONObject().put("status", "error").put("message", mensaje).toString()
