@@ -50,7 +50,8 @@ class AppContainer(database: AppDatabase) {
         transaccion,
     )
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
-    val registrarAnimal = RegistrarAnimal(animalRepository, chapetaRepository, transaccion)
+    val registrarAnimal =
+        RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository)
     val crearCuenta = CrearCuenta(cuentaRepository, transaccion)
