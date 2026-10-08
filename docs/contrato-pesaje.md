@@ -27,7 +27,7 @@ El ESP32 **no envía su reloj**. La app calcula la hora del pesaje como el momen
 |---|---|---|---|
 | `201` | `{"status":"ok","id_registro":"<uuid>"}` | Pesaje registrado al animal. | No |
 | `400` | `{"status":"error","message":"<campo>: <motivo>"}` | Cuerpo inválido: falta un campo, es de otro tipo o está fuera de rango. | No |
-| `404` | `{"status":"error","message":"chip no asociado"}` | El código no tiene una Chapeta activa. No se guarda nada. | No |
+| `202` | `{"status":"pendiente_asociacion","id_pesaje_pendiente":"<uuid>","motivo":"<motivo>"}` | Pesaje guardado como pendiente: no se pudo asignar a un animal. | No |
 | `404` | `{"status":"error","message":"ruta no encontrada"}` | Ruta o método equivocados. | No |
 | `503` | `{"status":"error","message":"sin sesion activa"}` | El teléfono todavía no tiene una cuenta creada. No se guarda nada. | Sí |
 | `500` | `{"status":"error","message":"error interno"}` | Fallo de la app. | Sí |
@@ -35,11 +35,21 @@ El ESP32 **no envía su reloj**. La app calcula la hora del pesaje como el momen
 
 Todo reintento usa el **mismo** `id_lectura`.
 
+El `motivo` de un `202` es uno de estos:
+
+| `motivo` | Significado |
+|---|---|
+| `CHIP_NO_ASOCIADO` | El código no tiene una Chapeta activa en la app. |
+| `ANIMAL_DADO_DE_BAJA` | El código tiene una Chapeta activa, pero su animal está dado de baja. |
+
+Un `202` no es un error para el ESP32: el pesaje quedó guardado y alguien lo asignará después desde la app. Conviene que la báscula lo indique, porque suele significar que a ese animal le falta registrar la chapeta.
+
 ## Reglas
 
 - **Orden.** La app primero valida el cuerpo (`400`), después busca el `id_lectura` entre lo ya guardado, después comprueba que haya cuenta (`503`) y por último busca la Chapeta.
-- **Idempotencia.** Si la app ya guardó un pesaje con ese `id_lectura`, responde lo mismo que la primera vez (`201` con el mismo `id_registro`) y no guarda nada nuevo, aunque el código o el peso del reintento sean otros. Por eso reintentar siempre es seguro. Un reintento con el cuerpo inválido recibe `400`, como cualquier otro.
-- **Nunca se crean animales ni chapetas** a partir de un pesaje.
+- **Ningún pesaje válido se descarta.** Todo pesaje que pasa la validación y llega con una cuenta creada queda guardado, como registro del animal (`201`) o como pendiente (`202`).
+- **Idempotencia.** Si la app ya guardó un pesaje con ese `id_lectura`, responde lo mismo que la primera vez (`201` con el mismo `id_registro`, o `202` con el mismo `id_pesaje_pendiente` y motivo) y no guarda nada nuevo, aunque el código o el peso del reintento sean otros. Por eso reintentar siempre es seguro. Un reintento con el cuerpo inválido recibe `400`, como cualquier otro.
+- **Nunca se crean animales ni chapetas** a partir de un pesaje. Un código desconocido solo produce un pesaje pendiente.
 - **Usuario.** Cada Registro queda a nombre del Usuario del teléfono que recibió el pesaje.
 
 ## Probarlo sin ESP32
