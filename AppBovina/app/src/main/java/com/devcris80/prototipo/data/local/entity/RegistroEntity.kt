@@ -32,4 +32,6 @@ data class RegistroEntity(
     val timestamp: Long,
     val fechaBaja: Long? = null,
     val sincronizado: Boolean = false,
+    // Con valor por defecto solo mientras el código viejo construya la entidad; lo quita #41.
+    val fechaModificacion: Long = System.currentTimeMillis(),
 )

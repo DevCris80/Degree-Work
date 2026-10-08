@@ -6,8 +6,11 @@ import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class RoomChapetaRepository(private val chapetaDao: ChapetaDao) : ChapetaRepository {
-    override suspend fun insert(chapeta: Chapeta) = chapetaDao.insert(chapeta.toEntity())
+class RoomChapetaRepository(
+    private val chapetaDao: ChapetaDao,
+    private val clock: () -> Long = { System.currentTimeMillis() },
+) : ChapetaRepository {
+    override suspend fun insert(chapeta: Chapeta) = chapetaDao.insert(chapeta.toEntity(fechaModificacion = clock()))
 
     override suspend fun findActivaByCodigo(codigo: String): Chapeta? =
         chapetaDao.findActivaByCodigo(codigo)?.toDomain()
