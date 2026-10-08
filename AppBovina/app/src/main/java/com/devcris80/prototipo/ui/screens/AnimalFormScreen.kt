@@ -59,8 +59,8 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.Animal
-import com.devcris80.prototipo.data.PERFIL_FINCA_ID
+import com.devcris80.prototipo.data.local.entity.AnimalEntity
+import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.FotoAnimal
@@ -85,7 +85,7 @@ private val PROPOSITOS = listOf("Leche", "Carne", "Doble Propósito")
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarAnimalScreen(
-    onGuardar: (animal: Animal, idChip: String?) -> Unit,
+    onGuardar: (animal: AnimalEntity, idChip: String?) -> Unit,
     onCancelar: () -> Unit,
     codigoPrecargado: String? = null,
     avisoAnterior: String? = null,
@@ -331,7 +331,7 @@ fun RegistrarAnimalScreen(
                 onClick = {
                     val fecha = fechaNacimiento ?: return@Button
                     onGuardar(
-                        Animal(
+                        AnimalEntity(
                             idAnimal = UUID.randomUUID().toString(),
                             idPerfilFinca = PERFIL_FINCA_ID,
                             nombre = nombre,

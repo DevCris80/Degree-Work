@@ -16,13 +16,13 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.Evento
+import com.devcris80.prototipo.data.local.entity.EventoEntity
 import java.util.UUID
 
 @Composable
 fun EventoFormScreen(
     idAnimal: String,
-    onGuardar: (Evento) -> Unit,
+    onGuardar: (EventoEntity) -> Unit,
 ) {
     var tipoEvento by remember { mutableStateOf("") }
     var detalle by remember { mutableStateOf("") }
@@ -54,7 +54,7 @@ fun EventoFormScreen(
                 enabled = puedeGuardar,
                 onClick = {
                     onGuardar(
-                        Evento(
+                        EventoEntity(
                             idEvento = UUID.randomUUID().toString(),
                             idAnimal = idAnimal,
                             tipoEvento = tipoEvento,

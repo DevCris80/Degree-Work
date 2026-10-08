@@ -1,7 +1,7 @@
-package com.devcris80.prototipo.domain
+package com.devcris80.prototipo.domain.usecase
 
-import com.devcris80.prototipo.data.local.dao.AnimalDao
-import com.devcris80.prototipo.data.local.dao.ChapetaDao
+import com.devcris80.prototipo.domain.repository.AnimalRepository
+import com.devcris80.prototipo.domain.repository.ChapetaRepository
 
 sealed interface DestinoEscaneo {
     data class AbrirAnimal(val idAnimal: String) : DestinoEscaneo
@@ -15,22 +15,22 @@ sealed interface DestinoEscaneo {
  * Chapeta activa de animal activo → detalle; activa de animal dado de baja → liberar primero;
  * sin activa pero con historial → registrar avisando del animal anterior; nunca visto → registrar.
  */
-class DestinoEscaneoResolver(
-    private val chapetaDao: ChapetaDao,
-    private val animalDao: AnimalDao,
+class ResolverDestinoEscaneo(
+    private val chapetaRepository: ChapetaRepository,
+    private val animalRepository: AnimalRepository,
 ) {
-    suspend fun resolver(codigo: String): DestinoEscaneo {
-        val activa = chapetaDao.findActivaByCodigo(codigo)
+    suspend operator fun invoke(codigo: String): DestinoEscaneo {
+        val activa = chapetaRepository.findActivaByCodigo(codigo)
         if (activa != null) {
-            val animal = animalDao.findById(activa.idAnimal)
+            val animal = animalRepository.findById(activa.idAnimal)
             return when {
                 animal == null -> DestinoEscaneo.RegistrarNuevo(codigo)
                 animal.fechaBaja == null -> DestinoEscaneo.AbrirAnimal(animal.idAnimal)
                 else -> DestinoEscaneo.AnimalDadoDeBaja(activa.idChapeta, animal.nombre, codigo)
             }
         }
-        val ultima = chapetaDao.findUltimaByCodigo(codigo) ?: return DestinoEscaneo.RegistrarNuevo(codigo)
-        val anterior = animalDao.findById(ultima.idAnimal) ?: return DestinoEscaneo.RegistrarNuevo(codigo)
+        val ultima = chapetaRepository.findUltimaByCodigo(codigo) ?: return DestinoEscaneo.RegistrarNuevo(codigo)
+        val anterior = animalRepository.findById(ultima.idAnimal) ?: return DestinoEscaneo.RegistrarNuevo(codigo)
         return DestinoEscaneo.RegistrarConAviso(codigo, anterior.nombre)
     }
 }

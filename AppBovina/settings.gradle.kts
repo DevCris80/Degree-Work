@@ -24,3 +24,4 @@ dependencyResolutionManagement {
 
 rootProject.name = "Prototipo1"
 include(":app")
+include(":domain")

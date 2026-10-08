@@ -38,11 +38,11 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.Animal
-import com.devcris80.prototipo.data.Chapeta
-import com.devcris80.prototipo.data.PerfilFinca
-import com.devcris80.prototipo.data.Registro
-import com.devcris80.prototipo.data.Usuario
+import com.devcris80.prototipo.data.local.entity.AnimalEntity
+import com.devcris80.prototipo.data.local.entity.ChapetaEntity
+import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
@@ -54,12 +54,12 @@ private val PROPOSITOS_FILTRO = listOf("Todos", "Leche", "Carne", "Doble Propós
 
 @Composable
 fun ListaAnimalesScreen(
-    perfilFinca: Flow<PerfilFinca?>,
-    usuario: Flow<Usuario?>,
-    animales: Flow<List<Animal>>,
-    chapetasActivas: Flow<List<Chapeta>>,
-    obtenerUltimoRegistro: (idAnimal: String) -> Flow<Registro?>,
-    onAnimalClick: (Animal) -> Unit,
+    perfilFinca: Flow<PerfilFincaEntity?>,
+    usuario: Flow<UsuarioEntity?>,
+    animales: Flow<List<AnimalEntity>>,
+    chapetasActivas: Flow<List<ChapetaEntity>>,
+    obtenerUltimoRegistro: (idAnimal: String) -> Flow<RegistroEntity?>,
+    onAnimalClick: (AnimalEntity) -> Unit,
     onNuevoAnimalClick: () -> Unit,
 ) {
     val perfil by perfilFinca.collectAsState(initial = null)
@@ -204,8 +204,8 @@ fun ListaAnimalesScreen(
 
 @Composable
 private fun TarjetaAnimal(
-    animal: Animal,
-    ultimoRegistro: Flow<Registro?>,
+    animal: AnimalEntity,
+    ultimoRegistro: Flow<RegistroEntity?>,
     onClick: () -> Unit,
 ) {
     val registro by ultimoRegistro.collectAsState(initial = null)

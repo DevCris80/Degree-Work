@@ -38,7 +38,7 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.Usuario
+import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.PillBadge
@@ -48,7 +48,7 @@ import kotlinx.coroutines.flow.Flow
 
 @Composable
 fun LoginScreen(
-    usuario: Flow<Usuario?>,
+    usuario: Flow<UsuarioEntity?>,
     onIniciarSesion: () -> Unit,
     onCrearCuentaNueva: () -> Unit,
 ) {
