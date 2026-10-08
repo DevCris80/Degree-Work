@@ -9,6 +9,7 @@ import com.devcris80.prototipo.data.local.entity.RegistroEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
+import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
@@ -16,6 +17,7 @@ import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
@@ -40,6 +42,13 @@ private val TEXTO_MOTIVO_PESAJE_PENDIENTE = mapOf(
     MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA to "CODIGO_SIN_CHAPETA_ACTIVA",
     MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA to "ANIMAL_DADO_DE_BAJA",
 )
+private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
+    ResolucionPesajePendiente.ASIGNADO to "ASIGNADO",
+    ResolucionPesajePendiente.DESCARTADO to "DESCARTADO",
+)
+
+// Conciliar escribe la resolución sola, sin pasar por toEntity.
+internal fun ResolucionPesajePendiente.textoGuardado(): String = TEXTO_RESOLUCION_PESAJE_PENDIENTE.aTexto(this)
 
 private fun <E : Enum<E>> Map<E, String>.aTexto(valor: E): String = getValue(valor)
 
@@ -141,7 +150,13 @@ fun PesajePendienteEntity.toDomain() = PesajePendiente(
     timestamp = timestamp,
     idUsuario = idUsuario,
     motivo = TEXTO_MOTIVO_PESAJE_PENDIENTE.desdeTexto(motivo),
-    resuelto = resuelto,
+    conciliacion = resolucion?.let {
+        Conciliacion(
+            resolucion = TEXTO_RESOLUCION_PESAJE_PENDIENTE.desdeTexto(it),
+            idUsuario = checkNotNull(idUsuarioResolucion) { "Pesaje pendiente resuelto sin Usuario" },
+            fecha = checkNotNull(fechaResolucion) { "Pesaje pendiente resuelto sin fecha" },
+        )
+    },
 )
 
 fun PesajePendiente.toEntity(fechaModificacion: Long) = PesajePendienteEntity(
@@ -152,7 +167,9 @@ fun PesajePendiente.toEntity(fechaModificacion: Long) = PesajePendienteEntity(
     timestamp = timestamp,
     idUsuario = idUsuario,
     motivo = TEXTO_MOTIVO_PESAJE_PENDIENTE.aTexto(motivo),
-    resuelto = resuelto,
+    resolucion = conciliacion?.resolucion?.textoGuardado(),
+    idUsuarioResolucion = conciliacion?.idUsuario,
+    fechaResolucion = conciliacion?.fecha,
     fechaModificacion = fechaModificacion,
 )
 
