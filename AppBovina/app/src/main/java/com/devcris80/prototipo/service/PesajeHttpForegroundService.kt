@@ -10,7 +10,6 @@ import android.os.IBinder
 import androidx.core.app.NotificationCompat
 import com.devcris80.prototipo.BovinaApplication
 import com.devcris80.prototipo.R
-import com.devcris80.prototipo.domain.RegistroPesoResolver
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
@@ -24,9 +23,8 @@ class PesajeHttpForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val database = (application as BovinaApplication).database
-        val resolver = RegistroPesoResolver(database.chapetaDao(), database.registroDao())
-        server = PesajeHttpServer(PesajeHttpServer.DEFAULT_PORT, resolver).also { it.start() }
+        val registrarPesaje = (application as BovinaApplication).container.registrarPesaje
+        server = PesajeHttpServer(PesajeHttpServer.DEFAULT_PORT, registrarPesaje).also { it.start() }
         startForeground(NOTIFICATION_ID, buildNotification())
         _isRunning.value = true
     }

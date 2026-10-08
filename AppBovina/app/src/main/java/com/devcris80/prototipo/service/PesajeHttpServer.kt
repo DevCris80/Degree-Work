@@ -1,21 +1,20 @@
 package com.devcris80.prototipo.service
 
 import android.util.Log
-import com.devcris80.prototipo.domain.RegistroPesoResolver
-import com.devcris80.prototipo.domain.RegistroPesoResultado
+import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import fi.iki.elonen.NanoHTTPD
 import kotlinx.coroutines.runBlocking
 import org.json.JSONException
 import org.json.JSONObject
 
 /**
- * Adaptador HTTP delgado sobre RegistroPesoResolver: parsea el JSON de POST /registro-peso
+ * Adaptador HTTP delgado sobre RegistrarPesaje: parsea el JSON de POST /registro-peso
  * y traduce el resultado de negocio a la respuesta 200/404 del contrato del endpoint. No
  * contiene lógica de negocio propia (ver sección 5 de la spec).
  */
 class PesajeHttpServer(
     port: Int,
-    private val resolver: RegistroPesoResolver,
+    private val registrarPesaje: RegistrarPesaje,
 ) : NanoHTTPD(port) {
 
     override fun serve(session: IHTTPSession): Response {
@@ -23,7 +22,8 @@ class PesajeHttpServer(
             return jsonResponse(Response.Status.NOT_FOUND, errorBody("ruta no encontrada"))
         }
 
-        val (idChip, peso) = try {
+        // id_chip es el nombre del campo en el contrato con el ESP32; en la app es el codigo.
+        val (codigo, peso) = try {
             val postData = HashMap<String, String>()
             session.parseBody(postData)
             val json = JSONObject(postData["postData"] ?: "{}")
@@ -33,14 +33,14 @@ class PesajeHttpServer(
         }
 
         return try {
-            when (val resultado = runBlocking { resolver.registrarPeso(idChip, peso) }) {
-                is RegistroPesoResultado.Exito -> jsonResponse(
+            when (val resultado = runBlocking { registrarPesaje(codigo, peso) }) {
+                is RegistrarPesaje.Resultado.Exito -> jsonResponse(
                     Response.Status.OK,
                     JSONObject().put("status", "ok").put("id_registro", resultado.idRegistro).toString(),
                 )
-                is RegistroPesoResultado.Error -> jsonResponse(
+                is RegistrarPesaje.Resultado.CodigoSinChapetaActiva -> jsonResponse(
                     Response.Status.NOT_FOUND,
-                    errorBody(resultado.mensaje),
+                    errorBody("chip no asociado"),
                 )
             }
         } catch (e: Exception) {
