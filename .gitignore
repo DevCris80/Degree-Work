@@ -1,0 +1,49 @@
+# --- OS ---
+.DS_Store
+Thumbs.db
+Desktop.ini
+
+# --- Editors / IDE ---
+# Anchored to repo root: AppBovina/.idea/ is governed by its own nested
+# .gitignore, which intentionally tracks a few shared project files.
+/.idea/
+*.iml
+*.ipr
+*.iws
+.vscode/
+*.swp
+*.swo
+*~
+
+# --- Android / Gradle (AppBovina) ---
+.gradle/
+build/
+captures/
+.cxx/
+.externalNativeBuild/
+local.properties
+*.apk
+*.aab
+*.ap_
+*.dex
+*.class
+*.jks
+*.keystore
+!debug.keystore
+.kotlin/
+*.hprof
+
+# --- Claude Code ---
+.claude/settings.local.json
+
+# --- Env / secrets ---
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+
+# --- Logs / temp ---
+*.log
+*.tmp
+tmp/
