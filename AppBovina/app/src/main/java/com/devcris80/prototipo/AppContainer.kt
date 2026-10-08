@@ -34,7 +34,7 @@ class AppContainer(database: AppDatabase) {
     val cuentaRepository: CuentaRepository =
         RoomCuentaRepository(database.perfilFincaDao(), database.usuarioDao())
 
-    val registrarPesaje = RegistrarPesaje(chapetaRepository, registroRepository)
+    val registrarPesaje = RegistrarPesaje(chapetaRepository, registroRepository, cuentaRepository)
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
     val registrarAnimal = RegistrarAnimal(animalRepository, chapetaRepository, transaccion)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)

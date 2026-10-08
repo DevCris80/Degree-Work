@@ -15,5 +15,7 @@ interface CuentaRepository {
 
     fun observeUsuario(): Flow<Usuario?>
 
+    suspend fun getUsuario(): Usuario?
+
     suspend fun insertUsuario(usuario: Usuario)
 }
