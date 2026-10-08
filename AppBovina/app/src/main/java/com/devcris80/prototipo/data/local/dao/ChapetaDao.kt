@@ -26,6 +26,10 @@ interface ChapetaDao {
     @Query("SELECT * FROM chapeta WHERE idAnimal = :idAnimal AND fechaDesasociacion IS NULL LIMIT 1")
     fun observeActivaByAnimal(idAnimal: String): Flow<ChapetaEntity?>
 
-    @Query("UPDATE chapeta SET fechaDesasociacion = :fecha WHERE idChapeta = :idChapeta")
+    // Liberar es una modificación: la fila vuelve a quedar pendiente de sincronizar.
+    @Query(
+        "UPDATE chapeta SET fechaDesasociacion = :fecha, sincronizado = 0, fechaModificacion = :fecha " +
+            "WHERE idChapeta = :idChapeta",
+    )
     suspend fun desasociar(idChapeta: String, fecha: Long)
 }
