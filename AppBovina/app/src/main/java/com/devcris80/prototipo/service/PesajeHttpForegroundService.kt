@@ -14,7 +14,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 
 /**
- * Foreground Service que mantiene el servidor HTTP escuchando POST /registro-peso incluso con
+ * Foreground Service que mantiene el servidor HTTP escuchando POST /pesaje incluso con
  * la pantalla apagada (requisito de estabilidad, sección 5 de la spec).
  */
 class PesajeHttpForegroundService : Service() {

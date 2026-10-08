@@ -21,12 +21,13 @@ import androidx.room.PrimaryKey
             childColumns = ["idUsuario"],
         ),
     ],
-    indices = [Index("idAnimal"), Index("idUsuario")],
+    indices = [Index("idAnimal"), Index("idUsuario"), Index("idLectura", unique = true)],
 )
 data class RegistroEntity(
     @PrimaryKey val idRegistro: String,
     val idAnimal: String,
     val idUsuario: String,
+    val idLectura: String? = null,
     val peso: Float,
     val timestamp: Long,
     val fechaBaja: Long? = null,
