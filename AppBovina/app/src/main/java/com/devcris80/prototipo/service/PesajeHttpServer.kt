@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.service
 
 import android.util.Log
+import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.Pesaje
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import fi.iki.elonen.NanoHTTPD
@@ -46,9 +47,13 @@ class PesajeHttpServer(
                     Response.Status.CREATED,
                     JSONObject().put("status", "ok").put("id_registro", resultado.idRegistro).toString(),
                 )
-                is RegistrarPesaje.Resultado.CodigoSinChapetaActiva -> jsonResponse(
-                    Response.Status.NOT_FOUND,
-                    errorBody("chip no asociado"),
+                is RegistrarPesaje.Resultado.Pendiente -> jsonResponse(
+                    Response.Status.ACCEPTED,
+                    JSONObject()
+                        .put("status", "pendiente_asociacion")
+                        .put("id_pesaje_pendiente", resultado.idPesajePendiente)
+                        .put("motivo", motivoEnContrato(resultado.motivo))
+                        .toString(),
                 )
                 is RegistrarPesaje.Resultado.Invalido -> jsonResponse(
                     Response.Status.BAD_REQUEST,
@@ -73,6 +78,12 @@ class PesajeHttpServer(
         // floor y no un truncado: -0.5 debe seguir siendo negativo para que el dominio lo rechace.
         antiguedadMs = if (json.has("antiguedad_ms")) floor(json.numero("antiguedad_ms")).toLong() else 0,
     )
+
+    // "chip" es el nombre que usa el contrato con el ESP32; en la app es el codigo de la Chapeta.
+    private fun motivoEnContrato(motivo: MotivoPesajePendiente): String = when (motivo) {
+        MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA -> "CHIP_NO_ASOCIADO"
+        MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA -> "ANIMAL_DADO_DE_BAJA"
+    }
 
     private fun mensajeDe(motivo: RegistrarPesaje.MotivoInvalido): String = when (motivo) {
         RegistrarPesaje.MotivoInvalido.PESO_FUERA_DE_RANGO ->

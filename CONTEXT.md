@@ -9,7 +9,7 @@ Un bovino individual registrado en el sistema, identificado por un `id_animal` (
 
 **Chapeta**:
 El identificador físico colocado en un `Animal`, identificado por su `codigo` (el UID del tag NFC, en mayúsculas y sin separadores; normalmente hexadecimal, pero no se exige). Está **activa** mientras no tiene fecha de desasociación; un mismo `codigo` puede tener varias Chapetas en el tiempo, pero solo una activa a la vez. Se **libera** (se desasocia) explícitamente desde el Detalle de un `Animal`; liberarla nunca ocurre en silencio.
-_Avoid_: chip, etiqueta, id_chip (este último sobrevive solo como nombre de campo en el mensaje que envía el ESP32)
+_Avoid_: chip, etiqueta, id_chip ("chip" sobrevive solo en el contrato con el ESP32: el campo `id_chip` y el motivo `CHIP_NO_ASOCIADO`)
 
 **Evento**:
 Un suceso clínico o de manejo asociado a un `Animal` (vacuna, tratamiento, nacimiento, inseminación), con fecha y detalle.

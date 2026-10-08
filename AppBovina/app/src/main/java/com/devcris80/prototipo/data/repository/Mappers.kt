@@ -4,20 +4,24 @@ import com.devcris80.prototipo.data.local.entity.AnimalEntity
 import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.PesajePendienteEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Evento
+import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PerfilFinca
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 
-// Los enum del dominio se guardan en Room con el mismo texto que ya escribían las pantallas.
+// Los enum del dominio se guardan en Room como texto. Sexo, Etapa, Proposito y Rol usan el mismo
+// que ya escribían las pantallas.
 
 private val TEXTO_SEXO = mapOf(Sexo.MACHO to "Macho", Sexo.HEMBRA to "Hembra")
 private val TEXTO_ETAPA = mapOf(
@@ -32,6 +36,10 @@ private val TEXTO_PROPOSITO = mapOf(
     Proposito.DOBLE_PROPOSITO to "Doble Propósito",
 )
 private val TEXTO_ROL = mapOf(Rol.GANADERO to "Ganadero", Rol.OPERARIO to "Operario")
+private val TEXTO_MOTIVO_PESAJE_PENDIENTE = mapOf(
+    MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA to "CODIGO_SIN_CHAPETA_ACTIVA",
+    MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA to "ANIMAL_DADO_DE_BAJA",
+)
 
 private fun <E : Enum<E>> Map<E, String>.aTexto(valor: E): String = getValue(valor)
 
@@ -119,6 +127,29 @@ fun Registro.toEntity() = RegistroEntity(
     peso = peso,
     timestamp = timestamp,
     fechaBaja = fechaBaja,
+)
+
+fun PesajePendienteEntity.toDomain() = PesajePendiente(
+    idPesajePendiente = idPesajePendiente,
+    idLectura = idLectura,
+    codigo = codigo,
+    peso = peso,
+    timestamp = timestamp,
+    idUsuario = idUsuario,
+    motivo = TEXTO_MOTIVO_PESAJE_PENDIENTE.desdeTexto(motivo),
+    resuelto = resuelto,
+)
+
+fun PesajePendiente.toEntity(fechaModificacion: Long) = PesajePendienteEntity(
+    idPesajePendiente = idPesajePendiente,
+    idLectura = idLectura,
+    codigo = codigo,
+    peso = peso,
+    timestamp = timestamp,
+    idUsuario = idUsuario,
+    motivo = TEXTO_MOTIVO_PESAJE_PENDIENTE.aTexto(motivo),
+    resuelto = resuelto,
+    fechaModificacion = fechaModificacion,
 )
 
 fun PerfilFincaEntity.toDomain() = PerfilFinca(

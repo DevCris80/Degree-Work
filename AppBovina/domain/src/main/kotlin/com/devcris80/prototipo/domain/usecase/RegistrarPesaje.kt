@@ -1,32 +1,39 @@
 package com.devcris80.prototipo.domain.usecase
 
+import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.Pesaje
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.normalizarCodigo
+import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import java.util.UUID
 
 /**
- * Resuelve un Pesaje contra la Chapeta activa de su codigo y crea el Registro del Animal
- * correspondiente, a nombre del Usuario de este dispositivo. Recibir dos veces el mismo Pesaje
- * no crea nada nuevo: responde lo mismo que la primera vez (ver docs/adr/0003).
+ * Guarda todo Pesaje válido, a nombre del Usuario de este dispositivo: como Registro si su
+ * codigo tiene una Chapeta activa de un Animal activo, o como Pesaje pendiente si no. Nunca
+ * crea Animales ni Chapetas. Recibir dos veces el mismo Pesaje no crea nada nuevo: responde lo
+ * mismo que la primera vez (ver docs/adr/0003).
  *
- * La hora del Registro es la de la medición: el momento de recepción menos la antigüedad que
+ * La hora que se guarda es la de la medición: el momento de recepción menos la antigüedad que
  * reporta el ESP32. Nunca se usa un reloj enviado por el ESP32.
  */
 class RegistrarPesaje(
     private val chapetaRepository: ChapetaRepository,
+    private val animalRepository: AnimalRepository,
     private val registroRepository: RegistroRepository,
+    private val pesajePendienteRepository: PesajePendienteRepository,
     private val cuentaRepository: CuentaRepository,
     private val transaccion: Transaccion,
     private val clock: () -> Long = { System.currentTimeMillis() },
 ) {
     sealed interface Resultado {
         data class Registrado(val idRegistro: String) : Resultado
-        data class CodigoSinChapetaActiva(val codigo: String) : Resultado
+        data class Pendiente(val idPesajePendiente: String, val motivo: MotivoPesajePendiente) : Resultado
         data class Invalido(val motivo: MotivoInvalido) : Resultado
 
         /** Todavía no se ha creado la cuenta en este dispositivo: no hay a nombre de quién guardar. */
@@ -54,14 +61,34 @@ class RegistrarPesaje(
         registroRepository.findByIdLectura(pesaje.idLectura)?.let { yaRegistrado ->
             return Resultado.Registrado(yaRegistrado.idRegistro)
         }
+        pesajePendienteRepository.findByIdLectura(pesaje.idLectura)?.let { yaPendiente ->
+            return Resultado.Pendiente(yaPendiente.idPesajePendiente, yaPendiente.motivo)
+        }
 
         val usuario = cuentaRepository.getUsuario() ?: return Resultado.SinUsuario
-        val chapeta = chapetaRepository.findActivaByCodigo(codigo)
-            ?: return Resultado.CodigoSinChapetaActiva(codigo)
+        val animal = chapetaRepository.findActivaByCodigo(codigo)?.let { animalRepository.findById(it.idAnimal) }
+
+        if (animal == null || animal.fechaBaja != null) {
+            val pendiente = PesajePendiente(
+                idPesajePendiente = UUID.randomUUID().toString(),
+                idLectura = pesaje.idLectura,
+                codigo = codigo,
+                peso = pesaje.peso,
+                timestamp = timestamp,
+                idUsuario = usuario.idUsuario,
+                motivo = if (animal == null) {
+                    MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA
+                } else {
+                    MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA
+                },
+            )
+            pesajePendienteRepository.insert(pendiente)
+            return Resultado.Pendiente(pendiente.idPesajePendiente, pendiente.motivo)
+        }
 
         val registro = Registro(
             idRegistro = UUID.randomUUID().toString(),
-            idAnimal = chapeta.idAnimal,
+            idAnimal = animal.idAnimal,
             idUsuario = usuario.idUsuario,
             idLectura = pesaje.idLectura,
             peso = pesaje.peso,
