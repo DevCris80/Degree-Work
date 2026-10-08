@@ -6,14 +6,14 @@ El servidor vive en la app (`PesajeHttpServer`, dentro de un servicio en primer 
 
 ## Petición
 
-`POST http://<ip-del-telefono>:8080/pesaje`, con cuerpo JSON:
+`POST http://<ip-del-telefono>:8080/pesaje`, con el encabezado `Content-Type: application/json` y cuerpo JSON:
 
 | Campo | Tipo | Obligatorio | Descripción |
 |---|---|---|---|
 | `id_lectura` | string | Sí | UUID que genera el ESP32 para cada pesaje. Un reintento del mismo pesaje lleva el **mismo** valor. |
 | `id_chip` | string | Sí | Código de la Chapeta leída, tal como sale del tag. La app lo normaliza (mayúsculas, sin espacios, `:` ni `-`). |
 | `peso` | number | Sí | Peso en kg. Mayor que 0 y menor o igual a 1500. |
-| `antiguedad_ms` | number | No | Milisegundos transcurridos entre la medición y este envío. Si no viene, se asume 0. |
+| `antiguedad_ms` | number | No | Milisegundos transcurridos entre la medición y este envío; mayor o igual a 0. Si no viene, se asume 0. |
 
 ```json
 { "id_lectura": "5f0c2a9e-7d7b-4e0a-9d5e-1c2b3a4d5e6f", "id_chip": "04A31B2C", "peso": 452.5, "antiguedad_ms": 1200 }
@@ -37,7 +37,8 @@ Todo reintento usa el **mismo** `id_lectura`.
 
 ## Reglas
 
-- **Idempotencia.** Si la app ya guardó un pesaje con ese `id_lectura`, responde lo mismo que la primera vez (`201` con el mismo `id_registro`) y no guarda nada nuevo, aunque el resto del cuerpo sea distinto. Por eso reintentar siempre es seguro.
+- **Orden.** La app primero valida el cuerpo (`400`), después busca el `id_lectura` entre lo ya guardado, después comprueba que haya cuenta (`503`) y por último busca la Chapeta.
+- **Idempotencia.** Si la app ya guardó un pesaje con ese `id_lectura`, responde lo mismo que la primera vez (`201` con el mismo `id_registro`) y no guarda nada nuevo, aunque el código o el peso del reintento sean otros. Por eso reintentar siempre es seguro. Un reintento con el cuerpo inválido recibe `400`, como cualquier otro.
 - **Nunca se crean animales ni chapetas** a partir de un pesaje.
 - **Usuario.** Cada Registro queda a nombre del Usuario del teléfono que recibió el pesaje.
 

@@ -4,6 +4,7 @@ package com.devcris80.prototipo.domain.model
 data class Pesaje(
     /** Identificador que genera el ESP32 para cada medición; lo repite si reintenta el envío. */
     val idLectura: String,
+    /** El codigo tal como llegó; RegistrarPesaje lo normaliza antes de buscar la Chapeta. */
     val codigo: String,
     val peso: Float,
     /** Milisegundos entre la medición y su envío; 0 si el ESP32 lo envió al momento. */
