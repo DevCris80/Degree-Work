@@ -19,7 +19,7 @@ import java.util.UUID
  * crea Animales ni Chapetas. Recibir dos veces el mismo Pesaje no crea nada nuevo: responde lo
  * mismo que la primera vez (ver docs/adr/0003).
  *
- * La hora del Registro es la de la medición: el momento de recepción menos la antigüedad que
+ * La hora que se guarda es la de la medición: el momento de recepción menos la antigüedad que
  * reporta el ESP32. Nunca se usa un reloj enviado por el ESP32.
  */
 class RegistrarPesaje(

@@ -20,7 +20,8 @@ import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 
-// Los enum del dominio se guardan en Room con el mismo texto que ya escribían las pantallas.
+// Los enum del dominio se guardan en Room como texto. Sexo, Etapa, Proposito y Rol usan el mismo
+// que ya escribían las pantallas.
 
 private val TEXTO_SEXO = mapOf(Sexo.MACHO to "Macho", Sexo.HEMBRA to "Hembra")
 private val TEXTO_ETAPA = mapOf(
