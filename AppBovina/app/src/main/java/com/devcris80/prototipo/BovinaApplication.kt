@@ -10,6 +10,7 @@ import kotlinx.coroutines.launch
 
 class BovinaApplication : Application() {
     val database: AppDatabase by lazy { AppDatabase.getInstance(this) }
+    val container: AppContainer by lazy { AppContainer(database) }
     private val applicationScope = CoroutineScope(SupervisorJob() + Dispatchers.IO)
 
     override fun onCreate() {
