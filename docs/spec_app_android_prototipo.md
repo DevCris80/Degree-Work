@@ -86,6 +86,8 @@ El servicio debe seguir escuchando peticiones **con la pantalla del celular apag
 
 ### Contrato del endpoint
 
+> **Reemplazado.** El contrato vigente está en [`docs/contrato-pesaje.md`](contrato-pesaje.md) (`POST /pesaje`, ver ADR 0003). Lo que sigue describe el prototipo inicial y se conserva solo como registro.
+
 - **Método:** `POST`
 - **Ruta:** `/registro-peso`
 - **Body (JSON):**
