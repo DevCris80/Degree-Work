@@ -29,5 +29,6 @@ class RoomCuentaRepository(
 
     override suspend fun getUsuario(): Usuario? = usuarioDao.getOnce()?.toDomain()
 
-    override suspend fun insertUsuario(usuario: Usuario) = usuarioDao.insert(usuario.toEntity(fechaModificacion = clock()))
+    override suspend fun insertUsuario(usuario: Usuario) =
+        usuarioDao.insert(usuario.toEntity(fechaModificacion = clock()))
 }

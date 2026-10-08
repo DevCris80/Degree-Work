@@ -24,6 +24,7 @@ data class ChapetaEntity(
     val fechaAsociacion: Long,
     val fechaDesasociacion: Long? = null,
     val sincronizado: Boolean = false,
-    // Con valor por defecto solo mientras el código viejo construya la entidad; lo quita #41.
+    // Con valor por defecto solo mientras haya código que construya la entidad sin pasar por un
+    // repositorio (las pantallas viejas y SeedData); lo quita #41.
     val fechaModificacion: Long = System.currentTimeMillis(),
 )
