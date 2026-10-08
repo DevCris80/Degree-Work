@@ -15,9 +15,17 @@ _Avoid_: chip, etiqueta, id_chip (este último sobrevive solo como nombre de cam
 Un suceso clínico o de manejo asociado a un `Animal` (vacuna, tratamiento, nacimiento, inseminación), con fecha y detalle.
 _Avoid_: Registro (reservado exclusivamente para pesajes)
 
+**Pesaje**:
+La medición (código y peso) que reporta el ESP32 cada vez que un bovino pasa por la báscula. Todo Pesaje válido se conserva: termina como `Registro` o como `Pesaje pendiente`.
+_Avoid_: lectura (reservada para la lectura NFC de una `Chapeta` en Escanear), medición
+
 **Registro**:
-Un pesaje de un `Animal`, recibido vía HTTP desde el ESP32 y resuelto contra una `Chapeta` para determinar a qué `Animal` pertenece. El sustantivo queda reservado para pesajes; el verbo *registrar* sí se usa para dar de alta un `Animal` ("registrar un animal").
+Un `Pesaje` ya asignado a un `Animal`: su código tenía una `Chapeta` activa y el `Animal` no estaba dado de baja. El sustantivo queda reservado para pesajes; el verbo *registrar* sí se usa para dar de alta un `Animal` ("registrar un animal").
 _Avoid_: Evento, medición; "Registro" como nombre de la creación de un `Animal` o de una cuenta
+
+**Pesaje pendiente**:
+Un `Pesaje` válido que no pudo asignarse a un `Animal`, porque su código no tiene `Chapeta` activa o porque el `Animal` está dado de baja. Se conserva con su motivo hasta que alguien lo concilie.
+_Avoid_: lectura huérfana, cuarentena (en ganadería es un término sanitario)
 
 **sincronizado**:
 Campo booleano presente en toda entidad: `false` significa que la fila tiene cambios locales que todavía no se han subido a Supabase. Toda creación o modificación lo devuelve a `false` y actualiza `fechaModificacion`, la fecha del último cambio de la fila. La sincronización en sí todavía no está implementada.
