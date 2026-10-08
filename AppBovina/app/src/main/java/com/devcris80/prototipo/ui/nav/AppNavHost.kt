@@ -29,10 +29,10 @@ import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import androidx.room.withTransaction
-import com.devcris80.prototipo.data.AppDatabase
-import com.devcris80.prototipo.data.PERFIL_FINCA_ID
-import com.devcris80.prototipo.data.PerfilFinca
-import com.devcris80.prototipo.data.Usuario
+import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
+import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.domain.DestinoEscaneoResolver
 import com.devcris80.prototipo.domain.RegistroAnimalConChapeta
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
@@ -120,9 +120,9 @@ fun AppNavHost(database: AppDatabase) {
                     onCrearCuenta = { nombreUsuario, nombreFinca ->
                         scope.launch {
                             database.withTransaction {
-                                database.perfilFincaDao().guardar(PerfilFinca(nombreFinca = nombreFinca))
+                                database.perfilFincaDao().guardar(PerfilFincaEntity(nombreFinca = nombreFinca))
                                 database.usuarioDao().insert(
-                                    Usuario(
+                                    UsuarioEntity(
                                         idUsuario = UUID.randomUUID().toString(),
                                         idPerfilFinca = PERFIL_FINCA_ID,
                                         nombre = nombreUsuario,

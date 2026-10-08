@@ -1,7 +1,7 @@
 package com.devcris80.prototipo.domain
 
-import com.devcris80.prototipo.data.AnimalDao
-import com.devcris80.prototipo.data.ChapetaDao
+import com.devcris80.prototipo.data.local.dao.AnimalDao
+import com.devcris80.prototipo.data.local.dao.ChapetaDao
 
 sealed interface DestinoEscaneo {
     data class AbrirAnimal(val idAnimal: String) : DestinoEscaneo

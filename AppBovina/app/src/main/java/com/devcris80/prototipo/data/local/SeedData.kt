@@ -1,5 +1,8 @@
-package com.devcris80.prototipo.data
+package com.devcris80.prototipo.data.local
 
+import com.devcris80.prototipo.data.local.entity.AnimalEntity
+import com.devcris80.prototipo.data.local.entity.ChapetaEntity
+import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
 import java.util.Calendar
 import java.util.UUID
 
@@ -17,7 +20,7 @@ suspend fun AppDatabase.seedTestDataIfEmpty() {
     val idAnimal = UUID.randomUUID().toString()
     val fechaNacimiento = Calendar.getInstance().apply { add(Calendar.YEAR, -2) }.timeInMillis
     animalDao().insert(
-        Animal(
+        AnimalEntity(
             idAnimal = idAnimal,
             idPerfilFinca = PERFIL_FINCA_ID,
             nombre = "Animal de prueba",
@@ -30,7 +33,7 @@ suspend fun AppDatabase.seedTestDataIfEmpty() {
         ),
     )
     chapetaDao().insert(
-        Chapeta(
+        ChapetaEntity(
             idChapeta = UUID.randomUUID().toString(),
             codigo = SEED_CHIP_ID,
             idAnimal = idAnimal,

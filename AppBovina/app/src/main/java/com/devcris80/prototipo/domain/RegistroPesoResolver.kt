@@ -1,8 +1,8 @@
 package com.devcris80.prototipo.domain
 
-import com.devcris80.prototipo.data.ChapetaDao
-import com.devcris80.prototipo.data.Registro
-import com.devcris80.prototipo.data.RegistroDao
+import com.devcris80.prototipo.data.local.dao.ChapetaDao
+import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.dao.RegistroDao
 import java.util.UUID
 
 sealed interface RegistroPesoResultado {
@@ -24,7 +24,7 @@ class RegistroPesoResolver(
         val chapeta = chapetaDao.findActivaByCodigo(codigo)
             ?: return RegistroPesoResultado.Error("chip no asociado")
 
-        val registro = Registro(
+        val registro = RegistroEntity(
             idRegistro = UUID.randomUUID().toString(),
             idAnimal = chapeta.idAnimal,
             peso = peso,

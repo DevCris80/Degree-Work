@@ -1,13 +1,32 @@
-package com.devcris80.prototipo.data
+package com.devcris80.prototipo.data.local
 
 import android.content.Context
 import androidx.room.Database
 import androidx.room.Room
 import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
+import com.devcris80.prototipo.data.local.dao.AnimalDao
+import com.devcris80.prototipo.data.local.dao.ChapetaDao
+import com.devcris80.prototipo.data.local.dao.EventoDao
+import com.devcris80.prototipo.data.local.dao.PerfilFincaDao
+import com.devcris80.prototipo.data.local.dao.RegistroDao
+import com.devcris80.prototipo.data.local.dao.UsuarioDao
+import com.devcris80.prototipo.data.local.entity.AnimalEntity
+import com.devcris80.prototipo.data.local.entity.ChapetaEntity
+import com.devcris80.prototipo.data.local.entity.EventoEntity
+import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 
 @Database(
-    entities = [Animal::class, Evento::class, Registro::class, Chapeta::class, PerfilFinca::class, Usuario::class],
+    entities = [
+        AnimalEntity::class,
+        EventoEntity::class,
+        RegistroEntity::class,
+        ChapetaEntity::class,
+        PerfilFincaEntity::class,
+        UsuarioEntity::class,
+    ],
     version = 4,
     exportSchema = false,
 )

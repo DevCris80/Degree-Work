@@ -1,8 +1,8 @@
 package com.devcris80.prototipo
 
 import android.app.Application
-import com.devcris80.prototipo.data.AppDatabase
-import com.devcris80.prototipo.data.seedTestDataIfEmpty
+import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.seedTestDataIfEmpty
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob

@@ -1,4 +1,4 @@
-package com.devcris80.prototipo.data
+package com.devcris80.prototipo.data.local.entity
 
 import androidx.room.Entity
 import androidx.room.ForeignKey
@@ -6,10 +6,10 @@ import androidx.room.Index
 import androidx.room.PrimaryKey
 
 @Entity(
-    tableName = "animal",
+    tableName = "usuario",
     foreignKeys = [
         ForeignKey(
-            entity = PerfilFinca::class,
+            entity = PerfilFincaEntity::class,
             parentColumns = ["id"],
             childColumns = ["idPerfilFinca"],
             onDelete = ForeignKey.CASCADE,
@@ -17,17 +17,10 @@ import androidx.room.PrimaryKey
     ],
     indices = [Index("idPerfilFinca")],
 )
-data class Animal(
-    @PrimaryKey val idAnimal: String,
+data class UsuarioEntity(
+    @PrimaryKey val idUsuario: String,
     val idPerfilFinca: String,
     val nombre: String,
-    val raza: String,
-    val sexo: String,
-    val etapa: String,
-    val fechaNacimiento: Long,
-    val fechaNacimientoEsEstimada: Boolean = false,
-    val proposito: String,
-    val fotoUri: String? = null,
-    val fechaBaja: Long? = null,
+    val rol: String = "Ganadero",
     val sincronizado: Boolean = false,
 )

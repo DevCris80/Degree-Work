@@ -1,9 +1,9 @@
 package com.devcris80.prototipo.domain
 
 import androidx.room.withTransaction
-import com.devcris80.prototipo.data.Animal
-import com.devcris80.prototipo.data.AppDatabase
-import com.devcris80.prototipo.data.Chapeta
+import com.devcris80.prototipo.data.local.entity.AnimalEntity
+import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import java.util.UUID
 
 /**
@@ -19,14 +19,14 @@ class RegistroAnimalConChapeta(
         data class CodigoYaActivo(val codigo: String) : Resultado
     }
 
-    suspend fun registrar(animal: Animal, codigo: String?): Resultado = database.withTransaction {
+    suspend fun registrar(animal: AnimalEntity, codigo: String?): Resultado = database.withTransaction {
         if (codigo != null && database.chapetaDao().findActivaByCodigo(codigo) != null) {
             return@withTransaction Resultado.CodigoYaActivo(codigo)
         }
         database.animalDao().insert(animal)
         if (codigo != null) {
             database.chapetaDao().insert(
-                Chapeta(
+                ChapetaEntity(
                     idChapeta = UUID.randomUUID().toString(),
                     codigo = codigo,
                     idAnimal = animal.idAnimal,

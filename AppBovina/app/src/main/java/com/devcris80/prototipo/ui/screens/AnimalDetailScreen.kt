@@ -41,10 +41,10 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.Animal
-import com.devcris80.prototipo.data.Chapeta
-import com.devcris80.prototipo.data.Evento
-import com.devcris80.prototipo.data.Registro
+import com.devcris80.prototipo.data.local.entity.AnimalEntity
+import com.devcris80.prototipo.data.local.entity.ChapetaEntity
+import com.devcris80.prototipo.data.local.entity.EventoEntity
+import com.devcris80.prototipo.data.local.entity.RegistroEntity
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
@@ -57,12 +57,12 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleAnimalScreen(
-    animal: Animal,
-    eventos: Flow<List<Evento>>,
-    registros: Flow<List<Registro>>,
+    animal: AnimalEntity,
+    eventos: Flow<List<EventoEntity>>,
+    registros: Flow<List<RegistroEntity>>,
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
-    chapetaActiva: Flow<Chapeta?>,
+    chapetaActiva: Flow<ChapetaEntity?>,
     onDarDeBaja: () -> Unit,
     onLiberarChapeta: (idChapeta: String) -> Unit,
     onEditarClick: () -> Unit = {},
