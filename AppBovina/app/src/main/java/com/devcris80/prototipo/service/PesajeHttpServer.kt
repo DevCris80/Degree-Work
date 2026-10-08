@@ -42,6 +42,10 @@ class PesajeHttpServer(
                     Response.Status.NOT_FOUND,
                     errorBody("chip no asociado"),
                 )
+                RegistrarPesaje.Resultado.SinUsuario -> jsonResponse(
+                    Response.Status.SERVICE_UNAVAILABLE,
+                    errorBody("sin sesion activa"),
+                )
             }
         } catch (e: Exception) {
             Log.e(TAG, "Error al procesar POST $RUTA_REGISTRO_PESO", e)

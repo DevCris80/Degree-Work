@@ -26,5 +26,7 @@ class RoomCuentaRepository(
 
     override fun observeUsuario(): Flow<Usuario?> = usuarioDao.observe().map { it?.toDomain() }
 
+    override suspend fun getUsuario(): Usuario? = usuarioDao.getOnce()?.toDomain()
+
     override suspend fun insertUsuario(usuario: Usuario) = usuarioDao.insert(usuario.toEntity())
 }
