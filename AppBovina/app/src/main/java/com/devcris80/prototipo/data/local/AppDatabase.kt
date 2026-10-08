@@ -27,7 +27,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         PerfilFincaEntity::class,
         UsuarioEntity::class,
     ],
-    version = 5,
+    version = 6,
     exportSchema = false,
 )
 abstract class AppDatabase : RoomDatabase() {

@@ -11,6 +11,9 @@ interface RegistroDao {
     @Insert
     suspend fun insert(registro: RegistroEntity)
 
+    @Query("SELECT * FROM registro WHERE idLectura = :idLectura LIMIT 1")
+    suspend fun findByIdLectura(idLectura: String): RegistroEntity?
+
     @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal AND fechaBaja IS NULL ORDER BY timestamp DESC")
     fun observeByAnimal(idAnimal: String): Flow<List<RegistroEntity>>
 

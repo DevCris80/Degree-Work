@@ -9,6 +9,9 @@ import kotlinx.coroutines.flow.map
 class RoomRegistroRepository(private val registroDao: RegistroDao) : RegistroRepository {
     override suspend fun insert(registro: Registro) = registroDao.insert(registro.toEntity())
 
+    override suspend fun findByIdLectura(idLectura: String): Registro? =
+        registroDao.findByIdLectura(idLectura)?.toDomain()
+
     override fun observeByAnimal(idAnimal: String): Flow<List<Registro>> =
         registroDao.observeByAnimal(idAnimal).map { registros -> registros.map { it.toDomain() } }
 
