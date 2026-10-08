@@ -20,6 +20,7 @@ import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
+import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
@@ -53,6 +54,8 @@ class AppContainer(database: AppDatabase) {
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository)
     val crearCuenta = CrearCuenta(cuentaRepository, transaccion)
+    val observarPesajesPendientes =
+        ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository)
     val asignarPesajesPendientes = AsignarPesajesPendientes(
         pesajePendienteRepository,
         animalRepository,
