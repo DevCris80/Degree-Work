@@ -4,6 +4,7 @@ import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.entity.AnimalEntity
 import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.local.entity.ChapetaEntity
+import com.devcris80.prototipo.domain.model.normalizarCodigo
 import java.util.UUID
 
 /**
@@ -19,7 +20,8 @@ class RegistroAnimalConChapeta(
         data class CodigoYaActivo(val codigo: String) : Resultado
     }
 
-    suspend fun registrar(animal: AnimalEntity, codigo: String?): Resultado = database.withTransaction {
+    suspend fun registrar(animal: AnimalEntity, codigoIngresado: String?): Resultado = database.withTransaction {
+        val codigo = codigoIngresado?.let(::normalizarCodigo)?.takeIf { it.isNotEmpty() }
         if (codigo != null && database.chapetaDao().findActivaByCodigo(codigo) != null) {
             return@withTransaction Resultado.CodigoYaActivo(codigo)
         }
