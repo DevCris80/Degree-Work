@@ -5,12 +5,14 @@ import com.devcris80.prototipo.data.repository.RoomAnimalRepository
 import com.devcris80.prototipo.data.repository.RoomChapetaRepository
 import com.devcris80.prototipo.data.repository.RoomCuentaRepository
 import com.devcris80.prototipo.data.repository.RoomEventoRepository
+import com.devcris80.prototipo.data.repository.RoomPesajePendienteRepository
 import com.devcris80.prototipo.data.repository.RoomRegistroRepository
 import com.devcris80.prototipo.data.repository.RoomTransaccion
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
+import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
@@ -31,6 +33,8 @@ class AppContainer(database: AppDatabase) {
     val chapetaRepository: ChapetaRepository = RoomChapetaRepository(database.chapetaDao())
     val eventoRepository: EventoRepository = RoomEventoRepository(database.eventoDao())
     val registroRepository: RegistroRepository = RoomRegistroRepository(database.registroDao())
+    val pesajePendienteRepository: PesajePendienteRepository =
+        RoomPesajePendienteRepository(database.pesajePendienteDao())
     val cuentaRepository: CuentaRepository =
         RoomCuentaRepository(database.perfilFincaDao(), database.usuarioDao())
 
