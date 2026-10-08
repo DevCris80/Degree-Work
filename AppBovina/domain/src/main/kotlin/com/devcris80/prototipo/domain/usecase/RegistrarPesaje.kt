@@ -17,7 +17,7 @@ import java.util.UUID
  * Guarda todo Pesaje válido, a nombre del Usuario de este dispositivo: como Registro si su
  * codigo tiene una Chapeta activa de un Animal activo, o como Pesaje pendiente si no. Nunca
  * crea Animales ni Chapetas. Recibir dos veces el mismo Pesaje no crea nada nuevo: responde lo
- * mismo que la primera vez (ver docs/adr/0003).
+ * mismo que la primera vez, aunque el pendiente ya se haya conciliado (ver docs/adr/0003).
  *
  * La hora que se guarda es la de la medición: el momento de recepción menos la antigüedad que
  * reporta el ESP32. Nunca se usa un reloj enviado por el ESP32.
@@ -58,11 +58,13 @@ class RegistrarPesaje(
     private suspend fun registrar(pesaje: Pesaje, timestamp: Long): Resultado {
         val codigo = normalizarCodigo(pesaje.codigo)
 
-        registroRepository.findByIdLectura(pesaje.idLectura)?.let { yaRegistrado ->
-            return Resultado.Registrado(yaRegistrado.idRegistro)
-        }
+        // Primero entre los pendientes: uno ya asignado tiene además un Registro con su idLectura,
+        // y el reintento debe recibir lo mismo que la primera vez, no ese Registro.
         pesajePendienteRepository.findByIdLectura(pesaje.idLectura)?.let { yaPendiente ->
             return Resultado.Pendiente(yaPendiente.idPesajePendiente, yaPendiente.motivo)
+        }
+        registroRepository.findByIdLectura(pesaje.idLectura)?.let { yaRegistrado ->
+            return Resultado.Registrado(yaRegistrado.idRegistro)
         }
 
         val usuario = cuentaRepository.getUsuario() ?: return Resultado.SinUsuario
