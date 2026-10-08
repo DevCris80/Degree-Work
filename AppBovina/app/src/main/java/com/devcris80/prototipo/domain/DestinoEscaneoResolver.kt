@@ -2,6 +2,7 @@ package com.devcris80.prototipo.domain
 
 import com.devcris80.prototipo.data.local.dao.AnimalDao
 import com.devcris80.prototipo.data.local.dao.ChapetaDao
+import com.devcris80.prototipo.domain.model.normalizarCodigo
 
 sealed interface DestinoEscaneo {
     data class AbrirAnimal(val idAnimal: String) : DestinoEscaneo
@@ -19,7 +20,8 @@ class DestinoEscaneoResolver(
     private val chapetaDao: ChapetaDao,
     private val animalDao: AnimalDao,
 ) {
-    suspend fun resolver(codigo: String): DestinoEscaneo {
+    suspend fun resolver(codigoLeido: String): DestinoEscaneo {
+        val codigo = normalizarCodigo(codigoLeido)
         val activa = chapetaDao.findActivaByCodigo(codigo)
         if (activa != null) {
             val animal = animalDao.findById(activa.idAnimal)
