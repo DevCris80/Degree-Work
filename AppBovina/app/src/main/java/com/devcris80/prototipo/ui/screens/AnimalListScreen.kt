@@ -38,45 +38,38 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.local.entity.AnimalEntity
-import com.devcris80.prototipo.data.local.entity.ChapetaEntity
-import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
-import com.devcris80.prototipo.data.local.entity.RegistroEntity
-import com.devcris80.prototipo.data.local.entity.UsuarioEntity
+import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.aEtiqueta
+import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.formatearEdad
-import kotlinx.coroutines.flow.Flow
 import java.util.concurrent.TimeUnit
 
-private val PROPOSITOS_FILTRO = listOf("Todos", "Leche", "Carne", "Doble Propósito")
+private val FILTROS_PROPOSITO: List<Proposito?> = listOf(null) + Proposito.entries
 
 @Composable
 fun ListaAnimalesScreen(
-    perfilFinca: Flow<PerfilFincaEntity?>,
-    usuario: Flow<UsuarioEntity?>,
-    animales: Flow<List<AnimalEntity>>,
-    chapetasActivas: Flow<List<ChapetaEntity>>,
-    obtenerUltimoRegistro: (idAnimal: String) -> Flow<RegistroEntity?>,
-    onAnimalClick: (AnimalEntity) -> Unit,
+    onAnimalClick: (idAnimal: String) -> Unit,
     onNuevoAnimalClick: () -> Unit,
 ) {
-    val perfil by perfilFinca.collectAsState(initial = null)
-    val usuarioActual by usuario.collectAsState(initial = null)
-    val lista by animales.collectAsState(initial = emptyList())
-    val chapetas by chapetasActivas.collectAsState(initial = emptyList())
-    val chipsPorAnimal = remember(chapetas) { chapetas.associateBy({ it.idAnimal }, { it.codigo }) }
+    val viewModel = appViewModel { container ->
+        ListaAnimalesViewModel(
+            container.cuentaRepository,
+            container.animalRepository,
+            container.chapetaRepository,
+            container.registroRepository,
+        )
+    }
+    val estado by viewModel.estado.collectAsState()
 
     var busqueda by remember { mutableStateOf("") }
-    var filtroProposito by remember { mutableStateOf("Todos") }
 
-    val listaFiltrada = lista.filter { animal ->
-        val coincideBusqueda = busqueda.isBlank() ||
-            animal.nombre.contains(busqueda, ignoreCase = true) ||
-            chipsPorAnimal[animal.idAnimal]?.contains(busqueda, ignoreCase = true) == true
-        val coincideFiltro = filtroProposito == "Todos" || animal.proposito == filtroProposito
-        coincideBusqueda && coincideFiltro
+    val listaFiltrada = estado.animales.filter { item ->
+        busqueda.isBlank() ||
+            item.animal.nombre.contains(busqueda, ignoreCase = true) ||
+            item.codigoChapeta?.contains(busqueda, ignoreCase = true) == true
     }
 
     Scaffold(
@@ -104,7 +97,7 @@ fun ListaAnimalesScreen(
                             modifier = Modifier.size(18.dp),
                         )
                         Text(
-                            text = "  FINCA ${perfil?.nombreFinca.orEmpty()}",
+                            text = "  FINCA ${estado.nombreFinca}",
                             style = MaterialTheme.typography.labelSmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                         )
@@ -125,18 +118,18 @@ fun ListaAnimalesScreen(
                         ) {
                             Column {
                                 Text(
-                                    text = "Buenos días, ${usuarioActual?.nombre.orEmpty()}",
+                                    text = "Buenos días, ${estado.nombreUsuario}",
                                     style = MaterialTheme.typography.bodyLarge,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 )
                                 Text(
-                                    text = perfil?.nombreFinca.orEmpty(),
+                                    text = estado.nombreFinca,
                                     style = MaterialTheme.typography.bodyMedium,
                                     color = MaterialTheme.colorScheme.onPrimaryContainer,
                                 )
                             }
                             PillBadge(
-                                texto = "${lista.size} en finca",
+                                texto = "${estado.animales.size} en finca",
                                 containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
                                 contentColor = MaterialTheme.colorScheme.primaryContainer,
                             )
@@ -182,20 +175,19 @@ fun ListaAnimalesScreen(
             }
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(PROPOSITOS_FILTRO) { proposito ->
+                    items(FILTROS_PROPOSITO) { proposito ->
                         FilterChip(
-                            selected = filtroProposito == proposito,
-                            onClick = { filtroProposito = proposito },
-                            label = { Text(proposito) },
+                            selected = estado.filtro == proposito,
+                            onClick = { viewModel.onFiltroSeleccionado(proposito) },
+                            label = { Text(proposito?.aEtiqueta() ?: "Todos") },
                         )
                     }
                 }
             }
-            items(listaFiltrada, key = { it.idAnimal }) { animal ->
+            items(listaFiltrada, key = { it.animal.idAnimal }) { item ->
                 TarjetaAnimal(
-                    animal = animal,
-                    ultimoRegistro = obtenerUltimoRegistro(animal.idAnimal),
-                    onClick = { onAnimalClick(animal) },
+                    item = item,
+                    onClick = { onAnimalClick(item.animal.idAnimal) },
                 )
             }
         }
@@ -204,11 +196,11 @@ fun ListaAnimalesScreen(
 
 @Composable
 private fun TarjetaAnimal(
-    animal: AnimalEntity,
-    ultimoRegistro: Flow<RegistroEntity?>,
+    item: AnimalConResumen,
     onClick: () -> Unit,
 ) {
-    val registro by ultimoRegistro.collectAsState(initial = null)
+    val animal = item.animal
+    val registro = item.ultimoRegistro
 
     Card(onClick = onClick, shape = RoundedCornerShape(16.dp)) {
         Row(modifier = Modifier.padding(12.dp)) {
@@ -218,14 +210,14 @@ private fun TarjetaAnimal(
                     .weight(1f)
                     .padding(start = 12.dp),
             ) {
-                PillBadge(texto = animal.proposito)
+                PillBadge(texto = animal.proposito.aEtiqueta())
                 Text(
                     text = animal.nombre,
                     style = MaterialTheme.typography.bodyLarge,
                     modifier = Modifier.padding(top = 4.dp),
                 )
                 Text(
-                    text = "${animal.raza} · ${animal.etapa}",
+                    text = "${animal.raza} · ${animal.etapa.aEtiqueta()}",
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )

@@ -41,15 +41,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.local.entity.AnimalEntity
-import com.devcris80.prototipo.data.local.entity.ChapetaEntity
-import com.devcris80.prototipo.data.local.entity.EventoEntity
-import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import androidx.lifecycle.createSavedStateHandle
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.aEtiqueta
+import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.formatearEdad
-import kotlinx.coroutines.flow.Flow
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -57,19 +55,28 @@ import java.util.Locale
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun DetalleAnimalScreen(
-    animal: AnimalEntity,
-    eventos: Flow<List<EventoEntity>>,
-    registros: Flow<List<RegistroEntity>>,
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
-    chapetaActiva: Flow<ChapetaEntity?>,
-    onDarDeBaja: () -> Unit,
-    onLiberarChapeta: (idChapeta: String) -> Unit,
     onEditarClick: () -> Unit = {},
 ) {
-    val listaEventos by eventos.collectAsState(initial = emptyList())
-    val listaRegistros by registros.collectAsState(initial = emptyList())
-    val chapeta by chapetaActiva.collectAsState(initial = null)
+    val viewModel = appViewModel { container ->
+        val idAnimal = createSavedStateHandle().get<String>("idAnimal").orEmpty()
+        DetalleAnimalViewModel(
+            idAnimal,
+            container.animalRepository,
+            container.eventoRepository,
+            container.registroRepository,
+            container.chapetaRepository,
+            container.darDeBajaAnimal,
+            container.liberarChapeta,
+        )
+    }
+    val estado by viewModel.estado.collectAsState()
+    val animal = estado.animal ?: return
+
+    val listaEventos = estado.eventos
+    val listaRegistros = estado.registros
+    val chapeta = estado.chapetaActiva
     val formatoFecha = remember(animal.idAnimal) { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
     var tabSeleccionada by remember { mutableIntStateOf(0) }
     var confirmarBaja by remember { mutableStateOf(false) }
@@ -124,21 +131,21 @@ fun DetalleAnimalScreen(
                     verticalAlignment = Alignment.CenterVertically,
                 ) {
                     Text(text = animal.nombre, style = MaterialTheme.typography.headlineMedium)
-                    PillBadge(texto = animal.proposito)
+                    PillBadge(texto = animal.proposito.aEtiqueta())
                 }
             }
             item {
                 Card(shape = RoundedCornerShape(16.dp)) {
                     Column(modifier = Modifier.padding(20.dp)) {
                         FilaDato("Raza", animal.raza)
-                        FilaDato("Sexo", animal.sexo)
-                        FilaDato("Etapa", animal.etapa)
+                        FilaDato("Sexo", animal.sexo.aEtiqueta())
+                        FilaDato("Etapa", animal.etapa.aEtiqueta())
                         FilaDato(
                             "Edad",
                             formatearEdad(animal.fechaNacimiento) +
                                 if (animal.fechaNacimientoEsEstimada) " (estimada)" else "",
                         )
-                        FilaDato("Destino", animal.proposito)
+                        FilaDato("Destino", animal.proposito.aEtiqueta())
                     }
                 }
             }
@@ -289,7 +296,7 @@ fun DetalleAnimalScreen(
                 confirmButton = {
                     TextButton(onClick = {
                         confirmarLiberacion = false
-                        onLiberarChapeta(chapetaActual.idChapeta)
+                        viewModel.onLiberarChapeta(chapetaActual.idChapeta)
                     }) { Text("Liberar") }
                 },
                 dismissButton = {
@@ -309,7 +316,7 @@ fun DetalleAnimalScreen(
             confirmButton = {
                 TextButton(onClick = {
                     confirmarBaja = false
-                    onDarDeBaja()
+                    viewModel.onDarDeBaja()
                 }) { Text("Dar de baja") }
             },
             dismissButton = {
