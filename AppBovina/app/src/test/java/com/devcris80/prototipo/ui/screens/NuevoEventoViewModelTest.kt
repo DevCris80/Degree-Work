@@ -1,5 +1,8 @@
 package com.devcris80.prototipo.ui.screens
 
+import com.devcris80.prototipo.domain.model.Rol
+import com.devcris80.prototipo.domain.model.Usuario
+import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakeEventoRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -16,13 +19,16 @@ import java.util.UUID
 
 class NuevoEventoViewModelTest {
     private val eventoRepository = FakeEventoRepository()
+    private val cuentaRepository = FakeCuentaRepository()
     private val idAnimal = UUID.randomUUID().toString()
+    private val usuario = Usuario(UUID.randomUUID().toString(), UUID.randomUUID().toString(), "Ana", Rol.GANADERO)
 
-    private fun crearViewModel() = NuevoEventoViewModel(idAnimal, eventoRepository, clock = { 7L })
+    private fun crearViewModel() = NuevoEventoViewModel(idAnimal, eventoRepository, cuentaRepository, clock = { 7L })
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        cuentaRepository.usuario.value = usuario
     }
 
     @After
@@ -59,6 +65,7 @@ class NuevoEventoViewModelTest {
         assertEquals("aftosa", eventos[0].detalle)
         assertEquals(idAnimal, eventos[0].idAnimal)
         assertEquals(7L, eventos[0].fecha)
+        assertEquals(usuario.idUsuario, eventos[0].idUsuario)
     }
 
     @Test

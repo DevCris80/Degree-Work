@@ -67,7 +67,7 @@ class DetalleAnimalViewModelTest {
     @Test
     fun combinaAnimalEventosRegistrosYChapetaActiva() = runTest {
         animalRepository.set(animal())
-        val evento = Evento(UUID.randomUUID().toString(), idAnimal, "vacuna", fecha = 1L, detalle = "aftosa")
+        val evento = Evento(UUID.randomUUID().toString(), idAnimal, idUsuario = UUID.randomUUID().toString(), tipoEvento = "vacuna", fecha = 1L, detalle = "aftosa")
         eventoRepository.set(idAnimal, listOf(evento))
         val registro = Registro(UUID.randomUUID().toString(), idAnimal, "usuario", peso = 300f, timestamp = 1L)
         registroRepository.set(idAnimal, listOf(registro))

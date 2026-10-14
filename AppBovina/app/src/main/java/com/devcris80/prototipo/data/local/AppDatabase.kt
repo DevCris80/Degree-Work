@@ -31,7 +31,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         PesajePendienteEntity::class,
     ],
     version = 11,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun animalDao(): AnimalDao
@@ -43,11 +43,13 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun pesajePendienteDao(): PesajePendienteDao
 
     companion object {
+        const val INDICE_CHAPETA_CODIGO_ACTIVA = "index_chapeta_codigo_activa"
+
         // Room no declara índices parciales: una sola Chapeta activa por codigo se garantiza aquí.
         val CALLBACK_INDICES_CHAPETA = object : RoomDatabase.Callback() {
             override fun onOpen(db: SupportSQLiteDatabase) {
                 db.execSQL(
-                    "CREATE UNIQUE INDEX IF NOT EXISTS index_chapeta_codigo_activa " +
+                    "CREATE UNIQUE INDEX IF NOT EXISTS $INDICE_CHAPETA_CODIGO_ACTIVA " +
                         "ON chapeta(codigo) WHERE fechaDesasociacion IS NULL",
                 )
             }
@@ -63,9 +65,10 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app-bovina.db",
                 )
-                    // Prototipo: aún no hay datos reales de usuarios en campo que proteger,
-                    // así que se prioriza iterar el esquema sobre escribir migraciones.
-                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    // La versión 10 es el primer esquema exportado: desde ahí cada cambio lleva su
+                    // Migration. Una instalación anterior no tiene cómo migrarse y se recrea vacía.
+                    .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+                    .addMigrations(MIGRACION_10_11)
                     .addCallback(CALLBACK_INDICES_CHAPETA)
                     .build()
                     .also { instance = it }

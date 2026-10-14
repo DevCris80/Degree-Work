@@ -3,6 +3,7 @@ package com.devcris80.prototipo.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Evento
+import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -25,10 +26,14 @@ sealed interface NuevoEventoEvento {
     data object Guardado : NuevoEventoEvento
 }
 
-/** Estado del formulario de un Evento nuevo. Sin caso de uso: no hay regla de negocio (ver #22). */
+/**
+ * Estado del formulario de un Evento nuevo, que queda a nombre del Usuario del dispositivo.
+ * Sin caso de uso: no hay regla de negocio (ver #22).
+ */
 class NuevoEventoViewModel(
     private val idAnimal: String,
     private val eventoRepository: EventoRepository,
+    private val cuentaRepository: CuentaRepository,
     private val clock: () -> Long = { System.currentTimeMillis() },
 ) : ViewModel() {
     private val _estado = MutableStateFlow(NuevoEventoUiState())
@@ -44,10 +49,12 @@ class NuevoEventoViewModel(
         val actual = _estado.value
         if (!actual.puedeGuardar) return
         viewModelScope.launch {
+            val idUsuario = cuentaRepository.getUsuario()?.idUsuario ?: return@launch
             eventoRepository.insert(
                 Evento(
                     idEvento = UUID.randomUUID().toString(),
                     idAnimal = idAnimal,
+                    idUsuario = idUsuario,
                     tipoEvento = actual.tipoEvento,
                     fecha = clock(),
                     detalle = actual.detalle,
