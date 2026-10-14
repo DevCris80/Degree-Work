@@ -11,10 +11,8 @@ import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -23,7 +21,6 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
@@ -34,7 +31,6 @@ import com.devcris80.prototipo.ui.screens.PesajesPendientesScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
 import com.devcris80.prototipo.ui.screens.ServiceStatusScreen
 import com.devcris80.prototipo.ui.util.appViewModel
-import kotlinx.coroutines.launch
 
 private val RUTAS_CON_NAV_INFERIOR = setOf(
     Rutas.ListaAnimales.ruta,
@@ -43,9 +39,8 @@ private val RUTAS_CON_NAV_INFERIOR = setOf(
 )
 
 @Composable
-fun AppNavHost(database: AppDatabase) {
+fun AppNavHost() {
     val navController = rememberNavController()
-    val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
     val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository) }

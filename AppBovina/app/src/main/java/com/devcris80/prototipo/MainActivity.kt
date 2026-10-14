@@ -11,10 +11,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        val database = (application as BovinaApplication).database
         setContent {
             Prototipo1Theme {
-                AppNavHost(database)
+                AppNavHost()
             }
         }
     }
