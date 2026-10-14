@@ -12,7 +12,6 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -145,17 +144,8 @@ fun AppNavHost(database: AppDatabase) {
                 )
             }
             composable(Rutas.ListaAnimales.ruta) {
-                val animales = remember { database.animalDao().observeActivos() }
-                val perfilFinca = remember { database.perfilFincaDao().observe() }
-                val usuario = remember { database.usuarioDao().observe() }
-                val chapetasActivas = remember { database.chapetaDao().observeActivas() }
                 ListaAnimalesScreen(
-                    perfilFinca = perfilFinca,
-                    usuario = usuario,
-                    animales = animales,
-                    chapetasActivas = chapetasActivas,
-                    obtenerUltimoRegistro = { idAnimal -> database.registroDao().observeUltimoByAnimal(idAnimal) },
-                    onAnimalClick = { animal -> navController.navigate(Rutas.DetalleAnimal.crear(animal.idAnimal)) },
+                    onAnimalClick = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                     onNuevoAnimalClick = { navController.navigate(Rutas.NuevoAnimal.crear()) },
                 )
             }
@@ -189,26 +179,10 @@ fun AppNavHost(database: AppDatabase) {
                 arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
             ) { entry ->
                 val idAnimal = entry.arguments?.getString("idAnimal").orEmpty()
-                val animalFlow = remember(idAnimal) { database.animalDao().observeById(idAnimal) }
-                val animal by animalFlow.collectAsState(initial = null)
-                val eventos = remember(idAnimal) { database.eventoDao().observeByAnimal(idAnimal) }
-                val registros = remember(idAnimal) { database.registroDao().observeByAnimal(idAnimal) }
-                animal?.let { animalActual ->
-                    DetalleAnimalScreen(
-                        animal = animalActual,
-                        eventos = eventos,
-                        registros = registros,
-                        onVolver = { navController.popBackStack() },
-                        onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
-                        chapetaActiva = remember(idAnimal) { database.chapetaDao().observeActivaByAnimal(idAnimal) },
-                        onDarDeBaja = {
-                            scope.launch { database.animalDao().darDeBaja(idAnimal, System.currentTimeMillis()) }
-                        },
-                        onLiberarChapeta = { idChapeta ->
-                            scope.launch { database.chapetaDao().desasociar(idChapeta, System.currentTimeMillis()) }
-                        },
-                    )
-                }
+                DetalleAnimalScreen(
+                    onVolver = { navController.popBackStack() },
+                    onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
+                )
             }
             composable(
                 route = Rutas.NuevoEvento.ruta,
