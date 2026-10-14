@@ -3,6 +3,7 @@ package com.devcris80.prototipo.domain.usecase
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.PesajePendiente
+import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.normalizarCodigo
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
@@ -13,6 +14,9 @@ import java.util.UUID
 /**
  * Guarda un Animal y, si hay codigo, su Chapeta activa en una sola transacción: o se guardan
  * ambos o ninguno. Verifica dentro de la transacción que el codigo no tenga otra Chapeta activa.
+ *
+ * Si trae padre o madre, deben existir y ser macho y hembra: elegir otro es un error de quien
+ * llama, igual que una etapa que no corresponde al sexo.
  *
  * Si ese codigo tiene Pesajes pendientes sin resolver, los devuelve para ofrecer asignarlos al
  * Animal recién registrado. No los asigna: eso lo decide una persona (ver docs/adr/0003).
@@ -34,6 +38,8 @@ class RegistrarAnimal(
         if (codigo != null && chapetaRepository.findActivaByCodigo(codigo) != null) {
             return@ejecutar Resultado.CodigoYaActivo(codigo)
         }
+        verificarProgenitor(animal.idPadre, Sexo.MACHO)
+        verificarProgenitor(animal.idMadre, Sexo.HEMBRA)
         animalRepository.insert(animal)
         if (codigo != null) {
             chapetaRepository.insert(
@@ -49,5 +55,11 @@ class RegistrarAnimal(
             idAnimal = animal.idAnimal,
             pesajesPendientes = codigo?.let { pesajePendienteRepository.findSinResolverByCodigo(it) }.orEmpty(),
         )
+    }
+
+    private suspend fun verificarProgenitor(idProgenitor: String?, sexo: Sexo) {
+        if (idProgenitor == null) return
+        val progenitor = animalRepository.findById(idProgenitor)
+        require(progenitor?.sexo == sexo) { "El progenitor $idProgenitor no existe o no es $sexo" }
     }
 }
