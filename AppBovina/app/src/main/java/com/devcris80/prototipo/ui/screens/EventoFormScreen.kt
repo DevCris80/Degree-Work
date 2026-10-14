@@ -10,24 +10,31 @@ import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.local.entity.EventoEntity
-import java.util.UUID
+import androidx.lifecycle.createSavedStateHandle
+import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
 fun EventoFormScreen(
-    idAnimal: String,
-    onGuardar: (EventoEntity) -> Unit,
+    onGuardado: () -> Unit,
 ) {
-    var tipoEvento by remember { mutableStateOf("") }
-    var detalle by remember { mutableStateOf("") }
+    val viewModel = appViewModel { container ->
+        val idAnimal = createSavedStateHandle().get<String>("idAnimal").orEmpty()
+        NuevoEventoViewModel(idAnimal, container.eventoRepository)
+    }
+    val estado by viewModel.estado.collectAsState()
 
-    val puedeGuardar = tipoEvento.isNotBlank() && detalle.isNotBlank()
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                NuevoEventoEvento.Guardado -> onGuardado()
+            }
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
@@ -39,30 +46,20 @@ fun EventoFormScreen(
         ) {
             Text("Registro de evento")
             OutlinedTextField(
-                value = tipoEvento,
-                onValueChange = { tipoEvento = it },
+                value = estado.tipoEvento,
+                onValueChange = viewModel::onTipoEventoCambiado,
                 label = { Text("Tipo (vacuna, tratamiento, nacimiento, inseminacion)") },
                 modifier = Modifier.fillMaxWidth(),
             )
             OutlinedTextField(
-                value = detalle,
-                onValueChange = { detalle = it },
+                value = estado.detalle,
+                onValueChange = viewModel::onDetalleCambiado,
                 label = { Text("Detalle") },
                 modifier = Modifier.fillMaxWidth(),
             )
             Button(
-                enabled = puedeGuardar,
-                onClick = {
-                    onGuardar(
-                        EventoEntity(
-                            idEvento = UUID.randomUUID().toString(),
-                            idAnimal = idAnimal,
-                            tipoEvento = tipoEvento,
-                            fecha = System.currentTimeMillis(),
-                            detalle = detalle,
-                        ),
-                    )
-                },
+                enabled = estado.puedeGuardar,
+                onClick = viewModel::onGuardar,
             ) {
                 Text("Guardar")
             }

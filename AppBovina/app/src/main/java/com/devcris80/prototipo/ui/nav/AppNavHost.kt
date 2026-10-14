@@ -145,14 +145,9 @@ fun AppNavHost(database: AppDatabase) {
             composable(
                 route = Rutas.NuevoEvento.ruta,
                 arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
-            ) { entry ->
-                val idAnimal = entry.arguments?.getString("idAnimal").orEmpty()
+            ) {
                 EventoFormScreen(
-                    idAnimal = idAnimal,
-                    onGuardar = { evento ->
-                        scope.launch { database.eventoDao().insert(evento) }
-                        navController.popBackStack()
-                    },
+                    onGuardado = { navController.popBackStack() },
                 )
             }
             composable(Rutas.Escanear.ruta) {
