@@ -14,12 +14,19 @@ import androidx.room.PrimaryKey
             childColumns = ["idAnimal"],
             onDelete = ForeignKey.CASCADE,
         ),
+        // Sin onDelete: un Usuario con Eventos a su nombre no se puede borrar.
+        ForeignKey(
+            entity = UsuarioEntity::class,
+            parentColumns = ["idUsuario"],
+            childColumns = ["idUsuario"],
+        ),
     ],
-    indices = [Index("idAnimal")],
+    indices = [Index("idAnimal"), Index("idUsuario")],
 )
 data class EventoEntity(
     @PrimaryKey val idEvento: String,
     val idAnimal: String,
+    val idUsuario: String,
     val tipoEvento: String,
     val fecha: Long,
     val detalle: String,
