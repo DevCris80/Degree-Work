@@ -24,7 +24,7 @@ fun EventoFormScreen(
 ) {
     val viewModel = appViewModel { container ->
         val idAnimal = createSavedStateHandle().get<String>("idAnimal").orEmpty()
-        NuevoEventoViewModel(idAnimal, container.eventoRepository)
+        NuevoEventoViewModel(idAnimal, container.eventoRepository, container.cuentaRepository)
     }
     val estado by viewModel.estado.collectAsState()
 
