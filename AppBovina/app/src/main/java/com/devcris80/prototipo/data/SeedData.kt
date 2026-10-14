@@ -12,7 +12,7 @@ import kotlinx.coroutines.flow.first
 import java.util.Calendar
 import java.util.UUID
 
-const val SEED_CHIP_ID = "TEST001"
+private const val CODIGO_CHAPETA_DE_PRUEBA = "TEST001"
 
 /**
  * Precarga un Animal y una Chapeta de prueba (codigo = "TEST001") para poder probar el flujo
@@ -29,7 +29,7 @@ class SeedData(
     suspend fun seedTestDataIfEmpty() {
         val perfilFinca = cuentaRepository.getPerfilFinca() ?: return
         if (animalRepository.observeActivos().first().isNotEmpty()) return
-        if (chapetaRepository.findUltimaByCodigo(SEED_CHIP_ID) != null) return
+        if (chapetaRepository.findUltimaByCodigo(CODIGO_CHAPETA_DE_PRUEBA) != null) return
 
         val fechaNacimiento = Calendar.getInstance().apply { add(Calendar.YEAR, -2) }.timeInMillis
         registrarAnimal(
@@ -44,7 +44,7 @@ class SeedData(
                 fechaNacimientoEsEstimada = true,
                 proposito = Proposito.LECHE,
             ),
-            codigoIngresado = SEED_CHIP_ID,
+            codigoIngresado = CODIGO_CHAPETA_DE_PRUEBA,
         )
     }
 }

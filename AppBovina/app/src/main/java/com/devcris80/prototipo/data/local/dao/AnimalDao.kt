@@ -14,9 +14,6 @@ interface AnimalDao {
     @Query("SELECT * FROM animal WHERE fechaBaja IS NULL ORDER BY nombre ASC")
     fun observeActivos(): Flow<List<AnimalEntity>>
 
-    @Query("SELECT * FROM animal ORDER BY nombre ASC")
-    suspend fun getAllOnce(): List<AnimalEntity>
-
     @Query("SELECT * FROM animal WHERE idAnimal = :idAnimal")
     fun observeById(idAnimal: String): Flow<AnimalEntity?>
 
