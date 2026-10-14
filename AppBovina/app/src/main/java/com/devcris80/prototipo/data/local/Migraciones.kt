@@ -47,3 +47,23 @@ val MIGRACION_10_11: Migration = object : MigracionBovina(10, 11) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_evento_idUsuario` ON `evento` (`idUsuario`)")
     }
 }
+
+/**
+ * 11 → 12: parentesco, Animal guarda su padre y su madre (#20). Las dos columnas son opcionales,
+ * así que basta con agregarlas: recrear `animal` borraría en cascada sus Eventos, Registros y
+ * Chapetas. Los Animales anteriores quedan sin padre ni madre.
+ */
+val MIGRACION_11_12: Migration = object : MigracionBovina(11, 12) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `animal` ADD COLUMN `idPadre` TEXT " +
+                "REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE SET NULL",
+        )
+        db.execSQL(
+            "ALTER TABLE `animal` ADD COLUMN `idMadre` TEXT " +
+                "REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE SET NULL",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_animal_idPadre` ON `animal` (`idPadre`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_animal_idMadre` ON `animal` (`idMadre`)")
+    }
+}
