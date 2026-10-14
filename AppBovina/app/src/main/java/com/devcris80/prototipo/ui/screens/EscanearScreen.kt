@@ -22,10 +22,10 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -35,30 +35,36 @@ import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleEventObserver
-import com.devcris80.prototipo.domain.DestinoEscaneo
 import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
-import kotlinx.coroutines.launch
+import com.devcris80.prototipo.ui.util.appViewModel
 
 private val FLAGS_LECTURA_TAG = NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
 
-private class Lectura(val codigo: String)
-
 @Composable
 fun EscanearScreen(
-    resolverDestino: suspend (codigo: String) -> DestinoEscaneo,
     onAbrirAnimal: (idAnimal: String) -> Unit,
     onRegistrar: (codigo: String, aviso: String?) -> Unit,
-    onLiberarChapeta: suspend (idChapeta: String) -> Unit,
 ) {
+    val viewModel = appViewModel { container ->
+        EscanearViewModel(container.resolverDestinoEscaneo, container.liberarChapeta)
+    }
+    val estado by viewModel.estado.collectAsState()
+
     val context = LocalContext.current
     val activity = context as? Activity
     val lifecycleOwner = LocalLifecycleOwner.current
     val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
-    val scope = rememberCoroutineScope()
     var nfcActivo by remember { mutableStateOf(nfcAdapter?.isEnabled == true) }
-    var lectura by remember { mutableStateOf<Lectura?>(null) }
-    var destino by remember { mutableStateOf<DestinoEscaneo?>(null) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                is EscanearEvento.AbrirAnimal -> onAbrirAnimal(evento.idAnimal)
+                is EscanearEvento.Registrar -> onRegistrar(evento.codigo, evento.aviso)
+            }
+        }
+    }
 
     DisposableEffect(lifecycleOwner, nfcAdapter, activity) {
         val observer = LifecycleEventObserver { _, evento ->
@@ -71,7 +77,7 @@ fun EscanearScreen(
                             activity,
                             { tag ->
                                 val codigo = tag.id.toCodigoHex()
-                                activity.runOnUiThread { lectura = Lectura(codigo) }
+                                activity.runOnUiThread { viewModel.onCodigoLeido(codigo) }
                             },
                             FLAGS_LECTURA_TAG,
                             null,
@@ -89,32 +95,6 @@ fun EscanearScreen(
         }
     }
 
-    LaunchedEffect(lectura) {
-        val leido = lectura ?: return@LaunchedEffect
-        destino = resolverDestino(leido.codigo)
-    }
-
-    LaunchedEffect(destino) {
-        when (val actual = destino) {
-            is DestinoEscaneo.AbrirAnimal -> {
-                destino = null
-                lectura = null
-                onAbrirAnimal(actual.idAnimal)
-            }
-            is DestinoEscaneo.RegistrarConAviso -> {
-                destino = null
-                lectura = null
-                onRegistrar(actual.codigo, "Este tag estuvo asociado a ${actual.nombreAnimalAnterior}")
-            }
-            is DestinoEscaneo.RegistrarNuevo -> {
-                destino = null
-                lectura = null
-                onRegistrar(actual.codigo, null)
-            }
-            is DestinoEscaneo.AnimalDadoDeBaja, null -> Unit
-        }
-    }
-
     Column(
         modifier = Modifier
             .fillMaxSize()
@@ -128,7 +108,7 @@ fun EscanearScreen(
             tint = MaterialTheme.colorScheme.primary,
             modifier = Modifier.size(64.dp),
         )
-        val dadoDeBaja = destino as? DestinoEscaneo.AnimalDadoDeBaja
+        val dadoDeBaja = estado as? EscanearUiState.AnimalDadoDeBaja
         when {
             nfcAdapter == null -> Text(
                 text = "Este celular no tiene NFC",
@@ -158,12 +138,7 @@ fun EscanearScreen(
                     textAlign = TextAlign.Center,
                 )
                 Button(
-                    onClick = {
-                        scope.launch {
-                            onLiberarChapeta(dadoDeBaja.idChapeta)
-                            lectura = Lectura(dadoDeBaja.codigo)
-                        }
-                    },
+                    onClick = { viewModel.onLiberarChapeta() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(BovinaMinFieldHeight),
@@ -172,10 +147,7 @@ fun EscanearScreen(
                     Text("Liberar chapeta", style = MaterialTheme.typography.labelLarge)
                 }
                 OutlinedButton(
-                    onClick = {
-                        destino = null
-                        lectura = null
-                    },
+                    onClick = { viewModel.onCancelar() },
                     modifier = Modifier
                         .fillMaxWidth()
                         .height(BovinaMinFieldHeight),
@@ -184,7 +156,7 @@ fun EscanearScreen(
                     Text("Cancelar", style = MaterialTheme.typography.labelLarge)
                 }
             }
-            lectura != null -> Text(
+            estado is EscanearUiState.Resolviendo -> Text(
                 text = "Leyendo chapeta…",
                 style = MaterialTheme.typography.bodyLarge,
                 textAlign = TextAlign.Center,

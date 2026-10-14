@@ -33,7 +33,6 @@ import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
-import com.devcris80.prototipo.domain.DestinoEscaneoResolver
 import com.devcris80.prototipo.domain.RegistroAnimalConChapeta
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
@@ -60,9 +59,6 @@ fun AppNavHost(database: AppDatabase) {
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
     val registroAnimal = remember { RegistroAnimalConChapeta(database) }
     val context = LocalContext.current
-    val destinoEscaneoResolver = remember {
-        DestinoEscaneoResolver(database.chapetaDao(), database.animalDao())
-    }
 
     var perfilCargado by remember { mutableStateOf(false) }
     var tienePerfil by remember { mutableStateOf(false) }
@@ -229,12 +225,8 @@ fun AppNavHost(database: AppDatabase) {
             }
             composable(Rutas.Escanear.ruta) {
                 EscanearScreen(
-                    resolverDestino = { codigo -> destinoEscaneoResolver.resolver(codigo) },
                     onAbrirAnimal = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                     onRegistrar = { codigo, aviso -> navController.navigate(Rutas.NuevoAnimal.crear(codigo, aviso)) },
-                    onLiberarChapeta = { idChapeta ->
-                        database.chapetaDao().desasociar(idChapeta, System.currentTimeMillis())
-                    },
                 )
             }
             composable(Rutas.EstadoServicio.ruta) {
