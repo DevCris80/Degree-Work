@@ -18,6 +18,7 @@ import com.devcris80.prototipo.domain.repository.Transaccion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 /** Repositorios falsos en memoria, compartidos entre los tests de ViewModel de `ui.screens`. */
 internal class FakeAnimalRepository : AnimalRepository {
@@ -81,7 +82,11 @@ internal class FakeCuentaRepository : CuentaRepository {
 
     override fun observePerfilFinca(): Flow<PerfilFinca?> = perfil
     override suspend fun getPerfilFinca(): PerfilFinca? = perfil.value
-    override suspend fun crearPerfilFinca(nombreFinca: String): PerfilFinca = error("no usado en estos tests")
+    override suspend fun crearPerfilFinca(nombreFinca: String): PerfilFinca {
+        val nuevo = PerfilFinca(idPerfilFinca = UUID.randomUUID().toString(), nombreFinca = nombreFinca)
+        perfil.value = nuevo
+        return nuevo
+    }
     override fun observeUsuario(): Flow<Usuario?> = usuario
     override suspend fun getUsuario(): Usuario? = usuario.value
     override suspend fun insertUsuario(usuario: Usuario) {
