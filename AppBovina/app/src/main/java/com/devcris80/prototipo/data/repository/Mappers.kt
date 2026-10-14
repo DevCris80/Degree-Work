@@ -50,6 +50,9 @@ private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
 // Conciliar escribe la resolución sola, sin pasar por toEntity.
 internal fun ResolucionPesajePendiente.textoGuardado(): String = TEXTO_RESOLUCION_PESAJE_PENDIENTE.aTexto(this)
 
+// Filtrar animales por sexo compara contra el texto guardado.
+internal fun Sexo.textoGuardado(): String = TEXTO_SEXO.aTexto(this)
+
 private fun <E : Enum<E>> Map<E, String>.aTexto(valor: E): String = getValue(valor)
 
 private fun <E : Enum<E>> Map<E, String>.desdeTexto(texto: String): E =

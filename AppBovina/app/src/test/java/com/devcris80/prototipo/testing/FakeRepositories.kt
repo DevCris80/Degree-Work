@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
@@ -32,6 +33,8 @@ internal class FakeAnimalRepository : AnimalRepository {
 
     override suspend fun insert(animal: Animal) = set(animal)
     override fun observeActivos(): Flow<List<Animal>> = activos
+    override fun observePorSexo(sexo: Sexo): Flow<List<Animal>> =
+        activos.map { animales -> animales.filter { it.sexo == sexo } }
     override fun observeById(idAnimal: String): Flow<Animal?> =
         porId.getOrPut(idAnimal) { MutableStateFlow(null) }
     override suspend fun findById(idAnimal: String): Animal? =
