@@ -31,7 +31,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         PesajePendienteEntity::class,
     ],
     version = 10,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun animalDao(): AnimalDao
