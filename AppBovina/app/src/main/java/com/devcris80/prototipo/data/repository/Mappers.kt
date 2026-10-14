@@ -174,7 +174,7 @@ fun PesajePendiente.toEntity(fechaModificacion: Long) = PesajePendienteEntity(
 )
 
 fun PerfilFincaEntity.toDomain() = PerfilFinca(
-    idPerfilFinca = id,
+    idPerfilFinca = idPerfilFinca,
     nombreFinca = nombreFinca,
 )
 

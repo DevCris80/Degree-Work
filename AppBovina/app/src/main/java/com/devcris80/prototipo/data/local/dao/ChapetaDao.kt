@@ -32,12 +32,4 @@ interface ChapetaDao {
             "fechaModificacion = :fechaModificacion WHERE idChapeta = :idChapeta",
     )
     suspend fun desasociar(idChapeta: String, fecha: Long, fechaModificacion: Long)
-
-    // La forma que todavía llama el código viejo: toma la fecha de liberación como fecha de
-    // modificación. La quita #41.
-    @Query(
-        "UPDATE chapeta SET fechaDesasociacion = :fecha, sincronizado = 0, fechaModificacion = :fecha " +
-            "WHERE idChapeta = :idChapeta",
-    )
-    suspend fun desasociar(idChapeta: String, fecha: Long)
 }
