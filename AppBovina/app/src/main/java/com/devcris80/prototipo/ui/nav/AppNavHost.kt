@@ -12,11 +12,9 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
@@ -25,11 +23,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
-import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
-import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
-import com.devcris80.prototipo.data.local.entity.UsuarioEntity
+import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
@@ -37,10 +32,9 @@ import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
 import com.devcris80.prototipo.ui.screens.PesajesPendientesScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
-import com.devcris80.prototipo.ui.screens.RegistroScreen
 import com.devcris80.prototipo.ui.screens.ServiceStatusScreen
+import com.devcris80.prototipo.ui.util.appViewModel
 import kotlinx.coroutines.launch
-import java.util.UUID
 
 private val RUTAS_CON_NAV_INFERIOR = setOf(
     Rutas.ListaAnimales.ruta,
@@ -54,13 +48,9 @@ fun AppNavHost(database: AppDatabase) {
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
-    var perfilCargado by remember { mutableStateOf(false) }
-    var tienePerfil by remember { mutableStateOf(false) }
-    LaunchedEffect(Unit) {
-        tienePerfil = database.perfilFincaDao().getOnce() != null
-        perfilCargado = true
-    }
-    if (!perfilCargado) return
+    val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository) }
+    val tienePerfil by inicioViewModel.tienePerfil.collectAsState()
+    if (tienePerfil == null) return
 
     Scaffold(
         bottomBar = {
@@ -102,26 +92,14 @@ fun AppNavHost(database: AppDatabase) {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (tienePerfil) Rutas.ListaAnimales.ruta else Rutas.Registro.ruta,
+            startDestination = if (tienePerfil == true) Rutas.ListaAnimales.ruta else Rutas.CrearCuenta.ruta,
             modifier = Modifier.padding(innerPadding),
         ) {
-            composable(Rutas.Registro.ruta) {
-                RegistroScreen(
-                    onCrearCuenta = { nombreUsuario, nombreFinca ->
-                        scope.launch {
-                            database.withTransaction {
-                                database.perfilFincaDao().guardar(PerfilFincaEntity(nombreFinca = nombreFinca))
-                                database.usuarioDao().insert(
-                                    UsuarioEntity(
-                                        idUsuario = UUID.randomUUID().toString(),
-                                        idPerfilFinca = PERFIL_FINCA_ID,
-                                        nombre = nombreUsuario,
-                                    ),
-                                )
-                            }
-                            navController.navigate(Rutas.ListaAnimales.ruta) {
-                                popUpTo(Rutas.Registro.ruta) { inclusive = true }
-                            }
+            composable(Rutas.CrearCuenta.ruta) {
+                CrearCuentaScreen(
+                    onCuentaCreada = {
+                        navController.navigate(Rutas.ListaAnimales.ruta) {
+                            popUpTo(Rutas.CrearCuenta.ruta) { inclusive = true }
                         }
                     },
                     onIrALogin = { navController.navigate(Rutas.Login.ruta) },
@@ -129,13 +107,12 @@ fun AppNavHost(database: AppDatabase) {
             }
             composable(Rutas.Login.ruta) {
                 LoginScreen(
-                    usuario = remember { database.usuarioDao().observe() },
                     onIniciarSesion = {
                         navController.navigate(Rutas.ListaAnimales.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
-                    onCrearCuentaNueva = { navController.navigate(Rutas.Registro.ruta) },
+                    onCrearCuentaNueva = { navController.navigate(Rutas.CrearCuenta.ruta) },
                 )
             }
             composable(Rutas.ListaAnimales.ruta) {
@@ -176,14 +153,9 @@ fun AppNavHost(database: AppDatabase) {
             composable(
                 route = Rutas.NuevoEvento.ruta,
                 arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
-            ) { entry ->
-                val idAnimal = entry.arguments?.getString("idAnimal").orEmpty()
+            ) {
                 EventoFormScreen(
-                    idAnimal = idAnimal,
-                    onGuardar = { evento ->
-                        scope.launch { database.eventoDao().insert(evento) }
-                        navController.popBackStack()
-                    },
+                    onGuardado = { navController.popBackStack() },
                 )
             }
             composable(Rutas.Escanear.ruta) {

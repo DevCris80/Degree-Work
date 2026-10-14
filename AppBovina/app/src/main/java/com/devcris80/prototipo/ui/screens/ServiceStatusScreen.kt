@@ -23,11 +23,13 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
 import androidx.core.content.ContextCompat
 import com.devcris80.prototipo.service.PesajeHttpForegroundService
+import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
 fun ServiceStatusScreen() {
+    val viewModel = appViewModel { EstadoServicioViewModel() }
+    val estado by viewModel.estado.collectAsState()
     val context = LocalContext.current
-    val isRunning by PesajeHttpForegroundService.isRunning.collectAsState()
 
     val requestNotificationPermission = rememberLauncherForActivityResult(
         ActivityResultContracts.RequestPermission(),
@@ -47,12 +49,12 @@ fun ServiceStatusScreen() {
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             Text(
-                text = if (isRunning) "Servicio activo" else "Servicio inactivo",
+                text = if (estado.activo) "Servicio activo" else "Servicio inactivo",
                 style = MaterialTheme.typography.headlineSmall,
             )
             Button(
                 onClick = {
-                    if (isRunning) {
+                    if (estado.activo) {
                         PesajeHttpForegroundService.stop(context)
                     } else if (notificationPermissionGranted(context)) {
                         PesajeHttpForegroundService.start(context)
@@ -61,7 +63,7 @@ fun ServiceStatusScreen() {
                     }
                 },
             ) {
-                Text(if (isRunning) "Detener servicio" else "Iniciar servicio")
+                Text(if (estado.activo) "Detener servicio" else "Iniciar servicio")
             }
         }
     }

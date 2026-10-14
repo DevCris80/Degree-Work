@@ -38,21 +38,20 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
-import kotlinx.coroutines.flow.Flow
+import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
 fun LoginScreen(
-    usuario: Flow<UsuarioEntity?>,
     onIniciarSesion: () -> Unit,
     onCrearCuentaNueva: () -> Unit,
 ) {
-    val usuarioActual by usuario.collectAsState(initial = null)
+    val viewModel = appViewModel { container -> LoginViewModel(container.cuentaRepository) }
+    val usuarioActual by viewModel.usuario.collectAsState()
     var correo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }

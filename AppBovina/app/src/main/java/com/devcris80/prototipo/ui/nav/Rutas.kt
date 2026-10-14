@@ -3,7 +3,7 @@ package com.devcris80.prototipo.ui.nav
 import android.net.Uri
 
 sealed class Rutas(val ruta: String) {
-    data object Registro : Rutas("registro")
+    data object CrearCuenta : Rutas("crear-cuenta")
     data object Login : Rutas("login")
     data object ListaAnimales : Rutas("animales")
     data object NuevoAnimal : Rutas("animales/nuevo?codigo={codigo}&aviso={aviso}") {

@@ -26,6 +26,8 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -40,22 +42,31 @@ import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
-fun RegistroScreen(
-    onCrearCuenta: (nombreUsuario: String, nombreFinca: String) -> Unit,
+fun CrearCuentaScreen(
+    onCuentaCreada: () -> Unit,
     onIrALogin: () -> Unit,
 ) {
-    var nombreGanadero by remember { mutableStateOf("") }
-    var nombreFinca by remember { mutableStateOf("") }
+    val viewModel = appViewModel { container -> CrearCuentaViewModel(container.crearCuenta) }
+    val estado by viewModel.estado.collectAsState()
+
     var correo by remember { mutableStateOf("") }
     var password by remember { mutableStateOf("") }
     var confirmarPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmarVisible by remember { mutableStateOf(false) }
 
-    val puedeCrear = nombreGanadero.isNotBlank() && nombreFinca.isNotBlank() &&
-        correo.isNotBlank() && password.length >= 6 && password == confirmarPassword
+    val puedeCrear = estado.puedeCrear && correo.isNotBlank() && password.length >= 6 && password == confirmarPassword
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                CrearCuentaEvento.CuentaCreada -> onCuentaCreada()
+            }
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
@@ -94,14 +105,14 @@ fun RegistroScreen(
 
             CampoConIcono(
                 label = "Nombre completo",
-                value = nombreGanadero,
-                onValueChange = { nombreGanadero = it },
+                value = estado.nombreGanadero,
+                onValueChange = viewModel::onNombreGanaderoCambiado,
                 icon = Icons.Filled.Person,
             )
             CampoConIcono(
                 label = "Nombre de la finca",
-                value = nombreFinca,
-                onValueChange = { nombreFinca = it },
+                value = estado.nombreFinca,
+                onValueChange = viewModel::onNombreFincaCambiado,
                 icon = Icons.Filled.Home,
             )
             CampoConIcono(
@@ -138,7 +149,7 @@ fun RegistroScreen(
             )
 
             Button(
-                onClick = { onCrearCuenta(nombreGanadero, nombreFinca) },
+                onClick = viewModel::onCrearCuenta,
                 enabled = puedeCrear,
                 modifier = Modifier
                     .fillMaxWidth()
