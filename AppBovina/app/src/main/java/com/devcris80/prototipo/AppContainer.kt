@@ -1,5 +1,7 @@
 package com.devcris80.prototipo
 
+import android.content.Context
+import com.devcris80.prototipo.data.SeedData
 import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.repository.RoomAnimalRepository
 import com.devcris80.prototipo.data.repository.RoomChapetaRepository
@@ -29,7 +31,8 @@ import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
  * Arma a mano los repositorios y casos de uso de la app (ver docs/adr/0001). Es el único lugar,
  * fuera de `data`, que conoce las implementaciones de Room.
  */
-class AppContainer(database: AppDatabase) {
+class AppContainer(context: Context) {
+    private val database = AppDatabase.getInstance(context)
     private val transaccion: Transaccion = RoomTransaccion(database)
 
     val animalRepository: AnimalRepository = RoomAnimalRepository(database.animalDao())
@@ -66,4 +69,6 @@ class AppContainer(database: AppDatabase) {
     )
     val descartarPesajePendiente =
         DescartarPesajePendiente(pesajePendienteRepository, cuentaRepository, transaccion)
+
+    val seedData = SeedData(cuentaRepository, animalRepository, chapetaRepository, registrarAnimal)
 }
