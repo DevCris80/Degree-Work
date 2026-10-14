@@ -68,6 +68,8 @@ fun AnimalEntity.toDomain() = Animal(
     proposito = TEXTO_PROPOSITO.desdeTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    idPadre = idPadre,
+    idMadre = idMadre,
 )
 
 fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
@@ -82,6 +84,8 @@ fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
     proposito = TEXTO_PROPOSITO.aTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    idPadre = idPadre,
+    idMadre = idMadre,
     fechaModificacion = fechaModificacion,
 )
 
