@@ -8,6 +8,7 @@ import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 class RoomCuentaRepository(
     private val perfilFincaDao: PerfilFincaDao,
@@ -18,9 +19,14 @@ class RoomCuentaRepository(
 
     override suspend fun getPerfilFinca(): PerfilFinca? = perfilFincaDao.getOnce()?.toDomain()
 
-    // El id sigue siendo el fijo de PerfilFincaEntity hasta que #41 lo pase a UUID.
+    // Hay un solo PerfilFinca por dispositivo: si ya existe, se actualiza conservando su id.
     override suspend fun crearPerfilFinca(nombreFinca: String): PerfilFinca {
-        val perfil = PerfilFincaEntity(nombreFinca = nombreFinca, fechaModificacion = clock())
+        val idPerfilFinca = perfilFincaDao.getOnce()?.idPerfilFinca ?: UUID.randomUUID().toString()
+        val perfil = PerfilFincaEntity(
+            idPerfilFinca = idPerfilFinca,
+            nombreFinca = nombreFinca,
+            fechaModificacion = clock(),
+        )
         perfilFincaDao.guardar(perfil)
         return perfil.toDomain()
     }
