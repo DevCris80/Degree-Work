@@ -18,8 +18,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.platform.LocalContext
-import android.widget.Toast
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -32,7 +30,6 @@ import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
-import com.devcris80.prototipo.domain.RegistroAnimalConChapeta
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
@@ -56,9 +53,6 @@ fun AppNavHost(database: AppDatabase) {
     val scope = rememberCoroutineScope()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
-    val registroAnimal = remember { RegistroAnimalConChapeta(database) }
-    val context = LocalContext.current
-
     var perfilCargado by remember { mutableStateOf(false) }
     var tienePerfil by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
@@ -155,22 +149,9 @@ fun AppNavHost(database: AppDatabase) {
                     navArgument("codigo") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("aviso") { type = NavType.StringType; nullable = true; defaultValue = null },
                 ),
-            ) { entry ->
+            ) {
                 RegistrarAnimalScreen(
-                    codigoPrecargado = entry.arguments?.getString("codigo"),
-                    avisoAnterior = entry.arguments?.getString("aviso"),
-                    onGuardar = { animal, idChip ->
-                        scope.launch {
-                            when (registroAnimal.registrar(animal, idChip?.takeIf { it.isNotBlank() })) {
-                                is RegistroAnimalConChapeta.Resultado.Exito -> navController.popBackStack()
-                                is RegistroAnimalConChapeta.Resultado.CodigoYaActivo -> Toast.makeText(
-                                    context,
-                                    "Esta chapeta ya está asociada a un animal activo",
-                                    Toast.LENGTH_LONG,
-                                ).show()
-                            }
-                        }
-                    },
+                    onGuardado = { navController.popBackStack() },
                     onCancelar = { navController.popBackStack() },
                 )
             }

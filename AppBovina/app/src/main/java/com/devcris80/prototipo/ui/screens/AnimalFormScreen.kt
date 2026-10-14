@@ -44,6 +44,8 @@ import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -57,56 +59,67 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
-import com.devcris80.prototipo.data.local.entity.AnimalEntity
-import com.devcris80.prototipo.data.local.entity.PERFIL_FINCA_ID
+import androidx.lifecycle.createSavedStateHandle
+import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.aEtiqueta
+import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.crearArchivoFotoUri
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
-import java.util.UUID
 
 private val RAZAS = listOf(
     "Holstein", "Jersey", "Normando", "Pardo Suizo", "Brahman", "Cebú",
     "Angus", "Simmental", "Criollo", "Otra",
 )
-private val ETAPAS_MACHO = listOf("Toro", "Novillo")
-private val ETAPAS_HEMBRA = listOf("Vaca", "Ternera")
-private val PROPOSITOS = listOf("Leche", "Carne", "Doble Propósito")
-
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarAnimalScreen(
-    onGuardar: (animal: AnimalEntity, idChip: String?) -> Unit,
+    onGuardado: () -> Unit,
     onCancelar: () -> Unit,
-    codigoPrecargado: String? = null,
-    avisoAnterior: String? = null,
 ) {
+    val viewModel = appViewModel { container ->
+        val savedState = createSavedStateHandle()
+        RegistrarAnimalViewModel(
+            savedState.get<String>("codigo"),
+            savedState.get<String>("aviso"),
+            container.cuentaRepository,
+            container.registrarAnimal,
+        )
+    }
+    val estado by viewModel.estado.collectAsState()
+
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var fotoUri by remember { mutableStateOf<String?>(null) }
-    var fotoTempUri by remember { mutableStateOf<Uri?>(null) }
-    var nombre by remember { mutableStateOf("") }
-    var idChip by remember { mutableStateOf(codigoPrecargado.orEmpty()) }
-    var raza by remember { mutableStateOf("") }
     var razaExpandida by remember { mutableStateOf(false) }
-    var sexo by remember { mutableStateOf("") }
-    var etapa by remember { mutableStateOf("") }
-    var fechaNacimiento by remember { mutableStateOf<Long?>(null) }
-    var fechaNacimientoEsEstimada by remember { mutableStateOf(false) }
     var mostrarSelectorFecha by remember { mutableStateOf(false) }
-    var proposito by remember { mutableStateOf("") }
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                RegistrarAnimalEvento.Guardado -> onGuardado()
+            }
+        }
+    }
+    LaunchedEffect(estado.codigoYaActivo) {
+        if (estado.codigoYaActivo) {
+            snackbarHostState.showSnackbar("Esta chapeta ya está asociada a un animal activo")
+            viewModel.onCodigoYaActivoVisto()
+        }
+    }
 
     val nfcAction: @Composable () -> Unit = {
         IconButton(onClick = {
@@ -120,23 +133,15 @@ fun RegistrarAnimalScreen(
         }
     }
 
+    var fotoTempUri by remember { mutableStateOf<Uri?>(null) }
     val tomarFotoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
     ) { exito ->
-        if (exito) fotoUri = fotoTempUri?.toString()
+        if (exito) viewModel.onFotoCapturada(fotoTempUri?.toString())
     }
     val elegirDeGaleriaLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent(),
-    ) { uri -> if (uri != null) fotoUri = uri.toString() }
-
-    val etapasDisponibles = when (sexo) {
-        "Macho" -> ETAPAS_MACHO
-        "Hembra" -> ETAPAS_HEMBRA
-        else -> emptyList()
-    }
-
-    val puedeGuardar = nombre.isNotBlank() && raza.isNotBlank() &&
-        sexo.isNotBlank() && etapa.isNotBlank() && fechaNacimiento != null && proposito.isNotBlank()
+    ) { uri -> if (uri != null) viewModel.onFotoCapturada(uri.toString()) }
 
     Scaffold(
         topBar = {
@@ -163,12 +168,12 @@ fun RegistrarAnimalScreen(
                 texto = "Complete los datos del animal. Podrá editarlos más adelante desde su ficha.",
                 icon = Icons.Filled.Info,
             )
-            avisoAnterior?.let { aviso ->
+            estado.aviso?.let { aviso ->
                 BannerInformativo(texto = aviso, icon = Icons.Filled.Info)
             }
 
             FotoAnimal(
-                fotoUri = fotoUri,
+                fotoUri = estado.fotoUri,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(180.dp),
@@ -196,18 +201,18 @@ fun RegistrarAnimalScreen(
 
             CampoConIcono(
                 label = "Nombre o Apodo",
-                value = nombre,
-                onValueChange = { nombre = it },
+                value = estado.nombre,
+                onValueChange = viewModel::onNombreCambiado,
                 icon = Icons.Filled.Person,
             )
 
             CampoConIcono(
                 label = "Número de chapeta / arete (opcional)",
-                value = idChip,
-                onValueChange = { idChip = it },
+                value = estado.codigo,
+                onValueChange = viewModel::onCodigoCambiado,
                 icon = Icons.Filled.Numbers,
-                readOnly = codigoPrecargado != null,
-                trailingAction = if (codigoPrecargado != null) null else nfcAction,
+                readOnly = estado.codigoSoloLectura,
+                trailingAction = if (estado.codigoSoloLectura) null else nfcAction,
             )
 
             ExposedDropdownMenuBox(
@@ -216,7 +221,7 @@ fun RegistrarAnimalScreen(
             ) {
                 CampoConIcono(
                     label = "Raza principal",
-                    value = raza,
+                    value = estado.raza,
                     onValueChange = {},
                     icon = Icons.Filled.Info,
                     readOnly = true,
@@ -230,7 +235,7 @@ fun RegistrarAnimalScreen(
                         DropdownMenuItem(
                             text = { Text(opcion) },
                             onClick = {
-                                raza = opcion
+                                viewModel.onRazaCambiada(opcion)
                                 razaExpandida = false
                             },
                         )
@@ -240,25 +245,22 @@ fun RegistrarAnimalScreen(
 
             Text("Sexo del ejemplar", style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                listOf("Macho", "Hembra").forEach { opcion ->
+                Sexo.entries.forEach { opcion ->
                     TarjetaSeleccionable(
-                        texto = opcion,
-                        seleccionada = sexo == opcion,
-                        onClick = {
-                            sexo = opcion
-                            etapa = ""
-                        },
+                        texto = opcion.aEtiqueta(),
+                        seleccionada = estado.sexo == opcion,
+                        onClick = { viewModel.onSexoSeleccionado(opcion) },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
-            if (etapasDisponibles.isNotEmpty()) {
+            if (estado.etapasDisponibles.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    etapasDisponibles.forEach { opcion ->
+                    estado.etapasDisponibles.forEach { opcion ->
                         FilterChip(
-                            selected = etapa == opcion,
-                            onClick = { etapa = opcion },
-                            label = { Text(opcion) },
+                            selected = estado.etapa == opcion,
+                            onClick = { viewModel.onEtapaSeleccionada(opcion) },
+                            label = { Text(opcion.aEtiqueta()) },
                         )
                     }
                 }
@@ -274,21 +276,21 @@ fun RegistrarAnimalScreen(
             ) {
                 Icon(Icons.Filled.CalendarMonth, contentDescription = null)
                 Text(
-                    text = fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
+                    text = estado.fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
                     modifier = Modifier.padding(start = 8.dp),
                 )
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
-                    checked = fechaNacimientoEsEstimada,
-                    onCheckedChange = { fechaNacimientoEsEstimada = it },
+                    checked = estado.fechaNacimientoEsEstimada,
+                    onCheckedChange = viewModel::onFechaEstimadaCambiada,
                 )
                 Text("Fecha estimada", style = MaterialTheme.typography.bodyMedium)
             }
 
             if (mostrarSelectorFecha) {
                 val selectorState = rememberDatePickerState(
-                    initialSelectedDateMillis = fechaNacimiento ?: System.currentTimeMillis(),
+                    initialSelectedDateMillis = estado.fechaNacimiento ?: System.currentTimeMillis(),
                     selectableDates = object : SelectableDates {
                         override fun isSelectableDate(utcTimeMillis: Long): Boolean =
                             utcTimeMillis <= System.currentTimeMillis()
@@ -298,7 +300,7 @@ fun RegistrarAnimalScreen(
                     onDismissRequest = { mostrarSelectorFecha = false },
                     confirmButton = {
                         TextButton(onClick = {
-                            fechaNacimiento = selectorState.selectedDateMillis
+                            selectorState.selectedDateMillis?.let(viewModel::onFechaNacimientoCambiada)
                             mostrarSelectorFecha = false
                         }) { Text("Aceptar") }
                     },
@@ -312,40 +314,23 @@ fun RegistrarAnimalScreen(
 
             Text("Propósito productivo", style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                PROPOSITOS.forEach { opcion ->
+                Proposito.entries.forEach { opcion ->
                     TarjetaSeleccionable(
-                        texto = opcion,
-                        seleccionada = proposito == opcion,
-                        onClick = { proposito = opcion },
+                        texto = opcion.aEtiqueta(),
+                        seleccionada = estado.proposito == opcion,
+                        onClick = { viewModel.onPropositoSeleccionado(opcion) },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
 
             Button(
-                enabled = puedeGuardar,
+                enabled = estado.puedeGuardar,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(BovinaMinFieldHeight),
                 shape = RoundedCornerShape(12.dp),
-                onClick = {
-                    val fecha = fechaNacimiento ?: return@Button
-                    onGuardar(
-                        AnimalEntity(
-                            idAnimal = UUID.randomUUID().toString(),
-                            idPerfilFinca = PERFIL_FINCA_ID,
-                            nombre = nombre,
-                            raza = raza,
-                            sexo = sexo,
-                            etapa = etapa,
-                            fechaNacimiento = fecha,
-                            fechaNacimientoEsEstimada = fechaNacimientoEsEstimada,
-                            proposito = proposito,
-                            fotoUri = fotoUri,
-                        ),
-                        idChip.takeIf { it.isNotBlank() },
-                    )
-                },
+                onClick = viewModel::onGuardar,
             ) {
                 Text("Guardar animal", style = MaterialTheme.typography.labelLarge)
             }
@@ -388,4 +373,3 @@ private fun TarjetaSeleccionable(
         )
     }
 }
-

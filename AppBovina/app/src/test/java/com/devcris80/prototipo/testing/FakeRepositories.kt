@@ -2,15 +2,19 @@ package com.devcris80.prototipo.testing
 
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
+import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PerfilFinca
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
+import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.Transaccion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -118,4 +122,18 @@ internal class FakeEventoRepository : EventoRepository {
     }
     override fun observeByAnimal(idAnimal: String): Flow<List<Evento>> =
         porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }
+}
+
+internal class FakePesajePendienteRepository : PesajePendienteRepository {
+    override suspend fun insert(pesajePendiente: PesajePendiente) = Unit
+    override suspend fun findById(idPesajePendiente: String): PesajePendiente? = null
+    override suspend fun findByIdLectura(idLectura: String): PesajePendiente? = null
+    override fun observeSinResolver(): Flow<List<PesajePendiente>> = MutableStateFlow(emptyList())
+    override suspend fun findSinResolverByCodigo(codigo: String): List<PesajePendiente> = emptyList()
+    override suspend fun conciliar(idPesajePendiente: String, conciliacion: Conciliacion) = Unit
+}
+
+/** Ejecuta el bloque directo, sin control de atomicidad real: alcanza para probar el resultado. */
+internal class FakeTransaccion : Transaccion {
+    override suspend fun <T> ejecutar(bloque: suspend () -> T): T = bloque()
 }
