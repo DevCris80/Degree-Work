@@ -29,12 +29,4 @@ interface AnimalDao {
             "WHERE idAnimal = :idAnimal",
     )
     suspend fun darDeBaja(idAnimal: String, fecha: Long, fechaModificacion: Long)
-
-    // La forma que todavía llama el código viejo: toma la fecha de baja como fecha de modificación.
-    // La quita #41.
-    @Query(
-        "UPDATE animal SET fechaBaja = :fecha, sincronizado = 0, fechaModificacion = :fecha " +
-            "WHERE idAnimal = :idAnimal",
-    )
-    suspend fun darDeBaja(idAnimal: String, fecha: Long)
 }
