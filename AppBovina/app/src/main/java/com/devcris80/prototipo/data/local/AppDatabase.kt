@@ -31,7 +31,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         PesajePendienteEntity::class,
     ],
     version = 10,
-    exportSchema = false,
+    exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
     abstract fun animalDao(): AnimalDao
@@ -63,9 +63,9 @@ abstract class AppDatabase : RoomDatabase() {
                     AppDatabase::class.java,
                     "app-bovina.db",
                 )
-                    // Prototipo: aún no hay datos reales de usuarios en campo que proteger,
-                    // así que se prioriza iterar el esquema sobre escribir migraciones.
-                    .fallbackToDestructiveMigration(dropAllTables = true)
+                    // La versión 10 es el primer esquema exportado: desde ahí cada cambio lleva su
+                    // Migration. Una instalación anterior no tiene cómo migrarse y se recrea vacía.
+                    .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
                     .addCallback(CALLBACK_INDICES_CHAPETA)
                     .build()
                     .also { instance = it }
