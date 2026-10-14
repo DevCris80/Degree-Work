@@ -3,15 +3,19 @@ package com.devcris80.prototipo.ui.screens
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PerfilFinca
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
+import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
 import com.devcris80.prototipo.testing.FakeCuentaRepository
+import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,9 +35,15 @@ class ListaAnimalesViewModelTest {
     private val animalRepository = FakeAnimalRepository()
     private val chapetaRepository = FakeChapetaRepository()
     private val registroRepository = FakeRegistroRepository()
+    private val pesajePendienteRepository = FakePesajePendienteRepository()
 
-    private fun crearViewModel() =
-        ListaAnimalesViewModel(cuentaRepository, animalRepository, chapetaRepository, registroRepository)
+    private fun crearViewModel() = ListaAnimalesViewModel(
+        cuentaRepository,
+        animalRepository,
+        chapetaRepository,
+        registroRepository,
+        ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository),
+    )
 
     @Before
     fun setUp() {
@@ -97,6 +107,29 @@ class ListaAnimalesViewModelTest {
         val ultimo = estados.last()
         assertEquals(Proposito.CARNE, ultimo.filtro)
         assertEquals(listOf(carne.idAnimal), ultimo.animales.map { it.animal.idAnimal })
+        job.cancel()
+    }
+
+    @Test
+    fun conPesajesPendientesSinResolver_elEstadoLosCuenta() = runTest {
+        pesajePendienteRepository.set(
+            PesajePendiente(
+                idPesajePendiente = UUID.randomUUID().toString(),
+                idLectura = UUID.randomUUID().toString(),
+                codigo = "04A1B2C3",
+                peso = 100f,
+                timestamp = 1L,
+                idUsuario = UUID.randomUUID().toString(),
+                motivo = MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA,
+            ),
+        )
+
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(1, estados.last().pesajesPendientes)
         job.cancel()
     }
 }

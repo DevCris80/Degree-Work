@@ -4,9 +4,11 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -31,6 +33,8 @@ data class RegistrarAnimalUiState(
     val proposito: Proposito? = null,
     val fotoUri: String? = null,
     val codigoYaActivo: Boolean = false,
+    val ofertaPesajesPendientes: OfertaPesajesPendientes? = null,
+    val errorAsignacionPendientes: Boolean = false,
 ) {
     val etapasDisponibles: List<Etapa> get() = sexo?.let(Etapa::de).orEmpty()
     val puedeGuardar: Boolean
@@ -42,12 +46,20 @@ sealed interface RegistrarAnimalEvento {
     data object Guardado : RegistrarAnimalEvento
 }
 
+data class OfertaPesajesPendientes(
+    val idAnimal: String,
+    val nombreAnimal: String,
+    val codigo: String,
+    val pesajes: List<PesajePendiente>,
+)
+
 /** Estado del formulario Registrar Animal: validación, etapas según sexo, y guardado con RegistrarAnimal. */
 class RegistrarAnimalViewModel(
     codigoPrecargado: String?,
     avisoAnterior: String?,
     private val cuentaRepository: CuentaRepository,
     private val registrarAnimal: RegistrarAnimal,
+    private val asignarPesajesPendientes: AsignarPesajesPendientes,
 ) : ViewModel() {
     private val _estado = MutableStateFlow(
         RegistrarAnimalUiState(
@@ -69,6 +81,7 @@ class RegistrarAnimalViewModel(
     fun onPropositoSeleccionado(proposito: Proposito) = _estado.update { it.copy(proposito = proposito) }
     fun onFotoCapturada(uri: String?) = _estado.update { it.copy(fotoUri = uri) }
     fun onCodigoYaActivoVisto() = _estado.update { it.copy(codigoYaActivo = false) }
+    fun onErrorAsignacionPendientesVisto() = _estado.update { it.copy(errorAsignacionPendientes = false) }
 
     fun onSexoSeleccionado(sexo: Sexo) = _estado.update {
         it.copy(sexo = sexo, etapa = null)
@@ -93,10 +106,41 @@ class RegistrarAnimalViewModel(
                 proposito = checkNotNull(actual.proposito),
                 fotoUri = actual.fotoUri,
             )
-            when (registrarAnimal(animal, actual.codigo.takeIf { it.isNotBlank() })) {
-                is RegistrarAnimal.Resultado.Exito -> _eventos.send(RegistrarAnimalEvento.Guardado)
+            when (val resultado = registrarAnimal(animal, actual.codigo.takeIf { it.isNotBlank() })) {
+                is RegistrarAnimal.Resultado.Exito -> {
+                    if (resultado.pesajesPendientes.isEmpty()) {
+                        _eventos.send(RegistrarAnimalEvento.Guardado)
+                    } else {
+                        _estado.update {
+                            it.copy(
+                                ofertaPesajesPendientes = OfertaPesajesPendientes(
+                                    idAnimal = animal.idAnimal,
+                                    nombreAnimal = animal.nombre,
+                                    codigo = actual.codigo,
+                                    pesajes = resultado.pesajesPendientes,
+                                ),
+                            )
+                        }
+                    }
+                }
                 is RegistrarAnimal.Resultado.CodigoYaActivo -> _estado.update { it.copy(codigoYaActivo = true) }
             }
+        }
+    }
+
+    fun onOfertaPesajesPendientesRespondida(asignar: Boolean) {
+        val oferta = _estado.value.ofertaPesajesPendientes ?: return
+        _estado.update { it.copy(ofertaPesajesPendientes = null) }
+        viewModelScope.launch {
+            if (asignar) {
+                when (asignarPesajesPendientes(oferta.pesajes.map { it.idPesajePendiente }, oferta.idAnimal)) {
+                    AsignarPesajesPendientes.Resultado.Asignados -> Unit
+                    AsignarPesajesPendientes.Resultado.AnimalNoDisponible,
+                    AsignarPesajesPendientes.Resultado.PendienteNoDisponible,
+                    -> _estado.update { it.copy(errorAsignacionPendientes = true) }
+                }
+            }
+            _eventos.send(RegistrarAnimalEvento.Guardado)
         }
     }
 }

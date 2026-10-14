@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.ui.util
 
 import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 
@@ -21,4 +22,9 @@ fun Proposito.aEtiqueta(): String = when (this) {
     Proposito.LECHE -> "Leche"
     Proposito.CARNE -> "Carne"
     Proposito.DOBLE_PROPOSITO -> "Doble Propósito"
+}
+
+fun MotivoPesajePendiente.aEtiqueta(): String = when (this) {
+    MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA -> "Código sin chapeta activa"
+    MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA -> "Animal dado de baja"
 }

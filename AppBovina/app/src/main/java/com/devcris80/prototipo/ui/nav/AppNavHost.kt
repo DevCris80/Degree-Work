@@ -35,6 +35,7 @@ import com.devcris80.prototipo.ui.screens.EscanearScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
 import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
+import com.devcris80.prototipo.ui.screens.PesajesPendientesScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
 import com.devcris80.prototipo.ui.screens.RegistroScreen
 import com.devcris80.prototipo.ui.screens.ServiceStatusScreen
@@ -141,6 +142,13 @@ fun AppNavHost(database: AppDatabase) {
                 ListaAnimalesScreen(
                     onAnimalClick = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                     onNuevoAnimalClick = { navController.navigate(Rutas.NuevoAnimal.crear()) },
+                    onPesajesPendientesClick = { navController.navigate(Rutas.PesajesPendientes.ruta) },
+                )
+            }
+            composable(Rutas.PesajesPendientes.ruta) {
+                PesajesPendientesScreen(
+                    onVolver = { navController.popBackStack() },
+                    onRegistrarAnimalConCodigo = { codigo -> navController.navigate(Rutas.NuevoAnimal.crear(codigo)) },
                 )
             }
             composable(
