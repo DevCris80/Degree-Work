@@ -1,15 +1,23 @@
 package com.devcris80.prototipo.ui.screens
 
 import com.devcris80.prototipo.domain.model.Chapeta
+import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PerfilFinca
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
+import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.model.Usuario
+import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
+import com.devcris80.prototipo.testing.FakeRegistroRepository
 import com.devcris80.prototipo.testing.FakeTransaccion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
@@ -29,19 +37,34 @@ class RegistrarAnimalViewModelTest {
     private val cuentaRepository = FakeCuentaRepository()
     private val animalRepository = FakeAnimalRepository()
     private val chapetaRepository = FakeChapetaRepository()
+    private val registroRepository = FakeRegistroRepository()
+    private val pesajePendienteRepository = FakePesajePendienteRepository()
 
     private fun crearViewModel(codigoPrecargado: String? = null, avisoAnterior: String? = null) =
         RegistrarAnimalViewModel(
             codigoPrecargado,
             avisoAnterior,
             cuentaRepository,
-            RegistrarAnimal(animalRepository, chapetaRepository, FakePesajePendienteRepository(), FakeTransaccion()),
+            RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, FakeTransaccion()),
+            AsignarPesajesPendientes(
+                pesajePendienteRepository,
+                animalRepository,
+                registroRepository,
+                cuentaRepository,
+                FakeTransaccion(),
+            ),
         )
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
         cuentaRepository.perfil.value = PerfilFinca(idPerfilFinca = "perfil_local", nombreFinca = "Finca Test")
+        cuentaRepository.usuario.value = Usuario(
+            idUsuario = UUID.randomUUID().toString(),
+            idPerfilFinca = "perfil_local",
+            nombre = "Ana",
+            rol = Rol.GANADERO,
+        )
     }
 
     @After
@@ -57,6 +80,16 @@ class RegistrarAnimalViewModelTest {
         viewModel.onFechaNacimientoCambiada(1L)
         viewModel.onPropositoSeleccionado(Proposito.LECHE)
     }
+
+    private fun pendiente(codigo: String, peso: Float = 150f, timestamp: Long = 1L) = PesajePendiente(
+        idPesajePendiente = UUID.randomUUID().toString(),
+        idLectura = UUID.randomUUID().toString(),
+        codigo = codigo,
+        peso = peso,
+        timestamp = timestamp,
+        idUsuario = UUID.randomUUID().toString(),
+        motivo = MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA,
+    )
 
     @Test
     fun codigoPrecargado_quedaDeSoloLecturaConElAviso() {
@@ -110,5 +143,65 @@ class RegistrarAnimalViewModelTest {
         viewModel.onGuardar()
 
         assertTrue(viewModel.estado.value.codigoYaActivo)
+    }
+
+    @Test
+    fun guardarConPesajesPendientesDelCodigo_ofreceAsignarlosSinEmitirGuardadoTodavia() = runTest {
+        pesajePendienteRepository.set(pendiente("04A1B2C3"))
+        val viewModel = crearViewModel(codigoPrecargado = "04A1B2C3")
+        llenarFormularioValido(viewModel)
+
+        viewModel.onGuardar()
+
+        val oferta = viewModel.estado.value.ofertaPesajesPendientes
+        assertEquals("04A1B2C3", oferta?.codigo)
+        assertEquals(1, oferta?.pesajes?.size)
+    }
+
+    @Test
+    fun aceptarLaOferta_asignaLosPesajesYLuegoEmiteGuardado() = runTest {
+        pesajePendienteRepository.set(pendiente("04A1B2C3"))
+        val viewModel = crearViewModel(codigoPrecargado = "04A1B2C3")
+        llenarFormularioValido(viewModel)
+        viewModel.onGuardar()
+
+        viewModel.onOfertaPesajesPendientesRespondida(true)
+
+        assertEquals(RegistrarAnimalEvento.Guardado, viewModel.eventos.first())
+        assertEquals(
+            ResolucionPesajePendiente.ASIGNADO,
+            pesajePendienteRepository.todos.value.first().conciliacion?.resolucion,
+        )
+    }
+
+    @Test
+    fun rechazarLaOferta_noAsignaPeroIgualEmiteGuardado() = runTest {
+        pesajePendienteRepository.set(pendiente("04A1B2C3"))
+        val viewModel = crearViewModel(codigoPrecargado = "04A1B2C3")
+        llenarFormularioValido(viewModel)
+        viewModel.onGuardar()
+
+        viewModel.onOfertaPesajesPendientesRespondida(false)
+
+        assertEquals(RegistrarAnimalEvento.Guardado, viewModel.eventos.first())
+        assertTrue(pesajePendienteRepository.todos.value.first().conciliacion == null)
+    }
+
+    @Test
+    fun aceptarLaOfertaConPendienteYaResuelto_marcaElErrorYIgualEmiteGuardado() = runTest {
+        val pesajePendiente = pendiente("04A1B2C3")
+        pesajePendienteRepository.set(pesajePendiente)
+        val viewModel = crearViewModel(codigoPrecargado = "04A1B2C3")
+        llenarFormularioValido(viewModel)
+        viewModel.onGuardar()
+        pesajePendienteRepository.conciliar(
+            pesajePendiente.idPesajePendiente,
+            Conciliacion(ResolucionPesajePendiente.DESCARTADO, UUID.randomUUID().toString(), 2L),
+        )
+
+        viewModel.onOfertaPesajesPendientesRespondida(true)
+
+        assertEquals(RegistrarAnimalEvento.Guardado, viewModel.eventos.first())
+        assertTrue(viewModel.estado.value.errorAsignacionPendientes)
     }
 }

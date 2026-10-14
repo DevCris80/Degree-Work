@@ -9,6 +9,7 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
@@ -30,6 +31,7 @@ data class ListaAnimalesUiState(
     val nombreUsuario: String = "",
     val animales: List<AnimalConResumen> = emptyList(),
     val filtro: Proposito? = null,
+    val pesajesPendientes: Int = 0,
 )
 
 /** Estado de la Lista de Animales: finca, usuario, animales activos con su Chapeta y último Registro. */
@@ -39,6 +41,7 @@ class ListaAnimalesViewModel(
     animalRepository: AnimalRepository,
     chapetaRepository: ChapetaRepository,
     registroRepository: RegistroRepository,
+    observarPesajesPendientes: ObservarPesajesPendientes,
 ) : ViewModel() {
     private val filtro = MutableStateFlow<Proposito?>(null)
 
@@ -66,12 +69,14 @@ class ListaAnimalesViewModel(
         cuentaRepository.observeUsuario(),
         animalesConResumen,
         filtro,
-    ) { perfil, usuario, animales, filtroActual ->
+        observarPesajesPendientes(),
+    ) { perfil, usuario, animales, filtroActual, pendientes ->
         ListaAnimalesUiState(
             nombreFinca = perfil?.nombreFinca.orEmpty(),
             nombreUsuario = usuario?.nombre.orEmpty(),
             animales = animales.filter { filtroActual == null || it.animal.proposito == filtroActual },
             filtro = filtroActual,
+            pesajesPendientes = pendientes.size,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListaAnimalesUiState())
 

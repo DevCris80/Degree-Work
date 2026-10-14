@@ -20,6 +20,7 @@ import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.PhotoLibrary
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -95,6 +96,7 @@ fun RegistrarAnimalScreen(
             savedState.get<String>("aviso"),
             container.cuentaRepository,
             container.registrarAnimal,
+            container.asignarPesajesPendientes,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -118,6 +120,12 @@ fun RegistrarAnimalScreen(
         if (estado.codigoYaActivo) {
             snackbarHostState.showSnackbar("Esta chapeta ya está asociada a un animal activo")
             viewModel.onCodigoYaActivoVisto()
+        }
+    }
+    LaunchedEffect(estado.errorAsignacionPendientes) {
+        if (estado.errorAsignacionPendientes) {
+            snackbarHostState.showSnackbar("No se pudieron asignar los pesajes pendientes")
+            viewModel.onErrorAsignacionPendientesVisto()
         }
     }
 
@@ -338,6 +346,31 @@ fun RegistrarAnimalScreen(
                 Text("Cancelar y volver")
             }
         }
+    }
+
+    estado.ofertaPesajesPendientes?.let { oferta ->
+        AlertDialog(
+            onDismissRequest = { viewModel.onOfertaPesajesPendientesRespondida(false) },
+            title = {
+                Text("¿Asignar los ${oferta.pesajes.size} pesajes pendientes de ${oferta.codigo} a ${oferta.nombreAnimal}?")
+            },
+            text = {
+                Column {
+                    oferta.pesajes.forEach { pendiente ->
+                        Text(
+                            text = "${pendiente.peso} kg · ${formatoFecha.format(Date(pendiente.timestamp))}",
+                            style = MaterialTheme.typography.bodySmall,
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                TextButton(onClick = { viewModel.onOfertaPesajesPendientesRespondida(true) }) { Text("Sí") }
+            },
+            dismissButton = {
+                TextButton(onClick = { viewModel.onOfertaPesajesPendientesRespondida(false) }) { Text("No") }
+            },
+        )
     }
 }
 

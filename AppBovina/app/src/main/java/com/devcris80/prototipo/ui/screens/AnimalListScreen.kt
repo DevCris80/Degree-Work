@@ -14,11 +14,13 @@ import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.FilterChip
@@ -53,6 +55,7 @@ private val FILTROS_PROPOSITO: List<Proposito?> = listOf(null) + Proposito.entri
 fun ListaAnimalesScreen(
     onAnimalClick: (idAnimal: String) -> Unit,
     onNuevoAnimalClick: () -> Unit,
+    onPesajesPendientesClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -60,6 +63,7 @@ fun ListaAnimalesScreen(
             container.animalRepository,
             container.chapetaRepository,
             container.registroRepository,
+            container.observarPesajesPendientes,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -103,6 +107,44 @@ fun ListaAnimalesScreen(
                         )
                     }
                     Text(text = "Animales", style = MaterialTheme.typography.headlineLarge)
+                }
+            }
+            if (estado.pesajesPendientes > 0) {
+                item {
+                    Card(
+                        onClick = onPesajesPendientesClick,
+                        shape = RoundedCornerShape(16.dp),
+                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                    ) {
+                        Row(
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(16.dp),
+                            horizontalArrangement = Arrangement.SpaceBetween,
+                            verticalAlignment = Alignment.CenterVertically,
+                        ) {
+                            Row(
+                                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                                verticalAlignment = Alignment.CenterVertically,
+                            ) {
+                                Icon(
+                                    imageVector = Icons.Filled.Warning,
+                                    contentDescription = null,
+                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                                )
+                                Text(
+                                    text = "${estado.pesajesPendientes} pesajes pendientes",
+                                    style = MaterialTheme.typography.bodyLarge,
+                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
+                                )
+                            }
+                            Icon(
+                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                                contentDescription = null,
+                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
+                            )
+                        }
+                    }
                 }
             }
             item {

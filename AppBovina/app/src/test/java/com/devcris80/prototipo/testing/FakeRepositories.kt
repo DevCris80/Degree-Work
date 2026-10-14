@@ -130,12 +130,24 @@ internal class FakeEventoRepository : EventoRepository {
 }
 
 internal class FakePesajePendienteRepository : PesajePendienteRepository {
-    override suspend fun insert(pesajePendiente: PesajePendiente) = Unit
-    override suspend fun findById(idPesajePendiente: String): PesajePendiente? = null
-    override suspend fun findByIdLectura(idLectura: String): PesajePendiente? = null
-    override fun observeSinResolver(): Flow<List<PesajePendiente>> = MutableStateFlow(emptyList())
-    override suspend fun findSinResolverByCodigo(codigo: String): List<PesajePendiente> = emptyList()
-    override suspend fun conciliar(idPesajePendiente: String, conciliacion: Conciliacion) = Unit
+    val todos = MutableStateFlow<List<PesajePendiente>>(emptyList())
+
+    fun set(pesajePendiente: PesajePendiente) {
+        todos.value = todos.value.filterNot { it.idPesajePendiente == pesajePendiente.idPesajePendiente } + pesajePendiente
+    }
+
+    override suspend fun insert(pesajePendiente: PesajePendiente) = set(pesajePendiente)
+    override suspend fun findById(idPesajePendiente: String): PesajePendiente? =
+        todos.value.firstOrNull { it.idPesajePendiente == idPesajePendiente }
+    override suspend fun findByIdLectura(idLectura: String): PesajePendiente? =
+        todos.value.firstOrNull { it.idLectura == idLectura }
+    override fun observeSinResolver(): Flow<List<PesajePendiente>> =
+        todos.map { lista -> lista.filter { it.conciliacion == null }.sortedByDescending { it.timestamp } }
+    override suspend fun findSinResolverByCodigo(codigo: String): List<PesajePendiente> =
+        todos.value.filter { it.codigo == codigo && it.conciliacion == null }.sortedByDescending { it.timestamp }
+    override suspend fun conciliar(idPesajePendiente: String, conciliacion: Conciliacion) {
+        todos.value.firstOrNull { it.idPesajePendiente == idPesajePendiente }?.let { set(it.copy(conciliacion = conciliacion)) }
+    }
 }
 
 /** Ejecuta el bloque directo, sin control de atomicidad real: alcanza para probar el resultado. */
