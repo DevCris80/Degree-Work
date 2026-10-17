@@ -16,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Numbers
@@ -67,9 +68,13 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.ui.components.BannerInformativo
+import com.devcris80.prototipo.ui.components.BovinaFilterChip
+import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
+import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
+import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.FotoAnimal
-import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
+import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.theme.Prototipo1Theme
 import com.devcris80.prototipo.ui.util.aEtiqueta
@@ -197,16 +202,7 @@ private fun RegistrarAnimalContent(
     }
 
     Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Registrar Animal") },
-                navigationIcon = {
-                    IconButton(onClick = onCancelar) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-            )
-        },
+        topBar = { BovinaTopBar(titulo = "Registrar Animal", onVolver = onCancelar) },
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { innerPadding ->
         Column(
@@ -232,20 +228,18 @@ private fun RegistrarAnimalContent(
                     .height(180.dp),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
+                BovinaSecondaryButton(
+                    texto = "Tomar foto",
                     onClick = onTomarFoto,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = null)
-                    Text(" Tomar foto")
-                }
-                OutlinedButton(
+                    icon = Icons.Filled.CameraAlt,
+                )
+                BovinaSecondaryButton(
+                    texto = "De galería",
                     onClick = onElegirDeGaleria,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
-                    Text(" De galería")
-                }
+                    icon = Icons.Filled.PhotoLibrary,
+                )
             }
 
             CampoConIcono(
@@ -306,29 +300,22 @@ private fun RegistrarAnimalContent(
             if (estado.etapasDisponibles.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     estado.etapasDisponibles.forEach { opcion ->
-                        FilterChip(
-                            selected = estado.etapa == opcion,
+                        BovinaFilterChip(
+                            texto = opcion.aEtiqueta(),
+                            seleccionado = estado.etapa == opcion,
                             onClick = { onEtapaSeleccionada(opcion) },
-                            label = { Text(opcion.aEtiqueta()) },
                         )
                     }
                 }
             }
 
             Text("Fecha de nacimiento", style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(
+            BovinaSecondaryButton(
+                texto = estado.fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
                 onClick = { mostrarSelectorFecha = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BovinaMinFieldHeight),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Icon(Icons.Filled.CalendarMonth, contentDescription = null)
-                Text(
-                    text = estado.fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Filled.CalendarMonth,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = estado.fechaNacimientoEsEstimada,
@@ -373,16 +360,13 @@ private fun RegistrarAnimalContent(
                 }
             }
 
-            Button(
-                enabled = estado.puedeGuardar,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BovinaMinFieldHeight),
-                shape = RoundedCornerShape(12.dp),
+            BovinaPrimaryButton(
+                texto = "Guardar animal",
                 onClick = onGuardar,
-            ) {
-                Text("Guardar animal", style = MaterialTheme.typography.labelLarge)
-            }
+                enabled = estado.puedeGuardar,
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Filled.CheckCircle,
+            )
             TextButton(onClick = onCancelar, modifier = Modifier.fillMaxWidth()) {
                 Text("Cancelar y volver")
             }
@@ -456,12 +440,12 @@ private fun TarjetaSeleccionable(
     Card(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         colors = CardDefaults.cardColors(
             containerColor = if (seleccionada) {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
+                MaterialTheme.colorScheme.surfaceContainerLowest
             },
         ),
         border = if (seleccionada) {
@@ -473,6 +457,7 @@ private fun TarjetaSeleccionable(
         Text(
             text = texto,
             style = MaterialTheme.typography.bodyMedium,
+            color = BovinaForest,
             fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.padding(16.dp),
         )
