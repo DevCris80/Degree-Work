@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.ui.screens
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -15,6 +16,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CameraAlt
+import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Numbers
@@ -66,10 +68,15 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.ui.components.BannerInformativo
+import com.devcris80.prototipo.ui.components.BovinaFilterChip
+import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
+import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
+import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.FotoAnimal
-import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
+import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.theme.Prototipo1Theme
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.crearArchivoFotoUri
@@ -83,7 +90,6 @@ private val RAZAS = listOf(
     "Angus", "Simmental", "Criollo", "Otra",
 )
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun RegistrarAnimalScreen(
     onGuardado: () -> Unit,
@@ -105,10 +111,6 @@ fun RegistrarAnimalScreen(
     val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
-    var razaExpandida by remember { mutableStateOf(false) }
-    var mostrarSelectorFecha by remember { mutableStateOf(false) }
-    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
             when (evento) {
@@ -129,18 +131,6 @@ fun RegistrarAnimalScreen(
         }
     }
 
-    val nfcAction: @Composable () -> Unit = {
-        IconButton(onClick = {
-            scope.launch {
-                snackbarHostState.showSnackbar(
-                    "Escaneo NFC disponible cuando haya tags físicos (Fase 3).",
-                )
-            }
-        }) {
-            Icon(Icons.Filled.Nfc, contentDescription = "Escanear con NFC")
-        }
-    }
-
     var fotoTempUri by remember { mutableStateOf<Uri?>(null) }
     val tomarFotoLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.TakePicture(),
@@ -151,17 +141,68 @@ fun RegistrarAnimalScreen(
         ActivityResultContracts.GetContent(),
     ) { uri -> if (uri != null) viewModel.onFotoCapturada(uri.toString()) }
 
-    Scaffold(
-        topBar = {
-            TopAppBar(
-                title = { Text("Registrar Animal") },
-                navigationIcon = {
-                    IconButton(onClick = onCancelar) {
-                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
-                    }
-                },
-            )
+    RegistrarAnimalContent(
+        estado = estado,
+        snackbarHostState = snackbarHostState,
+        onCancelar = onCancelar,
+        onTomarFoto = {
+            val uri = crearArchivoFotoUri(context)
+            fotoTempUri = uri
+            tomarFotoLauncher.launch(uri)
         },
+        onElegirDeGaleria = { elegirDeGaleriaLauncher.launch("image/*") },
+        onNfcClick = {
+            scope.launch {
+                snackbarHostState.showSnackbar(
+                    "Escaneo NFC disponible cuando haya tags físicos (Fase 3).",
+                )
+            }
+        },
+        onNombreCambiado = viewModel::onNombreCambiado,
+        onCodigoCambiado = viewModel::onCodigoCambiado,
+        onRazaCambiada = viewModel::onRazaCambiada,
+        onSexoSeleccionado = viewModel::onSexoSeleccionado,
+        onEtapaSeleccionada = viewModel::onEtapaSeleccionada,
+        onFechaNacimientoCambiada = viewModel::onFechaNacimientoCambiada,
+        onFechaEstimadaCambiada = viewModel::onFechaEstimadaCambiada,
+        onPropositoSeleccionado = viewModel::onPropositoSeleccionado,
+        onGuardar = viewModel::onGuardar,
+        onOfertaPesajesPendientesRespondida = viewModel::onOfertaPesajesPendientesRespondida,
+    )
+}
+
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun RegistrarAnimalContent(
+    estado: RegistrarAnimalUiState,
+    snackbarHostState: SnackbarHostState,
+    onCancelar: () -> Unit,
+    onTomarFoto: () -> Unit,
+    onElegirDeGaleria: () -> Unit,
+    onNfcClick: () -> Unit,
+    onNombreCambiado: (String) -> Unit,
+    onCodigoCambiado: (String) -> Unit,
+    onRazaCambiada: (String) -> Unit,
+    onSexoSeleccionado: (Sexo) -> Unit,
+    onEtapaSeleccionada: (Etapa) -> Unit,
+    onFechaNacimientoCambiada: (Long) -> Unit,
+    onFechaEstimadaCambiada: (Boolean) -> Unit,
+    onPropositoSeleccionado: (Proposito) -> Unit,
+    onGuardar: () -> Unit,
+    onOfertaPesajesPendientesRespondida: (Boolean) -> Unit,
+) {
+    var razaExpandida by remember { mutableStateOf(false) }
+    var mostrarSelectorFecha by remember { mutableStateOf(false) }
+    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+
+    val nfcAction: @Composable () -> Unit = {
+        IconButton(onClick = onNfcClick) {
+            Icon(Icons.Filled.Nfc, contentDescription = "Escanear con NFC")
+        }
+    }
+
+    Scaffold(
+        topBar = { BovinaTopBar(titulo = "Registrar Animal", onVolver = onCancelar) },
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { innerPadding ->
         Column(
@@ -187,37 +228,31 @@ fun RegistrarAnimalScreen(
                     .height(180.dp),
             )
             Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                OutlinedButton(
-                    onClick = {
-                        val uri = crearArchivoFotoUri(context)
-                        fotoTempUri = uri
-                        tomarFotoLauncher.launch(uri)
-                    },
+                BovinaSecondaryButton(
+                    texto = "Tomar foto",
+                    onClick = onTomarFoto,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Icon(Icons.Filled.CameraAlt, contentDescription = null)
-                    Text(" Tomar foto")
-                }
-                OutlinedButton(
-                    onClick = { elegirDeGaleriaLauncher.launch("image/*") },
+                    icon = Icons.Filled.CameraAlt,
+                )
+                BovinaSecondaryButton(
+                    texto = "De galería",
+                    onClick = onElegirDeGaleria,
                     modifier = Modifier.weight(1f),
-                ) {
-                    Icon(Icons.Filled.PhotoLibrary, contentDescription = null)
-                    Text(" De galería")
-                }
+                    icon = Icons.Filled.PhotoLibrary,
+                )
             }
 
             CampoConIcono(
                 label = "Nombre o Apodo",
                 value = estado.nombre,
-                onValueChange = viewModel::onNombreCambiado,
+                onValueChange = onNombreCambiado,
                 icon = Icons.Filled.Person,
             )
 
             CampoConIcono(
                 label = "Número de chapeta / arete (opcional)",
                 value = estado.codigo,
-                onValueChange = viewModel::onCodigoCambiado,
+                onValueChange = onCodigoCambiado,
                 icon = Icons.Filled.Numbers,
                 readOnly = estado.codigoSoloLectura,
                 trailingAction = if (estado.codigoSoloLectura) null else nfcAction,
@@ -243,7 +278,7 @@ fun RegistrarAnimalScreen(
                         DropdownMenuItem(
                             text = { Text(opcion) },
                             onClick = {
-                                viewModel.onRazaCambiada(opcion)
+                                onRazaCambiada(opcion)
                                 razaExpandida = false
                             },
                         )
@@ -257,7 +292,7 @@ fun RegistrarAnimalScreen(
                     TarjetaSeleccionable(
                         texto = opcion.aEtiqueta(),
                         seleccionada = estado.sexo == opcion,
-                        onClick = { viewModel.onSexoSeleccionado(opcion) },
+                        onClick = { onSexoSeleccionado(opcion) },
                         modifier = Modifier.weight(1f),
                     )
                 }
@@ -265,33 +300,26 @@ fun RegistrarAnimalScreen(
             if (estado.etapasDisponibles.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     estado.etapasDisponibles.forEach { opcion ->
-                        FilterChip(
-                            selected = estado.etapa == opcion,
-                            onClick = { viewModel.onEtapaSeleccionada(opcion) },
-                            label = { Text(opcion.aEtiqueta()) },
+                        BovinaFilterChip(
+                            texto = opcion.aEtiqueta(),
+                            seleccionado = estado.etapa == opcion,
+                            onClick = { onEtapaSeleccionada(opcion) },
                         )
                     }
                 }
             }
 
             Text("Fecha de nacimiento", style = MaterialTheme.typography.labelLarge)
-            OutlinedButton(
+            BovinaSecondaryButton(
+                texto = estado.fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
                 onClick = { mostrarSelectorFecha = true },
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BovinaMinFieldHeight),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Icon(Icons.Filled.CalendarMonth, contentDescription = null)
-                Text(
-                    text = estado.fechaNacimiento?.let { formatoFecha.format(Date(it)) } ?: "Seleccionar fecha",
-                    modifier = Modifier.padding(start = 8.dp),
-                )
-            }
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Filled.CalendarMonth,
+            )
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Checkbox(
                     checked = estado.fechaNacimientoEsEstimada,
-                    onCheckedChange = viewModel::onFechaEstimadaCambiada,
+                    onCheckedChange = onFechaEstimadaCambiada,
                 )
                 Text("Fecha estimada", style = MaterialTheme.typography.bodyMedium)
             }
@@ -308,7 +336,7 @@ fun RegistrarAnimalScreen(
                     onDismissRequest = { mostrarSelectorFecha = false },
                     confirmButton = {
                         TextButton(onClick = {
-                            selectorState.selectedDateMillis?.let(viewModel::onFechaNacimientoCambiada)
+                            selectorState.selectedDateMillis?.let(onFechaNacimientoCambiada)
                             mostrarSelectorFecha = false
                         }) { Text("Aceptar") }
                     },
@@ -326,22 +354,19 @@ fun RegistrarAnimalScreen(
                     TarjetaSeleccionable(
                         texto = opcion.aEtiqueta(),
                         seleccionada = estado.proposito == opcion,
-                        onClick = { viewModel.onPropositoSeleccionado(opcion) },
+                        onClick = { onPropositoSeleccionado(opcion) },
                         modifier = Modifier.weight(1f),
                     )
                 }
             }
 
-            Button(
+            BovinaPrimaryButton(
+                texto = "Guardar animal",
+                onClick = onGuardar,
                 enabled = estado.puedeGuardar,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BovinaMinFieldHeight),
-                shape = RoundedCornerShape(12.dp),
-                onClick = viewModel::onGuardar,
-            ) {
-                Text("Guardar animal", style = MaterialTheme.typography.labelLarge)
-            }
+                modifier = Modifier.fillMaxWidth(),
+                icon = Icons.Filled.CheckCircle,
+            )
             TextButton(onClick = onCancelar, modifier = Modifier.fillMaxWidth()) {
                 Text("Cancelar y volver")
             }
@@ -350,7 +375,7 @@ fun RegistrarAnimalScreen(
 
     estado.ofertaPesajesPendientes?.let { oferta ->
         AlertDialog(
-            onDismissRequest = { viewModel.onOfertaPesajesPendientesRespondida(false) },
+            onDismissRequest = { onOfertaPesajesPendientesRespondida(false) },
             title = {
                 Text("¿Asignar los ${oferta.pesajes.size} pesajes pendientes de ${oferta.codigo} a ${oferta.nombreAnimal}?")
             },
@@ -365,11 +390,42 @@ fun RegistrarAnimalScreen(
                 }
             },
             confirmButton = {
-                TextButton(onClick = { viewModel.onOfertaPesajesPendientesRespondida(true) }) { Text("Sí") }
+                TextButton(onClick = { onOfertaPesajesPendientesRespondida(true) }) { Text("Sí") }
             },
             dismissButton = {
-                TextButton(onClick = { viewModel.onOfertaPesajesPendientesRespondida(false) }) { Text("No") }
+                TextButton(onClick = { onOfertaPesajesPendientesRespondida(false) }) { Text("No") }
             },
+        )
+    }
+}
+
+@Preview(showBackground = true)
+@Composable
+private fun RegistrarAnimalPreview() {
+    Prototipo1Theme {
+        RegistrarAnimalContent(
+            estado = RegistrarAnimalUiState(
+                nombre = "Lucero",
+                codigo = "CH-0123",
+                raza = "Holstein",
+                sexo = Sexo.entries.first(),
+                aviso = "Esta chapeta aún no está asociada a ningún animal.",
+            ),
+            snackbarHostState = remember { SnackbarHostState() },
+            onCancelar = {},
+            onTomarFoto = {},
+            onElegirDeGaleria = {},
+            onNfcClick = {},
+            onNombreCambiado = {},
+            onCodigoCambiado = {},
+            onRazaCambiada = {},
+            onSexoSeleccionado = {},
+            onEtapaSeleccionada = {},
+            onFechaNacimientoCambiada = {},
+            onFechaEstimadaCambiada = {},
+            onPropositoSeleccionado = {},
+            onGuardar = {},
+            onOfertaPesajesPendientesRespondida = {},
         )
     }
 }
@@ -384,12 +440,12 @@ private fun TarjetaSeleccionable(
     Card(
         onClick = onClick,
         modifier = modifier,
-        shape = RoundedCornerShape(12.dp),
+        shape = MaterialTheme.shapes.small,
         colors = CardDefaults.cardColors(
             containerColor = if (seleccionada) {
-                MaterialTheme.colorScheme.primaryContainer
+                MaterialTheme.colorScheme.secondaryContainer
             } else {
-                MaterialTheme.colorScheme.surfaceContainerLow
+                MaterialTheme.colorScheme.surfaceContainerLowest
             },
         ),
         border = if (seleccionada) {
@@ -401,6 +457,7 @@ private fun TarjetaSeleccionable(
         Text(
             text = texto,
             style = MaterialTheme.typography.bodyMedium,
+            color = BovinaForest,
             fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.padding(16.dp),
         )
