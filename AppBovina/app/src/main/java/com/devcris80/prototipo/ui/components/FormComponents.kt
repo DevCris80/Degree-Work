@@ -55,6 +55,7 @@ fun BovinaTextField(
     visualTransformation: VisualTransformation = VisualTransformation.None,
     trailing: (@Composable () -> Unit)? = null,
     readOnly: Boolean = false,
+    leadingIcon: ImageVector? = null,
 ) {
     var enFoco by remember { mutableStateOf(false) }
     BasicTextField(
@@ -86,6 +87,16 @@ fun BovinaTextField(
                     .padding(start = 20.dp, end = if (trailing != null) 8.dp else 20.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
+                if (leadingIcon != null) {
+                    Icon(
+                        imageVector = leadingIcon,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier
+                            .padding(end = 12.dp)
+                            .size(20.dp),
+                    )
+                }
                 Box(modifier = Modifier.weight(1f)) {
                     if (value.isEmpty() && placeholder != null) {
                         Text(
