@@ -12,8 +12,11 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.EventAvailable
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -42,14 +45,30 @@ data class EventoItemUi(
  * ViewModel ni fuente de datos, así que la app la muestra vacía.
  */
 @Composable
-fun EventosScreen() {
-    EventosContent(eventos = emptyList())
+fun EventosScreen(
+    onProgramarClick: () -> Unit,
+) {
+    EventosContent(eventos = emptyList(), onProgramarClick = onProgramarClick)
 }
 
 @Composable
-private fun EventosContent(eventos: List<EventoItemUi>) {
+private fun EventosContent(
+    eventos: List<EventoItemUi>,
+    onProgramarClick: () -> Unit,
+) {
     Scaffold(
         topBar = { BovinaTopBar(titulo = "Eventos", mostrarLogo = true) },
+        floatingActionButton = {
+            ExtendedFloatingActionButton(
+                onClick = onProgramarClick,
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text(text = "  Programar evento", style = MaterialTheme.typography.labelLarge)
+            }
+        },
     ) { innerPadding ->
         if (eventos.isEmpty()) {
             Box(
@@ -127,6 +146,7 @@ private fun EventosConDatosPreview() {
                 EventoItemUi("vacuna", "Aftosa, dosis de refuerzo", "10/05/2026 08:30"),
                 EventoItemUi("tratamiento", "Desparasitación", "02/05/2026 16:10"),
             ),
+            onProgramarClick = {},
         )
     }
 }
@@ -134,5 +154,5 @@ private fun EventosConDatosPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun EventosVacioPreview() {
-    Prototipo1Theme { EventosContent(eventos = emptyList()) }
+    Prototipo1Theme { EventosContent(eventos = emptyList(), onProgramarClick = {}) }
 }

@@ -28,6 +28,7 @@ import com.devcris80.prototipo.ui.screens.EventosScreen
 import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
+import com.devcris80.prototipo.ui.screens.ProgramarEventoScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
 import com.devcris80.prototipo.ui.util.appViewModel
 
@@ -170,7 +171,14 @@ fun AppNavHost() {
                 )
             }
             composable(Rutas.Eventos.ruta) {
-                EventosScreen()
+                EventosScreen(
+                    onProgramarClick = { navController.navigate(Rutas.ProgramarEvento.ruta) },
+                )
+            }
+            composable(Rutas.ProgramarEvento.ruta) {
+                ProgramarEventoScreen(
+                    onVolver = { navController.popBackStack() },
+                )
             }
             composable(Rutas.EstadoServicio.ruta) {
                 PesosScreen(
