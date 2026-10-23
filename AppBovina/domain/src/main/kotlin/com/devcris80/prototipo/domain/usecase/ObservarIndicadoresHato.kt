@@ -2,11 +2,13 @@ package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
+import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import kotlinx.coroutines.ExperimentalCoroutinesApi
@@ -15,9 +17,13 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
+import java.util.Calendar
 
 /** Cuántos Animales activos hay de un propósito y una etapa; la etapa ya dice el sexo. */
 data class GrupoInventario(val proposito: Proposito, val etapa: Etapa, val cantidad: Int)
+
+/** Cuántos Eventos hubo en un mes, por tipo; [mes] va de 1 a 12. */
+data class EventosDelMes(val anio: Int, val mes: Int, val porTipo: Map<String, Int>)
 
 data class IndicadoresHato(
     /** Solo los grupos con algún Animal, por propósito y luego por etapa. */
@@ -29,6 +35,10 @@ data class IndicadoresHato(
     val animalesSinChapetaActiva: List<Animal>,
     /** Animales sin Registro en los últimos [ObservarIndicadoresHato.DIAS_SIN_PESAJE] días. */
     val animalesSinPesajeReciente: List<Animal>,
+    /** Animales activos, por nombre: entre ellos se elige cuál ver en la evolución de peso. */
+    val animalesActivos: List<Animal>,
+    /** Solo los meses con algún Evento, del más reciente al más antiguo (RF-42). */
+    val eventosPorMes: List<EventosDelMes>,
 )
 
 /**
@@ -41,13 +51,16 @@ class ObservarIndicadoresHato(
     private val chapetaRepository: ChapetaRepository,
     private val registroRepository: RegistroRepository,
     private val pesajePendienteRepository: PesajePendienteRepository,
+    private val eventoRepository: EventoRepository,
     private val clock: () -> Long = { System.currentTimeMillis() },
 ) {
     operator fun invoke(): Flow<IndicadoresHato> = combine(
         animalesConUltimoRegistro(),
         chapetaRepository.observeActivas(),
         pesajePendienteRepository.observeSinResolver(),
-    ) { animales, chapetasActivas, pendientes ->
+        eventoRepository.observeActivos(),
+    ) { animales, chapetasActivas, pendientes, eventos ->
+        val idsActivos = animales.map { it.animal.idAnimal }.toSet()
         val conChapetaActiva = chapetasActivas.map { it.idAnimal }.toSet()
         val desde = clock() - DIAS_SIN_PESAJE * MILIS_POR_DIA
         IndicadoresHato(
@@ -64,7 +77,29 @@ class ObservarIndicadoresHato(
             animalesSinPesajeReciente = animales
                 .filter { it.ultimoRegistro == null || it.ultimoRegistro.timestamp < desde }
                 .map { it.animal },
+            animalesActivos = animales.map { it.animal },
+            eventosPorMes = eventosPorMes(eventos.filter { it.idAnimal in idsActivos }),
         )
+    }
+
+    // tipoEvento es texto libre: "Vacunación" y " vacunación" cuentan como el mismo tipo.
+    private fun eventosPorMes(eventos: List<Evento>): List<EventosDelMes> {
+        val calendario = Calendar.getInstance()
+        return eventos
+            .groupBy { evento ->
+                calendario.timeInMillis = evento.fecha
+                calendario.get(Calendar.YEAR) to calendario.get(Calendar.MONTH) + 1
+            }
+            .map { (anioMes, delMes) ->
+                EventosDelMes(
+                    anio = anioMes.first,
+                    mes = anioMes.second,
+                    porTipo = delMes
+                        .groupingBy { it.tipoEvento.trim().lowercase().replaceFirstChar(Char::uppercase) }
+                        .eachCount(),
+                )
+            }
+            .sortedWith(compareByDescending<EventosDelMes> { it.anio }.thenByDescending { it.mes })
     }
 
     private data class AnimalConUltimoRegistro(val animal: Animal, val ultimoRegistro: Registro?)

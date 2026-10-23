@@ -13,4 +13,7 @@ interface EventoDao {
 
     @Query("SELECT * FROM evento WHERE idAnimal = :idAnimal AND fechaBaja IS NULL ORDER BY fecha DESC")
     fun observeByAnimal(idAnimal: String): Flow<List<EventoEntity>>
+
+    @Query("SELECT * FROM evento WHERE fechaBaja IS NULL ORDER BY fecha DESC")
+    fun observeActivos(): Flow<List<EventoEntity>>
 }

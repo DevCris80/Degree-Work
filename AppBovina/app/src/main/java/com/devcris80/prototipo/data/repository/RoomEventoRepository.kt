@@ -17,4 +17,7 @@ class RoomEventoRepository(
 
     override fun observeByAnimal(idAnimal: String): Flow<List<Evento>> =
         eventoDao.observeByAnimal(idAnimal).map { eventos -> eventos.map { it.toDomain() } }
+
+    override fun observeActivos(): Flow<List<Evento>> =
+        eventoDao.observeActivos().map { eventos -> eventos.map { it.toDomain() } }
 }

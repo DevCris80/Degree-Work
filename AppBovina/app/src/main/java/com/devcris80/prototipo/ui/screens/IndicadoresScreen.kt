@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyRow
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
@@ -24,10 +26,13 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.usecase.EventosDelMes
+import com.devcris80.prototipo.domain.usecase.EvolucionPeso
 import com.devcris80.prototipo.domain.usecase.GrupoInventario
 import com.devcris80.prototipo.domain.usecase.IndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.ui.components.BovinaCard
+import com.devcris80.prototipo.ui.components.BovinaFilterChip
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
@@ -36,18 +41,24 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import java.text.SimpleDateFormat
+import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
 
-/** Indicadores del hato (CU-24): inventario, pesajes pendientes y completitud del historial. */
+/**
+ * Indicadores del hato (CU-24): inventario, pesajes pendientes, completitud del historial,
+ * evolución de peso de un Animal y Eventos por mes.
+ */
 @Composable
 fun IndicadoresScreen(
     onVolver: () -> Unit,
     onAnimalClick: (idAnimal: String) -> Unit,
     onPesajesPendientesClick: () -> Unit,
 ) {
-    val viewModel = appViewModel { container -> IndicadoresViewModel(container.observarIndicadoresHato) }
+    val viewModel = appViewModel { container ->
+        IndicadoresViewModel(container.observarIndicadoresHato, container.observarEvolucionPeso)
+    }
     val estado by viewModel.estado.collectAsState()
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
 
@@ -83,6 +94,16 @@ fun IndicadoresScreen(
                 )
             }
             item { TarjetaCompletitud(indicadores = indicadores, onAnimalClick = onAnimalClick) }
+            item {
+                TarjetaEvolucionPeso(
+                    animales = indicadores.animalesActivos,
+                    idAnimalElegido = estado.idAnimalElegido,
+                    evolucion = estado.evolucionPeso,
+                    formatoFecha = formatoFecha,
+                    onAnimalElegido = viewModel::onAnimalElegido,
+                )
+            }
+            item { TarjetaEventosPorMes(indicadores.eventosPorMes) }
             item {
                 Text(
                     text = "Última sincronización: " +
@@ -218,7 +239,86 @@ private fun ListaIncompletos(
 }
 
 @Composable
-private fun FilaConteo(etiqueta: String, cantidad: Int, destacada: Boolean = false) {
+private fun TarjetaEvolucionPeso(
+    animales: List<Animal>,
+    idAnimalElegido: String?,
+    evolucion: EvolucionPeso?,
+    formatoFecha: SimpleDateFormat,
+    onAnimalElegido: (idAnimal: String) -> Unit,
+) {
+    BovinaCard(modifier = Modifier.fillMaxWidth()) {
+        Text(text = "Evolución de peso", style = MaterialTheme.typography.headlineSmall)
+        if (animales.isEmpty()) {
+            TextoSinDatos("Todavía no hay animales activos.")
+            return@BovinaCard
+        }
+        LazyRow(
+            horizontalArrangement = Arrangement.spacedBy(8.dp),
+            modifier = Modifier.padding(vertical = 8.dp),
+        ) {
+            items(animales, key = { it.idAnimal }) { animal ->
+                BovinaFilterChip(
+                    texto = animal.nombre,
+                    seleccionado = animal.idAnimal == idAnimalElegido,
+                    onClick = { onAnimalElegido(animal.idAnimal) },
+                )
+            }
+        }
+        when {
+            evolucion == null -> TextoSinDatos("Elige un animal para ver sus pesajes.")
+            evolucion.registros.isEmpty() -> TextoSinDatos("Este animal no tiene pesajes.")
+            else -> {
+                val ganancia = evolucion.gananciaDiariaKg
+                if (ganancia == null) {
+                    TextoSinDatos("No hay datos suficientes para la ganancia diaria: hace falta otro pesaje.")
+                } else {
+                    val kgPorDia = String.format(Locale.getDefault(), "%.2f", ganancia)
+                    Text(
+                        text = "Ganancia diaria promedio: $kgPorDia kg/día",
+                        style = MaterialTheme.typography.titleSmall,
+                    )
+                }
+                evolucion.registros.forEach { registro ->
+                    FilaDato(
+                        etiqueta = formatoFecha.format(Date(registro.timestamp)),
+                        valor = "${registro.peso} kg",
+                    )
+                }
+            }
+        }
+    }
+}
+
+@Composable
+private fun TarjetaEventosPorMes(eventosPorMes: List<EventosDelMes>) {
+    val formatoMes = remember { SimpleDateFormat("MMMM yyyy", Locale.getDefault()) }
+    BovinaCard(modifier = Modifier.fillMaxWidth()) {
+        Text(text = "Eventos por mes", style = MaterialTheme.typography.headlineSmall)
+        if (eventosPorMes.isEmpty()) {
+            TextoSinDatos("No hay eventos registrados.")
+            return@BovinaCard
+        }
+        eventosPorMes.forEach { delMes ->
+            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+            val inicioDelMes = Calendar.getInstance().apply { clear(); set(delMes.anio, delMes.mes - 1, 1) }
+            FilaConteo(
+                etiqueta = formatoMes.format(inicioDelMes.time).replaceFirstChar(Char::uppercase),
+                cantidad = delMes.porTipo.values.sum(),
+                destacada = true,
+            )
+            delMes.porTipo.entries.sortedByDescending { it.value }.forEach { (tipo, cantidad) ->
+                FilaConteo(etiqueta = tipo, cantidad = cantidad)
+            }
+        }
+    }
+}
+
+@Composable
+private fun FilaConteo(etiqueta: String, cantidad: Int, destacada: Boolean = false) =
+    FilaDato(etiqueta = etiqueta, valor = cantidad.toString(), destacada = destacada)
+
+@Composable
+private fun FilaDato(etiqueta: String, valor: String, destacada: Boolean = false) {
     val estilo = if (destacada) MaterialTheme.typography.titleSmall else MaterialTheme.typography.bodyMedium
     Row(
         modifier = Modifier
@@ -227,7 +327,7 @@ private fun FilaConteo(etiqueta: String, cantidad: Int, destacada: Boolean = fal
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
         Text(text = etiqueta, style = estilo, modifier = Modifier.weight(1f))
-        Text(text = cantidad.toString(), style = estilo)
+        Text(text = valor, style = estilo)
     }
 }
 
