@@ -1,0 +1,43 @@
+@startuml DE-02_edicion_concurrente
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DE-02] Escenario sin conexión 2: dos usuarios editan el mismo animal sin señal (E-04, RF-12, RF-33, RF-34)
+
+Person(ganadero, "Ganadero")
+Person(operario, "Operario")
+Container(appA, "App MiGanado — celular A", "Kotlin, Room", $tags="parcial")
+Container(appB, "App MiGanado — celular B", "Kotlin, Room", $tags="parcial")
+Container(rest, "API de datos", "PostgREST + funciones de sincronización", $tags="planificado")
+ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", $tags="planificado")
+
+Rel(ganadero, appA, "Sin señal: edita el animal X")
+Rel(appA, appA, "Guarda en Room con rev_base = 3, sincronizado = false")
+Rel(operario, appB, "Sin señal: edita el mismo animal X")
+Rel(appB, appB, "Guarda en Room con rev_base = 3, sincronizado = false")
+Rel(appA, rest, "Recupera señal y sube la edición (rev_base = 3)", "HTTPS/JSON + JWT")
+Rel(rest, pg, "Revisión vigente 3 = rev_base: acepta y asigna rev 4", "SQL")
+Rel(rest, appA, "Aceptada, rev 4", "HTTPS/JSON")
+Rel(appB, rest, "Recupera señal y sube su edición (rev_base = 3)", "HTTPS/JSON + JWT")
+Rel(rest, pg, "Revisión vigente 4 > rev_base: guarda la edición como sibling", "SQL")
+Rel(rest, appB, "Sibling: el animal queda «en conflicto»", "HTTPS/JSON")
+Rel(appA, rest, "Descarga: recibe el sibling y marca el animal «en conflicto»", "HTTPS/JSON + JWT")
+Rel(operario, appB, "Abre el conflicto y elige la versión que queda")
+Rel(appB, rest, "Sube la resolución como edición nueva (rev_base = 4)", "HTTPS/JSON + JWT")
+Rel(rest, pg, "Acepta rev 5 y marca los siblings como resueltos; se conservan", "SQL")
+
+note over appA, appB
+  Mientras el conflicto no se resuelve, los dos celulares muestran la revisión aceptada (rev 4) con la marca «en conflicto», sin bloquear la consulta (RN-17).
+end note
+
+SHOW_LEGEND()
+@enduml
