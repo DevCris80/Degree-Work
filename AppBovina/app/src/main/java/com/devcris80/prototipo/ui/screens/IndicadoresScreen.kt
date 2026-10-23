@@ -47,7 +47,9 @@ fun IndicadoresScreen(
     onAnimalClick: (idAnimal: String) -> Unit,
     onPesajesPendientesClick: () -> Unit,
 ) {
-    val viewModel = appViewModel { container -> IndicadoresViewModel(container.observarIndicadoresHato) }
+    val viewModel = appViewModel { container ->
+        IndicadoresViewModel(container.observarIndicadoresHato, container.observarEvolucionPeso)
+    }
     val estado by viewModel.estado.collectAsState()
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
 

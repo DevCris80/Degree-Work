@@ -8,4 +8,7 @@ interface EventoRepository {
 
     /** Eventos del Animal que no están dados de baja, del más reciente al más antiguo. */
     fun observeByAnimal(idAnimal: String): Flow<List<Evento>>
+
+    /** Eventos de todos los Animales que no están dados de baja, del más reciente al más antiguo. */
+    fun observeActivos(): Flow<List<Evento>>
 }

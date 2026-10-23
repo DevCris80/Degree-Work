@@ -129,15 +129,20 @@ internal class FakeRegistroRepository : RegistroRepository {
 
 internal class FakeEventoRepository : EventoRepository {
     private val porAnimal = mutableMapOf<String, MutableStateFlow<List<Evento>>>()
+    private val todos = MutableStateFlow<List<Evento>>(emptyList())
 
     fun set(idAnimal: String, eventos: List<Evento>) {
         porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }.value = eventos
+        todos.value = todos.value.filterNot { it.idAnimal == idAnimal } + eventos
     }
 
     override suspend fun insert(evento: Evento) {
         val actuales = porAnimal.getOrPut(evento.idAnimal) { MutableStateFlow(emptyList()) }
         actuales.value = listOf(evento) + actuales.value
+        todos.value = todos.value + evento
     }
+    override fun observeActivos(): Flow<List<Evento>> =
+        todos.map { lista -> lista.filter { it.fechaBaja == null }.sortedByDescending { it.fecha } }
     override fun observeByAnimal(idAnimal: String): Flow<List<Evento>> =
         porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }
 }
