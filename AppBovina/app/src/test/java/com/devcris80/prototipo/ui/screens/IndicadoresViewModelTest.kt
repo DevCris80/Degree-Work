@@ -10,6 +10,7 @@ import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
+import com.devcris80.prototipo.domain.usecase.AnioMes
 import com.devcris80.prototipo.domain.usecase.EventosDelMes
 import com.devcris80.prototipo.domain.usecase.GrupoInventario
 import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
@@ -52,6 +53,8 @@ class IndicadoresViewModelTest {
             clock = { AHORA },
         ),
         ObservarEvolucionPeso(registroRepository),
+        animalRepository,
+        chapetaRepository,
     )
 
     @Before
@@ -216,6 +219,57 @@ class IndicadoresViewModelTest {
         assertNull(evolucion.gananciaDiariaKg)
     }
 
+    @Test
+    fun conDosPesajesAMenosDeUnDia_noHayGananciaDiaria() = runTest {
+        val vaca = animal(Etapa.VACA, Proposito.LECHE)
+        animalRepository.activos.value = listOf(vaca)
+        val dosHoras = 2L * 60 * 60 * 1000
+        registroRepository.set(
+            vaca.idAnimal,
+            listOf(registro(vaca, timestamp = DIA + dosHoras).copy(peso = 405f), registro(vaca, timestamp = DIA)),
+        )
+
+        val evolucion = checkNotNull(ultimoEstado(idAnimalElegido = vaca.idAnimal).evolucionPeso)
+
+        assertEquals(2, evolucion.registros.size)
+        assertNull(evolucion.gananciaDiariaKg)
+    }
+
+    @Test
+    fun siElAnimalElegidoSeDaDeBaja_dejaDeMostrarseSuEvolucionDePeso() = runTest {
+        val vaca = animal(Etapa.VACA, Proposito.LECHE)
+        animalRepository.activos.value = listOf(vaca)
+        registroRepository.set(vaca.idAnimal, listOf(registro(vaca, timestamp = DIA)))
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<IndicadoresUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        viewModel.onAnimalElegido(vaca.idAnimal)
+        advanceUntilIdle()
+
+        animalRepository.activos.value = emptyList()
+        advanceUntilIdle()
+
+        assertNull(estados.last().idAnimalElegido)
+        assertNull(estados.last().evolucionPeso)
+        job.cancel()
+    }
+
+    @Test
+    fun losAnimalesParaElegirLlevanSuCodigoDeChapetaActiva() = runTest {
+        val conChapeta = animal(Etapa.VACA, Proposito.LECHE)
+        val sinChapeta = animal(Etapa.TORO, Proposito.CARNE)
+        animalRepository.activos.value = listOf(conChapeta, sinChapeta)
+        val activa = chapeta(conChapeta)
+        chapetaRepository.set(activa)
+
+        val elegibles = ultimoEstado().animalesElegibles
+
+        assertEquals(
+            listOf(AnimalConCodigo(conChapeta, activa.codigo), AnimalConCodigo(sinChapeta, null)),
+            elegibles,
+        )
+    }
+
     private fun evento(animal: Animal, tipo: String, fecha: Long, fechaBaja: Long? = null) = Evento(
         idEvento = UUID.randomUUID().toString(),
         idAnimal = animal.idAnimal,
@@ -238,9 +292,12 @@ class IndicadoresViewModelTest {
             vaca.idAnimal,
             listOf(
                 evento(vaca, "Vacunación", fecha(2026, 10, 20)),
-                evento(vaca, " vacunación", fecha(2026, 10, 5)),
+                evento(vaca, " vacunacion", fecha(2026, 10, 5)),
+                evento(vaca, "BVD", fecha(2026, 10, 3)),
                 evento(vaca, "Tratamiento", fecha(2026, 10, 7)),
                 evento(vaca, "Vacunación", fecha(2026, 9, 15)),
+                evento(vaca, "bvd ", fecha(2026, 9, 10)),
+                evento(vaca, "BVD", fecha(2026, 9, 2)),
                 evento(vaca, "Vacunación", fecha(2026, 10, 8), fechaBaja = fecha(2026, 10, 9)),
             ),
         )
@@ -250,8 +307,8 @@ class IndicadoresViewModelTest {
 
         assertEquals(
             listOf(
-                EventosDelMes(anio = 2026, mes = 10, porTipo = mapOf("Vacunación" to 2, "Tratamiento" to 1)),
-                EventosDelMes(anio = 2026, mes = 9, porTipo = mapOf("Vacunación" to 1)),
+                EventosDelMes(AnioMes(2026, 10), mapOf("Vacunación" to 2, "Tratamiento" to 1, "BVD" to 1)),
+                EventosDelMes(AnioMes(2026, 9), mapOf("Vacunación" to 1, "BVD" to 2)),
             ),
             indicadores.eventosPorMes,
         )

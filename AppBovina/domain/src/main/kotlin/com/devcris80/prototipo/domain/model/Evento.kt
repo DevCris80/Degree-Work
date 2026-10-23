@@ -1,5 +1,8 @@
 package com.devcris80.prototipo.domain.model
 
+import java.text.Normalizer
+import java.util.Locale
+
 data class Evento(
     val idEvento: String,
     val idAnimal: String,
@@ -9,4 +12,19 @@ data class Evento(
     val fecha: Long,
     val detalle: String,
     val fechaBaja: Long? = null,
-)
+) {
+    /** [tipoEvento] escrito sin espacios de más, como lo digitó la persona. */
+    val tipoEscrito: String get() = tipoEvento.trim().replace(ESPACIOS, " ")
+
+    /**
+     * El tipo sin lo que no lo cambia: mayúsculas, tildes y espacios. [tipoEvento] es texto libre,
+     * así que "Vacunación" y " vacunacion" son el mismo tipo.
+     */
+    val claveDeTipo: String
+        get() = Normalizer.normalize(tipoEscrito, Normalizer.Form.NFD).replace(TILDES, "").lowercase(Locale.ROOT)
+
+    private companion object {
+        val ESPACIOS = Regex("\\s+")
+        val TILDES = Regex("\\p{M}")
+    }
+}
