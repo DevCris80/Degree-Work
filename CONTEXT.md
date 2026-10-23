@@ -12,7 +12,7 @@ El identificador físico colocado en un `Animal`, identificado por su `codigo` (
 _Avoid_: chip, etiqueta, id_chip ("chip" sobrevive solo en el contrato con el ESP32: el campo `id_chip` y el motivo `CHIP_NO_ASOCIADO`)
 
 **Evento**:
-Un suceso clínico o de manejo asociado a un `Animal` (vacuna, tratamiento, nacimiento, inseminación), con fecha y detalle.
+Un suceso clínico o de manejo asociado a un `Animal` (vacunación, tratamiento, parto, inseminación), con fecha y detalle.
 _Avoid_: Registro (reservado exclusivamente para pesajes)
 
 **Pesaje**:
@@ -35,7 +35,26 @@ Conciliar un `Pesaje pendiente` sin asignarlo, porque no corresponde a ningún `
 _Avoid_: borrar, eliminar; "descartar" para un pesaje que el sistema rechaza o pierde
 
 **sincronizado**:
-Campo booleano presente en toda entidad: `false` significa que la fila tiene cambios locales que todavía no se han subido a Supabase. Toda creación o modificación lo devuelve a `false` y actualiza `fechaModificacion`, la fecha del último cambio de la fila. La sincronización en sí todavía no está implementada.
+Campo booleano presente en toda entidad: `false` significa que la fila tiene cambios locales que todavía no se han subido a Supabase. Toda creación o modificación lo devuelve a `false` y actualiza `fechaModificacion`, la fecha del último cambio de la fila. `fechaModificacion` informa cuándo cambió la fila, pero nunca decide un `Conflicto`. La sincronización en sí todavía no está implementada.
+
+**Revisión**:
+Cada versión de un `Animal`, `Evento` o `Registro` que el servidor aceptó, numerada en orden. Toda edición parte de una Revisión (la última que conocía el celular que la hizo); si esa sigue siendo la vigente al sincronizar, la edición se acepta como la Revisión siguiente. Las Revisiones se conservan siempre.
+_Avoid_: versión (a secas), historial
+
+**Sibling**:
+Una edición que llegó al servidor partiendo de una `Revisión` que ya no era la vigente. No se descarta ni se fusiona: se guarda junto a la Revisión vigente y deja la fila en `Conflicto`. Cuenta la fila entera, aunque los campos editados no se pisen. Se conserva aun después de resolverse.
+_Avoid_: copia, duplicado, versión perdedora
+
+**Conflicto**:
+El estado de una fila que tiene uno o más `Sibling` sin resolver. La fila se sigue consultando con su `Revisión` vigente, marcada "en conflicto". Solo lo cierra una persona al **resolverlo**, eligiendo qué queda; editar la fila sin resolverlo no lo cierra. Cualquier rol puede resolverlo.
+
+**Rechazo**:
+Un cambio local que el servidor no aceptó porque viola una regla de unicidad o de permisos (por ejemplo, un código con otra `Chapeta` activa, o un `Pesaje pendiente` ya conciliado en otro celular). No se pierde: queda a la vista hasta que una persona lo corrige.
+_Avoid_: descartar (reservado para `Pesaje pendiente`), error, `Conflicto` (un Conflicto es una edición concurrente válida; un Rechazo viola una regla)
+
+**Dar de baja**:
+Marcar un `Animal`, `Evento` o `Registro` como retirado: deja de aparecer en las listas, pero se conserva. Una baja nunca queda como `Sibling`: se aplica aunque la fila haya cambiado en otro celular.
+_Avoid_: borrar, eliminar
 
 **Usuario**:
 Una persona que opera la app, identificada por `idUsuario` y asociada a un `PerfilFinca` mediante `idPerfilFinca`; tiene un `rol` que distingue su función. Un mismo `PerfilFinca` puede tener varios Usuarios, cada uno con la app en su propio dispositivo; un Usuario pertenece a una sola finca. Su `rol` es **Ganadero** u **Operario**.
