@@ -26,3 +26,7 @@ Three layers, `ui → domain ← data`. The why is in `docs/adr/0001-capas-con-d
 - **`ui`** has one ViewModel per screen, created with `appViewModel { container -> ... }`. It exposes a `StateFlow` of screen state; the screen receives state and events, and `AppNavHost` only navigates.
 - **Use cases** exist where there is a business rule. A read with no rule goes from the ViewModel straight to the repository.
 - **`AppContainer`** creates the database and wires repositories and use cases by hand. Register new ones there. It is the only class outside `data` that imports from `data`.
+
+## Architecture (Supabase)
+
+The server schema lives in `supabase/migrations/` as SQL: each change is a new migration, and an applied migration stays as it is. Each rule the schema enforces has a pgTAP test in `supabase/tests/database/`. Before changing the schema or writing a function that writes to it, read `supabase/README.md`: it covers running it locally with Podman and the error codes a sync function classifies as rejections.
