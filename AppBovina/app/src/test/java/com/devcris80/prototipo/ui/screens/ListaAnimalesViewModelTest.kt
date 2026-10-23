@@ -138,13 +138,12 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun cerrarSesion_olvidaLaSesionYAvisaALaPantalla() = runTest {
+    fun cerrarSesion_olvidaLaSesionGuardada() = runTest {
         sesionRepository.guardada.value = true
         val viewModel = crearViewModel()
 
         viewModel.onCerrarSesion()
 
-        assertEquals(ListaAnimalesEvento.SesionCerrada, viewModel.eventos.first())
         assertEquals(false, sesionRepository.guardada.value)
     }
 }

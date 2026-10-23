@@ -5,6 +5,9 @@ import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakeSesionRepository
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.test.runCurrent
+import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.resetMain
 import kotlinx.coroutines.test.setMain
@@ -53,5 +56,21 @@ class InicioViewModelTest {
         sesionRepository.guardada.value = true
 
         assertEquals(false, viewModel.puedeEntrar.value)
+    }
+
+    // Cerrar sesión, o que el servidor rechace renovarla, saca de la app aunque ya esté abierta.
+    @Test
+    fun cuandoLaSesionGuardadaDesaparece_avisaQueSePerdio() = runTest {
+        sesionRepository.guardada.value = true
+        val viewModel = InicioViewModel(cuentaRepository, sesionRepository)
+        val avisos = mutableListOf<Unit>()
+        val job = launch { viewModel.sesionPerdida.collect { avisos.add(it) } }
+        runCurrent()
+
+        sesionRepository.guardada.value = false
+        runCurrent()
+
+        assertEquals(1, avisos.size)
+        job.cancel()
     }
 }

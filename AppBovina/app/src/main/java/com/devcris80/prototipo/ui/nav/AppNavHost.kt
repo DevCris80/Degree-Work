@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -45,8 +46,16 @@ fun AppNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
     val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository, container.sesionRepository) }
-    // InicioViewModel decide una sola vez; después, iniciar y cerrar sesión navegan.
+    // InicioViewModel decide una sola vez; después, iniciar sesión navega desde el Login, y perder la
+    // sesión (cerrarla o que el servidor rechace renovarla) vuelve al Login desde cualquier pantalla.
     val puedeEntrar by inicioViewModel.puedeEntrar.collectAsState()
+    LaunchedEffect(inicioViewModel) {
+        inicioViewModel.sesionPerdida.collect {
+            if (navController.currentDestination?.route != Rutas.Login.ruta) {
+                navController.navigate(Rutas.Login.ruta) { popUpTo(0) { inclusive = true } }
+            }
+        }
+    }
     if (puedeEntrar == null) return
 
     Scaffold(
@@ -104,6 +113,7 @@ fun AppNavHost() {
             startDestination = if (puedeEntrar == true) Rutas.ListaAnimales.ruta else Rutas.Login.ruta,
             modifier = Modifier.padding(innerPadding),
         ) {
+            // Sin entrada desde el Login hasta #87 (crear cuenta con Supabase).
             composable(Rutas.CrearCuenta.ruta) {
                 CrearCuentaScreen(
                     onCuentaCreada = {
@@ -133,11 +143,6 @@ fun AppNavHost() {
                         }
                     },
                     onIndicadoresClick = { navController.navigate(Rutas.Indicadores.ruta) },
-                    onSesionCerrada = {
-                        navController.navigate(Rutas.Login.ruta) {
-                            popUpTo(0) { inclusive = true }
-                        }
-                    },
                 )
             }
             composable(Rutas.Indicadores.ruta) {

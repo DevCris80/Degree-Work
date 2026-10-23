@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.TextButton
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
@@ -31,8 +30,8 @@ import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -64,7 +63,6 @@ fun ListaAnimalesScreen(
     onNuevoAnimalClick: () -> Unit,
     onPesajesPendientesClick: () -> Unit,
     onIndicadoresClick: () -> Unit,
-    onSesionCerrada: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -78,14 +76,6 @@ fun ListaAnimalesScreen(
     }
     val estado by viewModel.estado.collectAsState()
     var confirmarCierre by remember { mutableStateOf(false) }
-
-    LaunchedEffect(viewModel) {
-        viewModel.eventos.collect { evento ->
-            when (evento) {
-                ListaAnimalesEvento.SesionCerrada -> onSesionCerrada()
-            }
-        }
-    }
 
     var busqueda by remember { mutableStateOf("") }
 

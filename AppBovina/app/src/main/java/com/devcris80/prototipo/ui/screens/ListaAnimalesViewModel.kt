@@ -1,9 +1,5 @@
 package com.devcris80.prototipo.ui.screens
 
-import kotlinx.coroutines.launch
-import kotlinx.coroutines.flow.receiveAsFlow
-import kotlinx.coroutines.flow.Flow
-import kotlinx.coroutines.channels.Channel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
@@ -16,6 +12,7 @@ import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -24,6 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class AnimalConResumen(
     val animal: Animal,
@@ -39,10 +37,6 @@ data class ListaAnimalesUiState(
     val pesajesPendientes: Int = 0,
 )
 
-sealed interface ListaAnimalesEvento {
-    data object SesionCerrada : ListaAnimalesEvento
-}
-
 /** Estado de la Lista de Animales: finca, usuario, animales activos con su Chapeta y último Registro. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ListaAnimalesViewModel(
@@ -53,8 +47,6 @@ class ListaAnimalesViewModel(
     observarPesajesPendientes: ObservarPesajesPendientes,
     private val sesionRepository: SesionRepository,
 ) : ViewModel() {
-    private val _eventos = Channel<ListaAnimalesEvento>(Channel.BUFFERED)
-    val eventos: Flow<ListaAnimalesEvento> = _eventos.receiveAsFlow()
 
     private val filtro = MutableStateFlow<Proposito?>(null)
 
@@ -97,10 +89,8 @@ class ListaAnimalesViewModel(
         filtro.value = proposito
     }
 
+    // AppNavHost vuelve al Login al perderse la sesión.
     fun onCerrarSesion() {
-        viewModelScope.launch {
-            sesionRepository.cerrarSesion()
-            _eventos.send(ListaAnimalesEvento.SesionCerrada)
-        }
+        viewModelScope.launch { sesionRepository.cerrarSesion() }
     }
 }
