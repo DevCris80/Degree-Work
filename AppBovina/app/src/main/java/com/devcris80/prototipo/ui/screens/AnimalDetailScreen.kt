@@ -42,6 +42,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
+import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
@@ -63,6 +64,7 @@ fun DetalleAnimalScreen(
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
     onEditarClick: () -> Unit = {},
+    onAnimalClick: (idAnimal: String) -> Unit = {},
 ) {
     val viewModel = appViewModel { container ->
         val idAnimal = createSavedStateHandle().get<String>("idAnimal").orEmpty()
@@ -180,6 +182,28 @@ fun DetalleAnimalScreen(
                         )
                     }
                     DatoTile("Destino", animal.proposito.aEtiqueta(), Modifier.fillMaxWidth())
+                }
+            }
+            if (estado.padre != null || estado.madre != null) {
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        estado.padre?.let { padre ->
+                            DatoTile(
+                                "Padre",
+                                padre.etiquetaGenealogia(),
+                                Modifier.weight(1f),
+                                onClick = { onAnimalClick(padre.idAnimal) },
+                            )
+                        }
+                        estado.madre?.let { madre ->
+                            DatoTile(
+                                "Madre",
+                                madre.etiquetaGenealogia(),
+                                Modifier.weight(1f),
+                                onClick = { onAnimalClick(madre.idAnimal) },
+                            )
+                        }
+                    }
                 }
             }
             item {
@@ -362,10 +386,16 @@ fun DetalleAnimalScreen(
 }
 
 @Composable
-private fun DatoTile(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
+private fun DatoTile(
+    etiqueta: String,
+    valor: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.small)
+            .then(if (onClick != null) Modifier.clickable(onClickLabel = "Ver ficha", onClick = onClick) else Modifier)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {
@@ -377,6 +407,9 @@ private fun DatoTile(etiqueta: String, valor: String, modifier: Modifier = Modif
         Text(text = valor, style = MaterialTheme.typography.titleMedium)
     }
 }
+
+private fun Animal.etiquetaGenealogia(): String =
+    if (fechaBaja == null) "$nombre ›" else "$nombre (dado de baja) ›"
 
 @Composable
 private fun PestanaPildora(

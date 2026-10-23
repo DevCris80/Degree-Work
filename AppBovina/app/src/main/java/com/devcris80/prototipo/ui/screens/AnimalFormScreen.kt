@@ -21,6 +21,7 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -64,6 +65,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
+import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
@@ -101,6 +103,7 @@ fun RegistrarAnimalScreen(
             savedState.get<String>("codigo"),
             savedState.get<String>("aviso"),
             container.cuentaRepository,
+            container.animalRepository,
             container.registrarAnimal,
             container.asignarPesajesPendientes,
         )
@@ -166,6 +169,8 @@ fun RegistrarAnimalScreen(
         onFechaNacimientoCambiada = viewModel::onFechaNacimientoCambiada,
         onFechaEstimadaCambiada = viewModel::onFechaEstimadaCambiada,
         onPropositoSeleccionado = viewModel::onPropositoSeleccionado,
+        onPadreSeleccionado = viewModel::onPadreSeleccionado,
+        onMadreSeleccionada = viewModel::onMadreSeleccionada,
         onGuardar = viewModel::onGuardar,
         onOfertaPesajesPendientesRespondida = viewModel::onOfertaPesajesPendientesRespondida,
     )
@@ -188,6 +193,8 @@ private fun RegistrarAnimalContent(
     onFechaNacimientoCambiada: (Long) -> Unit,
     onFechaEstimadaCambiada: (Boolean) -> Unit,
     onPropositoSeleccionado: (Proposito) -> Unit,
+    onPadreSeleccionado: (String?) -> Unit,
+    onMadreSeleccionada: (String?) -> Unit,
     onGuardar: () -> Unit,
     onOfertaPesajesPendientesRespondida: (Boolean) -> Unit,
 ) {
@@ -360,6 +367,19 @@ private fun RegistrarAnimalContent(
                 }
             }
 
+            SelectorProgenitor(
+                label = "Padre (opcional)",
+                candidatos = estado.candidatosPadre,
+                idSeleccionado = estado.idPadre,
+                onSeleccionado = onPadreSeleccionado,
+            )
+            SelectorProgenitor(
+                label = "Madre (opcional)",
+                candidatos = estado.candidatosMadre,
+                idSeleccionado = estado.idMadre,
+                onSeleccionado = onMadreSeleccionada,
+            )
+
             BovinaPrimaryButton(
                 texto = "Guardar animal",
                 onClick = onGuardar,
@@ -424,11 +444,57 @@ private fun RegistrarAnimalPreview() {
             onFechaNacimientoCambiada = {},
             onFechaEstimadaCambiada = {},
             onPropositoSeleccionado = {},
+            onPadreSeleccionado = {},
+            onMadreSeleccionada = {},
             onGuardar = {},
             onOfertaPesajesPendientesRespondida = {},
         )
     }
 }
+
+/** Elige el padre o la madre entre los candidatos, o ninguno. Los dados de baja también se pueden elegir. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectorProgenitor(
+    label: String,
+    candidatos: List<Animal>,
+    idSeleccionado: String?,
+    onSeleccionado: (String?) -> Unit,
+) {
+    var expandido by remember { mutableStateOf(false) }
+    val seleccionado = candidatos.firstOrNull { it.idAnimal == idSeleccionado }
+    ExposedDropdownMenuBox(expanded = expandido, onExpandedChange = { expandido = it }) {
+        CampoConIcono(
+            label = label,
+            value = seleccionado?.etiquetaProgenitor() ?: "Sin registrar",
+            onValueChange = {},
+            icon = Icons.Filled.Pets,
+            readOnly = true,
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
+        )
+        ExposedDropdownMenu(expanded = expandido, onDismissRequest = { expandido = false }) {
+            DropdownMenuItem(
+                text = { Text("Sin registrar") },
+                onClick = {
+                    onSeleccionado(null)
+                    expandido = false
+                },
+            )
+            candidatos.forEach { candidato ->
+                DropdownMenuItem(
+                    text = { Text(candidato.etiquetaProgenitor()) },
+                    onClick = {
+                        onSeleccionado(candidato.idAnimal)
+                        expandido = false
+                    },
+                )
+            }
+        }
+    }
+}
+
+private fun Animal.etiquetaProgenitor(): String =
+    if (fechaBaja == null) nombre else "$nombre (dado de baja)"
 
 @Composable
 private fun TarjetaSeleccionable(

@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
@@ -15,6 +16,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
@@ -32,6 +34,11 @@ data class RegistrarAnimalUiState(
     val fechaNacimientoEsEstimada: Boolean = false,
     val proposito: Proposito? = null,
     val fotoUri: String? = null,
+    val idPadre: String? = null,
+    val idMadre: String? = null,
+    /** Machos y hembras de la finca, incluidos los dados de baja; primero los activos. */
+    val candidatosPadre: List<Animal> = emptyList(),
+    val candidatosMadre: List<Animal> = emptyList(),
     val codigoYaActivo: Boolean = false,
     val ofertaPesajesPendientes: OfertaPesajesPendientes? = null,
     val errorAsignacionPendientes: Boolean = false,
@@ -58,6 +65,7 @@ class RegistrarAnimalViewModel(
     codigoPrecargado: String?,
     avisoAnterior: String?,
     private val cuentaRepository: CuentaRepository,
+    animalRepository: AnimalRepository,
     private val registrarAnimal: RegistrarAnimal,
     private val asignarPesajesPendientes: AsignarPesajesPendientes,
 ) : ViewModel() {
@@ -73,6 +81,18 @@ class RegistrarAnimalViewModel(
     private val _eventos = Channel<RegistrarAnimalEvento>(Channel.BUFFERED)
     val eventos: Flow<RegistrarAnimalEvento> = _eventos.receiveAsFlow()
 
+    init {
+        viewModelScope.launch {
+            combine(
+                animalRepository.observePorSexo(Sexo.MACHO),
+                animalRepository.observePorSexo(Sexo.HEMBRA),
+            ) { machos, hembras -> machos to hembras }
+                .collect { (machos, hembras) ->
+                    _estado.update { it.copy(candidatosPadre = machos, candidatosMadre = hembras) }
+                }
+        }
+    }
+
     fun onNombreCambiado(valor: String) = _estado.update { it.copy(nombre = valor) }
     fun onCodigoCambiado(valor: String) = _estado.update { it.copy(codigo = valor) }
     fun onRazaCambiada(valor: String) = _estado.update { it.copy(raza = valor) }
@@ -80,6 +100,8 @@ class RegistrarAnimalViewModel(
     fun onFechaEstimadaCambiada(esEstimada: Boolean) = _estado.update { it.copy(fechaNacimientoEsEstimada = esEstimada) }
     fun onPropositoSeleccionado(proposito: Proposito) = _estado.update { it.copy(proposito = proposito) }
     fun onFotoCapturada(uri: String?) = _estado.update { it.copy(fotoUri = uri) }
+    fun onPadreSeleccionado(idAnimal: String?) = _estado.update { it.copy(idPadre = idAnimal) }
+    fun onMadreSeleccionada(idAnimal: String?) = _estado.update { it.copy(idMadre = idAnimal) }
     fun onCodigoYaActivoVisto() = _estado.update { it.copy(codigoYaActivo = false) }
     fun onErrorAsignacionPendientesVisto() = _estado.update { it.copy(errorAsignacionPendientes = false) }
 
@@ -105,6 +127,8 @@ class RegistrarAnimalViewModel(
                 fechaNacimientoEsEstimada = actual.fechaNacimientoEsEstimada,
                 proposito = checkNotNull(actual.proposito),
                 fotoUri = actual.fotoUri,
+                idPadre = actual.idPadre,
+                idMadre = actual.idMadre,
             )
             when (val resultado = registrarAnimal(animal, actual.codigo.takeIf { it.isNotBlank() })) {
                 is RegistrarAnimal.Resultado.Exito -> {

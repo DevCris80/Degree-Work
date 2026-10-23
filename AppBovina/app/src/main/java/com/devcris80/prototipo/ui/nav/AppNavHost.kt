@@ -153,6 +153,7 @@ fun AppNavHost() {
                 DetalleAnimalScreen(
                     onVolver = { navController.popBackStack() },
                     onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
+                    onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
                 )
             }
             composable(

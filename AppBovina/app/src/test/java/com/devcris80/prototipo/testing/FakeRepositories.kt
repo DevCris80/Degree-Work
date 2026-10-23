@@ -26,12 +26,16 @@ internal class FakeAnimalRepository : AnimalRepository {
     val activos = MutableStateFlow<List<Animal>>(emptyList())
     private val porId = mutableMapOf<String, MutableStateFlow<Animal?>>()
     val bajas = mutableListOf<Pair<String, Long>>()
+    val insertados = mutableListOf<Animal>()
 
     fun set(animal: Animal) {
         porId.getOrPut(animal.idAnimal) { MutableStateFlow(null) }.value = animal
     }
 
-    override suspend fun insert(animal: Animal) = set(animal)
+    override suspend fun insert(animal: Animal) {
+        insertados.add(animal)
+        set(animal)
+    }
     override fun observeActivos(): Flow<List<Animal>> = activos
     override fun observePorSexo(sexo: Sexo): Flow<List<Animal>> =
         activos.map { animales -> animales.filter { it.sexo == sexo } }
