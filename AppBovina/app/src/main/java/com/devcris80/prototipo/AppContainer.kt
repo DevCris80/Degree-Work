@@ -31,6 +31,7 @@ import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
+import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
 
 /**
@@ -60,6 +61,8 @@ class AppContainer(context: Context) {
         cuentaRepository,
         transaccion,
     )
+    val registrarPesajeManual =
+        RegistrarPesajeManual(animalRepository, registroRepository, cuentaRepository, transaccion)
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)

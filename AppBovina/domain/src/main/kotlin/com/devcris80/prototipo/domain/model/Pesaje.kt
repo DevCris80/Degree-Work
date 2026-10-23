@@ -13,5 +13,11 @@ data class Pesaje(
     companion object {
         /** Ningún bovino pesa más que esto: un valor mayor es un error de la báscula. */
         const val PESO_MAXIMO_KG = 1500f
+
+        /**
+         * RN-07: 0 < peso ≤ [PESO_MAXIMO_KG]. Escrito con `>` y `<=` para que un peso que no es un
+         * número (NaN) también quede fuera.
+         */
+        fun pesoValido(peso: Float): Boolean = peso > 0f && peso <= PESO_MAXIMO_KG
     }
 }

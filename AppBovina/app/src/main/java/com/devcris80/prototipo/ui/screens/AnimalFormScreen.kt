@@ -28,8 +28,6 @@ import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -46,7 +44,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -58,7 +55,6 @@ import androidx.compose.runtime.setValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
-import androidx.compose.material3.SelectableDates
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
@@ -72,6 +68,7 @@ import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.BovinaFilterChip
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
+import com.devcris80.prototipo.ui.components.DialogoFechaHastaHoy
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.CampoConIcono
@@ -333,27 +330,11 @@ private fun RegistrarAnimalContent(
             }
 
             if (mostrarSelectorFecha) {
-                val selectorState = rememberDatePickerState(
-                    initialSelectedDateMillis = estado.fechaNacimiento ?: System.currentTimeMillis(),
-                    selectableDates = object : SelectableDates {
-                        override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                            utcTimeMillis <= System.currentTimeMillis()
-                    },
+                DialogoFechaHastaHoy(
+                    fecha = estado.fechaNacimiento ?: System.currentTimeMillis(),
+                    onAceptar = onFechaNacimientoCambiada,
+                    onCerrar = { mostrarSelectorFecha = false },
                 )
-                DatePickerDialog(
-                    onDismissRequest = { mostrarSelectorFecha = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            selectorState.selectedDateMillis?.let(onFechaNacimientoCambiada)
-                            mostrarSelectorFecha = false
-                        }) { Text("Aceptar") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { mostrarSelectorFecha = false }) { Text("Cancelar") }
-                    },
-                ) {
-                    DatePicker(state = selectorState)
-                }
             }
 
             Text("Propósito productivo", style = MaterialTheme.typography.labelLarge)

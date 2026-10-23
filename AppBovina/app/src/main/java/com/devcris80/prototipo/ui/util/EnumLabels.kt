@@ -31,4 +31,4 @@ fun MotivoPesajePendiente.aEtiqueta(): String = when (this) {
 }
 
 /** El nombre de un Animal, marcado si está dado de baja (por ejemplo, un padre que ya salió de la finca). */
-fun Animal.nombreConBaja(): String = if (fechaBaja == null) nombre else "$nombre (dado de baja)"
+fun Animal.nombreConBaja(): String = if (activo) nombre else "$nombre (dado de baja)"
