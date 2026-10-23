@@ -12,16 +12,12 @@ import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Schedule
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -39,15 +35,16 @@ import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.CampoConIcono
+import com.devcris80.prototipo.ui.components.DialogoFechaHastaHoy
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.appViewModel
+import com.devcris80.prototipo.ui.util.conHora
 import java.text.SimpleDateFormat
 import java.util.Calendar
 import java.util.Date
 import java.util.Locale
-import java.util.TimeZone
 
-/** Formulario del pesaje manual de un Animal (CU-16): peso, y fecha y hora de la medición. */
+/** Formulario del pesaje manual de un Animal (CU-16): peso, y fecha y hora del pesaje. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PesajeFormScreen(
@@ -89,7 +86,7 @@ fun PesajeFormScreen(
                 icon = Icons.Filled.MonitorWeight,
                 keyboardType = KeyboardType.Decimal,
             )
-            Text("Fecha y hora de la medición", style = MaterialTheme.typography.labelLarge)
+            Text("Fecha y hora del pesaje", style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BovinaSecondaryButton(
                     texto = formatoFecha.format(Date(estado.fecha)),
@@ -109,8 +106,8 @@ fun PesajeFormScreen(
                     text = when (error) {
                         NuevoPesajeError.PesoFueraDeRango ->
                             "El peso debe ser mayor que 0 y de hasta ${Pesaje.PESO_MAXIMO_KG.toInt()} kg."
-                        NuevoPesajeError.FechaFutura -> "La fecha y hora de la medición no pueden ser futuras."
-                        NuevoPesajeError.AnimalNoDisponible -> "Este animal está dado de baja."
+                        NuevoPesajeError.FechaFutura -> "La fecha y hora del pesaje no pueden ser futuras."
+                        NuevoPesajeError.AnimalNoDisponible -> "Este animal está dado de baja o ya no existe."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
@@ -119,7 +116,7 @@ fun PesajeFormScreen(
             BovinaPrimaryButton(
                 texto = "Guardar",
                 onClick = viewModel::onGuardar,
-                enabled = estado.puedeGuardar,
+                enabled = estado.puedeGuardar && !estado.guardando,
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Filled.CheckCircle,
             )
@@ -127,27 +124,11 @@ fun PesajeFormScreen(
     }
 
     if (mostrarSelectorFecha) {
-        val selectorState = rememberDatePickerState(
-            initialSelectedDateMillis = diaEnUtc(estado.fecha),
-            selectableDates = object : SelectableDates {
-                override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                    utcTimeMillis <= System.currentTimeMillis()
-            },
+        DialogoFechaHastaHoy(
+            fecha = estado.fecha,
+            onAceptar = viewModel::onFechaCambiada,
+            onCerrar = { mostrarSelectorFecha = false },
         )
-        DatePickerDialog(
-            onDismissRequest = { mostrarSelectorFecha = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    selectorState.selectedDateMillis?.let { viewModel.onFechaCambiada(conDia(estado.fecha, it)) }
-                    mostrarSelectorFecha = false
-                }) { Text("Aceptar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarSelectorFecha = false }) { Text("Cancelar") }
-            },
-        ) {
-            DatePicker(state = selectorState)
-        }
     }
 
     if (mostrarSelectorHora) {
@@ -172,28 +153,3 @@ fun PesajeFormScreen(
         )
     }
 }
-
-// El DatePicker trabaja con la medianoche UTC del día; la fecha del pesaje está en la hora local.
-private fun diaEnUtc(fecha: Long): Long {
-    val local = Calendar.getInstance().apply { timeInMillis = fecha }
-    return Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply {
-        clear()
-        set(local.get(Calendar.YEAR), local.get(Calendar.MONTH), local.get(Calendar.DAY_OF_MONTH))
-    }.timeInMillis
-}
-
-private fun conDia(fecha: Long, diaUtc: Long): Long {
-    val dia = Calendar.getInstance(TimeZone.getTimeZone("UTC")).apply { timeInMillis = diaUtc }
-    return Calendar.getInstance().apply {
-        timeInMillis = fecha
-        set(dia.get(Calendar.YEAR), dia.get(Calendar.MONTH), dia.get(Calendar.DAY_OF_MONTH))
-    }.timeInMillis
-}
-
-private fun conHora(fecha: Long, hora: Int, minuto: Int): Long = Calendar.getInstance().apply {
-    timeInMillis = fecha
-    set(Calendar.HOUR_OF_DAY, hora)
-    set(Calendar.MINUTE, minuto)
-    set(Calendar.SECOND, 0)
-    set(Calendar.MILLISECOND, 0)
-}.timeInMillis
