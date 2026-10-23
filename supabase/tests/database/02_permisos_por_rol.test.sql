@@ -1,6 +1,6 @@
 -- El Operario no da de baja, no libera ni descarta; nadie borra; nadie escribe Usuarios por la API.
 begin;
-select plan(18);
+select plan(24);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
@@ -44,10 +44,34 @@ select throws_ok(
     where id_pesaje_pendiente = 'd0000000-0000-0000-0000-000000000001'$$,
   '42501', null, 'el Operario no puede descartar un Pesaje pendiente');
 select lives_ok(
+  $$insert into public.registro (id_registro, id_animal, id_usuario, id_lectura, peso, fecha_medicion, fecha_modificacion)
+    values ('f0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'lectura-2', 381, now(), now())$$,
+  'al conciliar, el Registro conserva el autor del Pesaje pendiente');
+select lives_ok(
   $$update public.pesaje_pendiente
     set resolucion = 'ASIGNADO', id_usuario_resolucion = '00000000-0000-0000-0000-0000000000a2', fecha_resolucion = now()
     where id_pesaje_pendiente = 'd0000000-0000-0000-0000-000000000002'$$,
   'el Operario puede asignar un Pesaje pendiente');
+set constraints all immediate;
+select throws_ok(
+  $$update public.pesaje_pendiente
+    set resolucion = 'ASIGNADO', id_usuario_resolucion = '00000000-0000-0000-0000-0000000000a2', fecha_resolucion = now()
+    where id_pesaje_pendiente = 'd0000000-0000-0000-0000-000000000001'$$,
+  '23503', null, 'asignar un Pesaje pendiente sin su Registro no es descartarlo a escondidas');
+set constraints all deferred;
+select throws_ok(
+  $$update public.pesaje_pendiente
+    set resolucion = 'ASIGNADO', id_usuario_resolucion = '00000000-0000-0000-0000-0000000000a1', fecha_resolucion = now()
+    where id_pesaje_pendiente = 'd0000000-0000-0000-0000-000000000001'$$,
+  '42501', null, 'la conciliación queda a nombre de quien concilia');
+select throws_ok(
+  $$insert into public.evento (id_evento, id_animal, id_usuario, tipo_evento, fecha, detalle, fecha_modificacion)
+    values ('e0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 'Otro', now(), '', now())$$,
+  '42501', null, 'el Operario no registra un Evento a nombre de otro');
+select throws_ok(
+  $$insert into public.registro (id_registro, id_animal, id_usuario, peso, fecha_medicion, fecha_modificacion)
+    values ('f0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 300, now(), now())$$,
+  '42501', null, 'el Operario no registra un pesaje manual a nombre de otro');
 update public.perfil_finca set nombre_finca = 'Cambiada por el Operario';
 select is((select nombre_finca from public.perfil_finca), 'Finca A', 'el Operario no puede editar la finca');
 reset role;
@@ -83,6 +107,11 @@ select throws_ok(
     values ('0000000c-0000-0000-0000-000000000000', 'Otra finca', now())$$,
   '42501', null, 'las fincas no se crean por la API');
 reset role;
+
+-- Una tabla que agregue una migración futura tampoco se puede borrar desde la API.
+create table public.tabla_futura (id integer);
+select ok(not has_table_privilege('authenticated', 'public.tabla_futura', 'DELETE'),
+  'las tablas nuevas no conceden DELETE a authenticated');
 
 select * from finish();
 rollback;

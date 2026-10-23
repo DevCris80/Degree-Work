@@ -29,8 +29,8 @@ end;
 $$;
 
 -- Evento y Registro: se editan, pero no cambian de Animal ni de autor, un Registro conserva su
--- `id_lectura`, y la baja es definitiva. Dar de baja un Evento o un pesaje sigue permitido al Operario
--- mientras la matriz lo marque como propuesta.
+-- `id_lectura`, y la baja es definitiva. Dar de baja un Evento o un Registro sigue permitido al Operario
+-- mientras la matriz lo marque como propuesta. Compara con jsonb porque Evento no tiene `id_lectura`.
 create function privado.reglas_de_evento_o_registro() returns trigger
 language plpgsql set search_path = '' as $$
 declare
@@ -87,9 +87,14 @@ begin
       raise exception 'Conciliar un Pesaje pendiente es definitivo' using errcode = '55000';
     end if;
   end if;
-  if new.resolucion = 'DESCARTADO' and (tg_op = 'INSERT' or old.resolucion is null)
-     and privado.mi_rol() = 'Operario' then
-    raise exception 'Un Operario no puede descartar un Pesaje pendiente' using errcode = '42501';
+  if new.resolucion is not null and (tg_op = 'INSERT' or old.resolucion is null) then
+    if new.resolucion = 'DESCARTADO' and privado.mi_rol() = 'Operario' then
+      raise exception 'Un Operario no puede descartar un Pesaje pendiente' using errcode = '42501';
+    end if;
+    -- RN-19: la conciliación queda a nombre de quien concilia, que es quien la sube.
+    if auth.uid() is not null and new.id_usuario_resolucion is distinct from auth.uid() then
+      raise exception 'La conciliación va a nombre de quien concilia' using errcode = '42501';
+    end if;
   end if;
   return new;
 end;
@@ -100,6 +105,12 @@ language plpgsql set search_path = '' as $$
 declare
   cambian constant text[] := array['resuelto_por', 'fecha_resolucion', 'cursor_descarga'];
 begin
+  if tg_op = 'INSERT' then
+    if new.resuelto_por is not null then
+      raise exception 'Un sibling llega sin resolver' using errcode = '55000';
+    end if;
+    return new;
+  end if;
   if (to_jsonb(new) - cambian) is distinct from (to_jsonb(old) - cambian) then
     raise exception 'De un sibling solo cambia su resolución' using errcode = '55000';
   end if;
@@ -121,5 +132,26 @@ create trigger c_reglas before insert or update on public.chapeta
   for each row execute function privado.reglas_de_chapeta();
 create trigger c_reglas before insert or update on public.pesaje_pendiente
   for each row execute function privado.reglas_de_pesaje_pendiente();
-create trigger c_reglas before update on public.sibling
+create trigger c_reglas before insert or update on public.sibling
   for each row execute function privado.reglas_de_sibling();
+
+-- Asignar un Pesaje pendiente crea su Registro (CU-15). Sin él, asignar sería descartar sin permiso de
+-- Ganadero. Se comprueba al terminar la transacción, porque la subida puede escribir el pendiente antes
+-- que el Registro dentro del mismo lote.
+create function privado.asignado_tiene_registro() returns trigger
+language plpgsql set search_path = '' as $$
+begin
+  if new.resolucion = 'ASIGNADO' and not exists (
+    select 1 from public.registro r
+    where r.id_perfil_finca = new.id_perfil_finca and r.id_lectura = new.id_lectura
+  ) then
+    raise exception 'El Pesaje pendiente % está asignado pero no tiene Registro', new.id_pesaje_pendiente
+      using errcode = '23503';
+  end if;
+  return null;
+end;
+$$;
+
+create constraint trigger asignado_tiene_registro after insert or update on public.pesaje_pendiente
+  deferrable initially deferred
+  for each row execute function privado.asignado_tiene_registro();

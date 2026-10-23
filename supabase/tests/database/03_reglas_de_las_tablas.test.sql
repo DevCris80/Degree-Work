@@ -1,6 +1,6 @@
 -- Unicidad (RN-01, RN-09, RN-21), cursor de descarga, estados definitivos y datos válidos.
 begin;
-select plan(21);
+select plan(23);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
@@ -44,6 +44,10 @@ select throws_ok(
   $$insert into public.pesaje_pendiente (id_pesaje_pendiente, id_lectura, codigo, peso, fecha_medicion, id_usuario, motivo, fecha_modificacion)
     values ('d0000000-0000-0000-0000-000000000002', 'lectura-2', '0BADC0DE', 380, now(), '00000000-0000-0000-0000-0000000000a1', 'CODIGO_SIN_CHAPETA_ACTIVA', now())$$,
   '23505', null, 'un pesaje del ESP32 es un solo Pesaje pendiente');
+select lives_ok(
+  $$insert into public.registro (id_registro, id_animal, id_usuario, id_lectura, peso, fecha_medicion, fecha_modificacion)
+    values ('f0000000-0000-0000-0000-000000000003', 'b0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000b1', 'lectura-1', 500, now(), now())$$,
+  'el id_lectura es único dentro de cada finca');
 
 -- Cursor de descarga
 create temp table cursor_antes as
@@ -94,6 +98,10 @@ update public.sibling set resuelto_por = gen_random_uuid(), fecha_resolucion = n
 select throws_ok(
   $$update public.sibling set resuelto_por = gen_random_uuid() where id_version = '5a000000-0000-0000-0000-000000000001'$$,
   '55000', null, 'un sibling resuelto no cambia');
+select throws_ok(
+  $$insert into public.sibling (id_version, entidad, id_fila, id_perfil_finca, rev_base, contenido, id_usuario, resuelto_por, fecha_resolucion)
+    values ('5a000000-0000-0000-0000-000000000002', 'animal', 'a0000000-0000-0000-0000-000000000001', '0000000a-0000-0000-0000-000000000000', 1, '{}', '00000000-0000-0000-0000-0000000000a1', gen_random_uuid(), now())$$,
+  '55000', null, 'un sibling llega sin resolver');
 
 -- Datos válidos
 select throws_ok(

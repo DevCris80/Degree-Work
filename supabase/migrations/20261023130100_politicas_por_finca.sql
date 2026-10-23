@@ -112,6 +112,9 @@ grant select, insert, update on public.animal, public.evento, public.registro, p
   public.pesaje_pendiente, public.sibling to authenticated;
 grant select, insert on public.revision to authenticated;
 
+-- Las tablas que creen las migraciones siguientes tampoco conceden DELETE ni TRUNCATE por defecto.
+alter default privileges in schema public revoke delete, truncate on tables from anon, authenticated;
+
 alter table public.perfil_finca enable row level security;
 alter table public.usuario enable row level security;
 alter table public.animal enable row level security;
@@ -123,58 +126,71 @@ alter table public.revision enable row level security;
 alter table public.sibling enable row level security;
 
 create policy "ver su finca" on public.perfil_finca for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
 create policy "el Ganadero edita su finca" on public.perfil_finca for update to authenticated
-  using (id_perfil_finca = privado.mi_finca() and privado.mi_rol() = 'Ganadero')
-  with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()) and (select privado.mi_rol()) = 'Ganadero')
+  with check (id_perfil_finca = (select privado.mi_finca()));
 
 create policy "ver los usuarios de su finca" on public.usuario for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
 
 create policy "ver su finca" on public.animal for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
 create policy "crear en su finca" on public.animal for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca());
+  with check (id_perfil_finca = (select privado.mi_finca()));
 create policy "editar en su finca" on public.animal for update to authenticated
-  using (id_perfil_finca = privado.mi_finca()) with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca())) with check (id_perfil_finca = (select privado.mi_finca()));
 
 create policy "ver su finca" on public.evento for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
+-- RN-19: quien registra un Evento es quien lo sube.
 create policy "crear en su finca" on public.evento for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca());
+  with check (id_perfil_finca = (select privado.mi_finca()) and id_usuario = (select auth.uid()));
 create policy "editar en su finca" on public.evento for update to authenticated
-  using (id_perfil_finca = privado.mi_finca()) with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca())) with check (id_perfil_finca = (select privado.mi_finca()));
 
 create policy "ver su finca" on public.registro for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
+-- RN-19: un Registro va a nombre de quien lo sube, salvo el que nace de conciliar un Pesaje pendiente,
+-- que conserva el autor del pendiente (CU-15).
 create policy "crear en su finca" on public.registro for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca());
+  with check (
+    id_perfil_finca = (select privado.mi_finca()) and (
+      id_usuario = (select auth.uid()) or exists (
+        select 1 from public.pesaje_pendiente p
+        where p.id_perfil_finca = registro.id_perfil_finca
+          and p.id_lectura = registro.id_lectura
+          and p.id_usuario = registro.id_usuario
+      )
+    )
+  );
 create policy "editar en su finca" on public.registro for update to authenticated
-  using (id_perfil_finca = privado.mi_finca()) with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca())) with check (id_perfil_finca = (select privado.mi_finca()));
 
 create policy "ver su finca" on public.chapeta for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
 create policy "crear en su finca" on public.chapeta for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca());
+  with check (id_perfil_finca = (select privado.mi_finca()));
 create policy "editar en su finca" on public.chapeta for update to authenticated
-  using (id_perfil_finca = privado.mi_finca()) with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca())) with check (id_perfil_finca = (select privado.mi_finca()));
 
 create policy "ver su finca" on public.pesaje_pendiente for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
+-- RN-19: el Pesaje pendiente va a nombre del Usuario del celular que lo recibió, que es quien lo sube.
 create policy "crear en su finca" on public.pesaje_pendiente for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca());
+  with check (id_perfil_finca = (select privado.mi_finca()) and id_usuario = (select auth.uid()));
 create policy "editar en su finca" on public.pesaje_pendiente for update to authenticated
-  using (id_perfil_finca = privado.mi_finca()) with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca())) with check (id_perfil_finca = (select privado.mi_finca()));
 
 -- Revisiones y siblings: cada uno a nombre de quien lo envía.
 create policy "ver su finca" on public.revision for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
 create policy "crear en su finca" on public.revision for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca() and id_usuario = auth.uid());
+  with check (id_perfil_finca = (select privado.mi_finca()) and id_usuario = (select auth.uid()));
 
 create policy "ver su finca" on public.sibling for select to authenticated
-  using (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca()));
 create policy "crear en su finca" on public.sibling for insert to authenticated
-  with check (id_perfil_finca = privado.mi_finca() and id_usuario = auth.uid());
+  with check (id_perfil_finca = (select privado.mi_finca()) and id_usuario = (select auth.uid()));
 create policy "resolver en su finca" on public.sibling for update to authenticated
-  using (id_perfil_finca = privado.mi_finca()) with check (id_perfil_finca = privado.mi_finca());
+  using (id_perfil_finca = (select privado.mi_finca())) with check (id_perfil_finca = (select privado.mi_finca()));

@@ -1,8 +1,9 @@
 -- Tablas centrales de la finca (SRS v0.2, ADR-0004, ADR-0005).
 --
--- Replican las entidades de Room con tres diferencias: no llevan `sincronizado`, `rev_base` ni `id_version`
--- (son estado de cada celular); las fechas son timestamptz en lugar de milisegundos; y cada tabla lleva
--- `cursor_descarga`, que toma un valor nuevo de una secuencia global en cada escritura para la descarga
+-- Replican las entidades de Room, con lo ya decidido para ellas (padre y madre, ubicación de la finca, `rev`).
+-- En el servidor no llevan `sincronizado`, `rev_base` ni `id_version`, que son estado de cada celular; las
+-- fechas son timestamptz en lugar de milisegundos, y la hora de medición se llama `fecha_medicion`. Cada tabla
+-- lleva `cursor_descarga`, que toma un valor nuevo de una secuencia global en cada escritura, para la descarga
 -- incremental (RF-36). Las tablas hijas llevan además `id_perfil_finca`, que llena un trigger, para filtrar
 -- por finca sin unir con `animal`.
 --
@@ -86,14 +87,15 @@ create table public.registro (
   id_animal uuid not null references public.animal,
   id_usuario uuid not null references public.usuario,
   id_perfil_finca uuid not null references public.perfil_finca,
-  -- Nulo en un pesaje manual. Único: un pesaje del ESP32 se guarda una sola vez (RN-09, RN-21).
-  id_lectura text unique,
+  -- Nulo en un pesaje manual. Único en la finca: un pesaje del ESP32 se guarda una sola vez (RN-09, RN-21).
+  id_lectura text,
   peso real not null check (peso > 0 and peso <= 1500),
   fecha_medicion timestamptz not null,
   fecha_baja timestamptz,
   fecha_modificacion timestamptz not null,
   rev integer not null default 1 check (rev >= 1),
-  cursor_descarga bigint not null
+  cursor_descarga bigint not null,
+  unique (id_perfil_finca, id_lectura)
 );
 create index on public.registro (id_perfil_finca);
 create index on public.registro (id_animal);
@@ -117,7 +119,7 @@ create unique index chapeta_activa_por_codigo on public.chapeta (id_perfil_finca
 
 create table public.pesaje_pendiente (
   id_pesaje_pendiente uuid primary key,
-  id_lectura text not null unique,
+  id_lectura text not null,
   codigo text not null,
   peso real not null check (peso > 0 and peso <= 1500),
   fecha_medicion timestamptz not null,
@@ -129,6 +131,7 @@ create table public.pesaje_pendiente (
   fecha_resolucion timestamptz,
   fecha_modificacion timestamptz not null,
   cursor_descarga bigint not null,
+  unique (id_perfil_finca, id_lectura),
   -- Las tres son nulas mientras está sin resolver y se llenan juntas al conciliar.
   constraint conciliacion_completa check (
     (resolucion is null) = (id_usuario_resolucion is null) and (resolucion is null) = (fecha_resolucion is null)
@@ -136,7 +139,7 @@ create table public.pesaje_pendiente (
 );
 create index on public.pesaje_pendiente (id_perfil_finca);
 
--- Historial completo de las filas con revisiones (RN-16). Lo escribe `subir_cambios`.
+-- Todas las Revisiones aceptadas de Animal, Evento y Registro, sin depuración (RN-16). Las escribe `subir_cambios`.
 create table public.revision (
   id_version uuid primary key,
   entidad text not null check (entidad in ('animal', 'evento', 'registro')),
