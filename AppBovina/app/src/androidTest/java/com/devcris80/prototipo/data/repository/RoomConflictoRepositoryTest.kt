@@ -51,6 +51,14 @@ class RoomConflictoRepositoryTest {
         assertFalse(repositorio.observeEnConflicto(EntidadConRevisiones.EVENTO, "animal-1").first())
     }
 
+    @Test
+    fun unSiblingQueLlegaDosVecesSeGuardaUnaSola() = runTest {
+        db.siblingDao().insert(sibling(idVersion = "version-b", idFila = "animal-1"))
+        db.siblingDao().insert(sibling(idVersion = "version-b", idFila = "animal-1"))
+
+        assertEquals(1, repositorio.observeSiblings(EntidadConRevisiones.ANIMAL, "animal-1").first().size)
+    }
+
     private fun sibling(idVersion: String, idFila: String) = SiblingEntity(
         idVersion = idVersion,
         entidad = "animal",

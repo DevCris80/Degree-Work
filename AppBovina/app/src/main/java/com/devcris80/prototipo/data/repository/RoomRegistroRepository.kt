@@ -12,7 +12,8 @@ class RoomRegistroRepository(
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val nuevoIdVersion: () -> String = { UUID.randomUUID().toString() },
 ) : RegistroRepository {
-    override suspend fun insert(registro: Registro) = registroDao.insert(registro.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion()))
+    override suspend fun insert(registro: Registro) =
+        registroDao.insert(registro.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion()))
 
     override suspend fun findByIdLectura(idLectura: String): Registro? =
         registroDao.findByIdLectura(idLectura)?.toDomain()

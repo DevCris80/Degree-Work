@@ -56,7 +56,6 @@ private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
 // Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor.
 private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
     EntidadSincronizada.PERFIL_FINCA to "perfil_finca",
-    EntidadSincronizada.USUARIO to "usuario",
     EntidadSincronizada.ANIMAL to "animal",
     EntidadSincronizada.EVENTO to "evento",
     EntidadSincronizada.REGISTRO to "registro",

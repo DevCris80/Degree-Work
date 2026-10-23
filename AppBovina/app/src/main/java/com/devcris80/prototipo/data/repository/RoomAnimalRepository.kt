@@ -12,7 +12,8 @@ class RoomAnimalRepository(
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val nuevoIdVersion: () -> String = { UUID.randomUUID().toString() },
 ) : AnimalRepository {
-    override suspend fun insert(animal: Animal) = animalDao.insert(animal.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion()))
+    override suspend fun insert(animal: Animal) =
+        animalDao.insert(animal.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion()))
 
     override fun observeActivos(): Flow<List<Animal>> =
         animalDao.observeActivos().map { animales -> animales.map { it.toDomain() } }
