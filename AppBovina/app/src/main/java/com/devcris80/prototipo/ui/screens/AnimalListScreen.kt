@@ -1,7 +1,7 @@
 package com.devcris80.prototipo.ui.screens
 
+import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -12,23 +12,19 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
-import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
-import androidx.compose.material.icons.filled.Home
+import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.FilterChip
-import androidx.compose.material3.FloatingActionButton
+import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -39,10 +35,16 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.ui.components.BovinaCard
+import com.devcris80.prototipo.ui.components.BovinaFilterChip
+import com.devcris80.prototipo.ui.components.BovinaTextField
+import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.PillBadge
+import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
@@ -77,9 +79,19 @@ fun ListaAnimalesScreen(
     }
 
     Scaffold(
+        topBar = { BovinaTopBar(titulo = "Animales", mostrarLogo = true) },
         floatingActionButton = {
-            FloatingActionButton(onClick = onNuevoAnimalClick) {
-                Icon(Icons.Filled.Add, contentDescription = "Registrar animal")
+            ExtendedFloatingActionButton(
+                onClick = onNuevoAnimalClick,
+                shape = CircleShape,
+                containerColor = MaterialTheme.colorScheme.primary,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            ) {
+                Icon(Icons.Filled.Add, contentDescription = null)
+                Text(
+                    text = "  Registrar",
+                    style = MaterialTheme.typography.labelLarge,
+                )
             }
         },
     ) { innerPadding ->
@@ -89,37 +101,17 @@ fun ListaAnimalesScreen(
                 .padding(innerPadding)
                 .padding(horizontal = BovinaScreenGutter),
             verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(vertical = BovinaScreenGutter),
+            contentPadding = PaddingValues(bottom = 96.dp, top = 4.dp),
         ) {
-            item {
-                Column {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(
-                            imageVector = Icons.Filled.Home,
-                            contentDescription = null,
-                            tint = MaterialTheme.colorScheme.primary,
-                            modifier = Modifier.size(18.dp),
-                        )
-                        Text(
-                            text = "  FINCA ${estado.nombreFinca}",
-                            style = MaterialTheme.typography.labelSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    Text(text = "Animales", style = MaterialTheme.typography.headlineLarge)
-                }
-            }
             if (estado.pesajesPendientes > 0) {
                 item {
-                    Card(
+                    BovinaCard(
                         onClick = onPesajesPendientesClick,
-                        shape = RoundedCornerShape(16.dp),
-                        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.tertiaryContainer),
+                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
+                        modifier = Modifier.fillMaxWidth(),
                     ) {
                         Row(
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(16.dp),
+                            modifier = Modifier.fillMaxWidth(),
                             horizontalArrangement = Arrangement.SpaceBetween,
                             verticalAlignment = Alignment.CenterVertically,
                         ) {
@@ -134,7 +126,7 @@ fun ListaAnimalesScreen(
                                 )
                                 Text(
                                     text = "${estado.pesajesPendientes} pesajes pendientes",
-                                    style = MaterialTheme.typography.bodyLarge,
+                                    style = MaterialTheme.typography.titleSmall,
                                     color = MaterialTheme.colorScheme.onTertiaryContainer,
                                 )
                             }
@@ -148,67 +140,23 @@ fun ListaAnimalesScreen(
                 }
             }
             item {
-                Card(
-                    shape = RoundedCornerShape(16.dp),
-                    colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-                ) {
-                    Column(modifier = Modifier.padding(20.dp)) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.Top,
-                        ) {
-                            Column {
-                                Text(
-                                    text = "Buenos días, ${estado.nombreUsuario}",
-                                    style = MaterialTheme.typography.bodyLarge,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                )
-                                Text(
-                                    text = estado.nombreFinca,
-                                    style = MaterialTheme.typography.bodyMedium,
-                                    color = MaterialTheme.colorScheme.onPrimaryContainer,
-                                )
-                            }
-                            PillBadge(
-                                texto = "${estado.animales.size} en finca",
-                                containerColor = MaterialTheme.colorScheme.onPrimaryContainer,
-                                contentColor = MaterialTheme.colorScheme.primaryContainer,
-                            )
-                        }
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            horizontalArrangement = Arrangement.spacedBy(6.dp),
-                            modifier = Modifier.padding(top = 10.dp),
-                        ) {
-                            Icon(
-                                imageVector = Icons.Filled.CheckCircle,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                                modifier = Modifier.size(14.dp),
-                            )
-                            Text(
-                                text = "Todos los datos sincronizados sin internet",
-                                style = MaterialTheme.typography.bodySmall,
-                                color = MaterialTheme.colorScheme.onPrimaryContainer,
-                            )
-                        }
-                    }
-                }
+                ResumenFinca(
+                    nombreUsuario = estado.nombreUsuario,
+                    nombreFinca = estado.nombreFinca,
+                    totalAnimales = estado.animales.size,
+                )
             }
             item {
                 Row(
                     verticalAlignment = Alignment.CenterVertically,
                     horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
-                    OutlinedTextField(
+                    BovinaTextField(
                         value = busqueda,
                         onValueChange = { busqueda = it },
                         modifier = Modifier.weight(1f),
-                        placeholder = { Text("Buscar por chapeta o nombre...") },
-                        leadingIcon = { Icon(Icons.Filled.Search, contentDescription = null) },
-                        singleLine = true,
-                        shape = RoundedCornerShape(12.dp),
+                        placeholder = "Buscar por chapeta o nombre...",
+                        leadingIcon = Icons.Filled.Search,
                     )
                     IconButton(onClick = {}) {
                         Icon(Icons.Filled.FilterList, contentDescription = "Filtros")
@@ -218,10 +166,10 @@ fun ListaAnimalesScreen(
             item {
                 LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                     items(FILTROS_PROPOSITO) { proposito ->
-                        FilterChip(
-                            selected = estado.filtro == proposito,
+                        BovinaFilterChip(
+                            texto = proposito?.aEtiqueta() ?: "Todos",
+                            seleccionado = estado.filtro == proposito,
                             onClick = { viewModel.onFiltroSeleccionado(proposito) },
-                            label = { Text(proposito?.aEtiqueta() ?: "Todos") },
                         )
                     }
                 }
@@ -237,6 +185,62 @@ fun ListaAnimalesScreen(
 }
 
 @Composable
+private fun ResumenFinca(
+    nombreUsuario: String,
+    nombreFinca: String,
+    totalAnimales: Int,
+) {
+    Column(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clip(MaterialTheme.shapes.extraLarge)
+            .background(MaterialTheme.colorScheme.surfaceContainer)
+            .padding(20.dp),
+        verticalArrangement = Arrangement.spacedBy(10.dp),
+    ) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.Top,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Text(
+                    text = "Buenos días, $nombreUsuario",
+                    style = MaterialTheme.typography.headlineMedium,
+                    color = MaterialTheme.colorScheme.onSurface,
+                )
+                Text(
+                    text = nombreFinca,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                )
+            }
+            PillBadge(
+                texto = "$totalAnimales en finca",
+                containerColor = BovinaForest,
+                contentColor = MaterialTheme.colorScheme.onPrimary,
+            )
+        }
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.spacedBy(6.dp),
+        ) {
+            Icon(
+                imageVector = Icons.Filled.CheckCircle,
+                contentDescription = null,
+                tint = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.size(16.dp),
+            )
+            Text(
+                text = "Todos los datos sincronizados sin internet",
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
+    }
+}
+
+@Composable
 private fun TarjetaAnimal(
     item: AnimalConResumen,
     onClick: () -> Unit,
@@ -244,23 +248,29 @@ private fun TarjetaAnimal(
     val animal = item.animal
     val registro = item.ultimoRegistro
 
-    Card(onClick = onClick, shape = RoundedCornerShape(16.dp)) {
-        Row(modifier = Modifier.padding(12.dp)) {
+    BovinaCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
+        Row(verticalAlignment = Alignment.Top) {
             FotoAnimal(fotoUri = animal.fotoUri, modifier = Modifier.size(72.dp))
             Column(
                 modifier = Modifier
                     .weight(1f)
-                    .padding(start = 12.dp),
+                    .padding(start = 14.dp),
+                verticalArrangement = Arrangement.spacedBy(2.dp),
             ) {
-                PillBadge(texto = animal.proposito.aEtiqueta())
-                Text(
-                    text = animal.nombre,
-                    style = MaterialTheme.typography.bodyLarge,
-                    modifier = Modifier.padding(top = 4.dp),
-                )
+                Row(
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text(
+                        text = animal.nombre,
+                        style = MaterialTheme.typography.headlineSmall,
+                        modifier = Modifier.weight(1f, fill = false),
+                    )
+                    item.codigoChapeta?.let { PillBadge(texto = "#$it") }
+                }
                 Text(
                     text = "${animal.raza} · ${animal.etapa.aEtiqueta()}",
-                    style = MaterialTheme.typography.bodySmall,
+                    style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
@@ -269,25 +279,59 @@ private fun TarjetaAnimal(
                     style = MaterialTheme.typography.bodySmall,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
-                Text(
-                    text = registro?.let { "Último peso: ${it.peso} kg" } ?: "Sin pesajes registrados",
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
-                Text(
-                    text = registro?.let { "Pesaje: hace ${diasDesde(it.timestamp)} días" }.orEmpty(),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                )
             }
-            Box(contentAlignment = Alignment.BottomEnd) {
-                Text(
-                    text = "Ficha →",
-                    style = MaterialTheme.typography.labelMedium,
-                    color = MaterialTheme.colorScheme.primary,
+        }
+        Row(
+            modifier = Modifier
+                .fillMaxWidth()
+                .padding(top = 12.dp),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Column(modifier = Modifier.weight(1f)) {
+                Row(
+                    verticalAlignment = Alignment.CenterVertically,
+                    horizontalArrangement = Arrangement.spacedBy(6.dp),
+                ) {
+                    Icon(
+                        imageVector = Icons.Filled.MonitorWeight,
+                        contentDescription = null,
+                        tint = MaterialTheme.colorScheme.primary,
+                        modifier = Modifier.size(18.dp),
+                    )
+                    Text(
+                        text = registro?.let { "Último peso: ${it.peso} kg" } ?: "Sin pesajes registrados",
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                }
+                registro?.let {
+                    Text(
+                        text = "Pesaje: hace ${diasDesde(it.timestamp)} días",
+                        style = MaterialTheme.typography.bodySmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+            }
+            Row(
+                modifier = Modifier
+                    .clip(CircleShape)
+                    .background(MaterialTheme.colorScheme.surfaceContainer)
+                    .padding(horizontal = 16.dp, vertical = 10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(6.dp),
+            ) {
+                Text(text = "Ficha", style = MaterialTheme.typography.labelLarge)
+                Icon(
+                    imageVector = Icons.AutoMirrored.Filled.ArrowForward,
+                    contentDescription = null,
+                    modifier = Modifier.size(16.dp),
                 )
             }
         }
+        PillBadge(
+            texto = animal.proposito.aEtiqueta(),
+            modifier = Modifier.padding(top = 10.dp),
+        )
     }
 }
 
