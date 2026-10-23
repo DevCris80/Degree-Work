@@ -32,7 +32,7 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-10 | Detalle del animal con historial | Implementado | UI-02, DAT-01 | App |
 | RF-11 | Dar de baja un animal | Implementado | UI-02, DOM-02, DAT-01 | App |
 | RF-12 | Editar animal | Pendiente | UI-02, DOM-02, DAT-01 | App |
-| RF-13 | Registrar padre y madre | Pendiente | UI-02, DOM-02, DAT-01 | App |
+| RF-13 | Registrar padre y madre | Implementado | UI-02, DOM-02, DAT-01 | App |
 | RF-14 | Ubicación de la finca | Pendiente | UI-06, DAT-01 | App |
 | RF-15 | Leer y normalizar el UID NFC | Implementado | UI-03, DOM-02 | App |
 | RF-16 | Decidir el destino del código escaneado | Implementado | UI-03, DOM-02 | App |

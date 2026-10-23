@@ -8,7 +8,7 @@
 | Autores | Cristian Steven Villamil Rodríguez, Mariana Alvarez |
 | Director | Juan Guillermo Hurtado |
 | Repositorio | `github.com/DevCris80/Degree-Work` |
-| Versión de este documento | 0.2 (borrador) |
+| Versión de este documento | 0.3 (borrador) |
 | Fecha de corte del estado | 23 de octubre de 2026 |
 
 > **Datos por completar antes de `srs-v1.0`** (marcados en el texto con ⚠):
@@ -25,6 +25,7 @@
 |---|---|---|---|---|---|
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
 | 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
+| 0.3 | 2026-10-23 | C. Villamil | RF-13 (padre y madre) pasa a implementado (#20). | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -296,7 +297,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-10 | Mostrar el detalle de un animal con sus datos, chapeta activa e historial de pesajes y eventos, del más reciente al más antiguo. | M | Implementado | CAMPO | OE3 | CU-07 |
 | RF-11 | Dar de baja un animal (baja lógica), con confirmación previa. | M | Implementado | NORMA (Ley 1659) | OE3 | CU-09 |
 | RF-12 | Editar los datos de un animal. | S | Pendiente | CAMPO | OE3 | CU-08 |
-| RF-13 | Registrar el padre y la madre de un animal entre los animales de la finca. | S | Pendiente | CAMPO | OE3 | CU-06, CU-08 |
+| RF-13 | Registrar el padre y la madre de un animal entre los animales de la finca. | S | Implementado | CAMPO | OE3 | CU-06, CU-08 |
 | RF-14 | Registrar la ubicación (latitud y longitud) de la finca. | S | Pendiente | CAMPO | OE3 | CU-23 |
 | **C3. Identificación** | | | | | | |
 | RF-15 | Leer el UID de un tag NFC-A con el NFC del celular y normalizarlo. | M | Implementado | CAMPO | OE3 | CU-10 |
@@ -446,7 +447,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-08, RF-13, RF-17 |
 | Objetivo / Fuente | OE3 / CAMPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | M / Implementado, salvo la genealogía (RF-13, pendiente). |
+| Prioridad / Estado | M / Implementado. |
 | Precondiciones | Sesión iniciada. |
 | Disparador | "Nuevo animal" en la lista; un código escaneado sin chapeta activa (CU-10); "Registrar animal con este código" desde un pesaje pendiente (CU-15). |
 | Flujo principal | 1. La app muestra el formulario.<br>2. El usuario ingresa nombre y raza, elige sexo y luego etapa (solo las del sexo elegido), fecha de nacimiento (marcando si es estimada) y propósito.<br>3. Opcionalmente toma o elige una foto, elige padre y madre, e ingresa el código de chapeta.<br>4. El usuario guarda.<br>5. El sistema guarda el animal y, si hay código, su chapeta activa, en una sola transacción.<br>6. La app vuelve a la pantalla anterior. |
@@ -454,9 +455,9 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Offline / sincronización | Funciona sin señal. Las filas quedan con `sincronizado = false`. |
 | Postcondiciones | Animal activo; chapeta activa si hubo código; pendientes asignados si el usuario aceptó. |
 | Entidades | Animal, Chapeta, Pesaje pendiente, Registro |
-| Reglas | RN-01, RN-02, RN-03, RN-14. ⚠ Propuesta para RF-13: el padre debe ser macho y la madre hembra. |
+| Reglas | RN-01, RN-02, RN-03, RN-14. Para RF-13, el padre es macho y la madre hembra; pueden estar dados de baja, porque un progenitor puede haber salido de la finca antes de registrar la cría. |
 | Criterios de aceptación | 1. **Dado** el formulario completo, **cuando** guarda, **entonces** el animal aparece en la lista.<br>2. **Dado** sexo Hembra, **entonces** solo puede elegir Vaca o Ternera.<br>3. **Dado** un código con chapeta activa en otro animal, **entonces** no se guarda ni el animal ni la chapeta.<br>4. **Dado** un código con dos pesajes pendientes, **cuando** acepta asignarlos, **entonces** el detalle del animal muestra esos dos pesajes con su hora de medición original. |
-| Trazas | Issues #31, #38 · `AnimalFormScreen` · `RegistrarAnimalViewModelTest` |
+| Trazas | Issues #20, #31, #38 · `AnimalFormScreen` · `RegistrarAnimalViewModelTest`, `RoomAnimalRepositoryTest` |
 
 **CU-07 — Consultar animales**
 
@@ -778,7 +779,7 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Iniciar sesión | CU-02, CU-03 | Existe; sin validación |
 | Lista de animales | CU-07 | Implementada |
 | Detalle de animal | CU-07, CU-09, CU-12 | Implementada |
-| Registrar animal | CU-06 | Implementada (sin genealogía) |
+| Registrar animal | CU-06 | Implementada |
 | Registrar evento | CU-17 | Parcial (sin fecha ni subtipos) |
 | Escanear | CU-10 | Implementada |
 | Pesos (servicio de pesaje y pesajes pendientes) | CU-14, CU-15 | Implementada |
@@ -1039,7 +1040,7 @@ Resumen del contrato de pesaje:
 | RF-10 | CU-07 | CAMPO | ⚠ | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | #37 |
 | RF-11 | CU-09 | NORMA | — | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | — |
 | RF-12 | CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #92 |
-| RF-13 | CU-06, CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #20 |
+| RF-13 | CU-06, CU-08 | CAMPO | ⚠ | OE3 | S | Implementado | P `RegistrarAnimalViewModelTest`, `DetalleAnimalViewModelTest`, `RoomAnimalRepositoryTest` | #20 |
 | RF-14 | CU-23 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #93 |
 | RF-15 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | D (lectura de un NTAG215; registro pendiente) | #31 |
 | RF-16 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | P `EscanearViewModelTest` | #31, #36 |
@@ -1099,9 +1100,9 @@ Resumen del contrato de pesaje:
 | Prioridad | Total | Implementado | Parcial | Pendiente |
 |---|---|---|---|---|
 | Must | 26 | 15 | 2 | 9 |
-| Should | 12 | 0 | 0 | 12 |
+| Should | 12 | 1 | 0 | 11 |
 | Could | 5 | 0 | 0 | 5 |
-| **Total** | **43** | **15** | **2** | **26** |
+| **Total** | **43** | **16** | **2** | **25** |
 
 **KPI de la propuesta**
 
@@ -1111,7 +1112,7 @@ Resumen del contrato de pesaje:
 | OE1 — Requisitos no funcionales documentados | ≥ 5 | 16 |
 | OE1 — Ganaderos participantes | ≥ 3 | 1 |
 | OE1 — Requisitos confirmados por ganaderos | ≥ 80 % | Pendiente. Los marcados CAMPO son 14 de 59 (24 %). |
-| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 15 implementados (35 %); 8 con prueba automatizada y 7 que dependen de una demostración por registrar |
+| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 16 implementados (37 %); 9 con prueba automatizada y 7 que dependen de una demostración por registrar |
 
 La trazabilidad de requisitos a módulos (KPI de OE2) se documenta en la arquitectura (modelo C4, Fase 3).
 
