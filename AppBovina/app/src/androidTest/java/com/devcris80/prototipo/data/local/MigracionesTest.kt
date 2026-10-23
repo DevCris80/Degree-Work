@@ -83,6 +83,27 @@ class MigracionesTest {
         }
     }
 
+    @Test
+    fun unaInstalacionEnLaVersion11LlegaALa13() {
+        helper.createDatabase(BASE, 11).use { db ->
+            db.execSQL("INSERT INTO perfil_finca VALUES ('finca-1', 'Finca', 0, 0)")
+            db.execSQL(
+                "INSERT INTO animal (idAnimal, idPerfilFinca, nombre, raza, sexo, etapa, fechaNacimiento, " +
+                    "fechaNacimientoEsEstimada, proposito, sincronizado, fechaModificacion) VALUES " +
+                    "('animal-1', 'finca-1', 'Lucero', 'Brahman', 'Hembra', 'Vaca', 0, 0, 'Leche', 0, 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(BASE, 13, true, MIGRACION_11_12, MIGRACION_12_13).use { db ->
+            db.query("SELECT nombre, idVersion, idPadre FROM animal").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Lucero", fila.getString(0))
+                assertTrue(UUID.matches(fila.getString(1)))
+                assertTrue(fila.isNull(2))
+            }
+        }
+    }
+
     private companion object {
         const val BASE = "migracion-test"
         val UUID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
