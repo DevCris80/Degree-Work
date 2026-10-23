@@ -1,5 +1,9 @@
 -- Unicidad (RN-01, RN-09, RN-21), cursor de descarga, estados definitivos y datos válidos.
 begin;
+-- En la nube el CLI entra con un rol temporal; las pruebas corren como postgres, igual que en local.
+set local role postgres;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
 select plan(23);
 
 insert into auth.users (id, email) values

@@ -1,5 +1,9 @@
 -- Una cuenta solo ve y escribe las filas de su finca, y una sin sesión no ve nada.
 begin;
+-- En la nube el CLI entra con un rol temporal; las pruebas corren como postgres, igual que en local.
+set local role postgres;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
 select plan(13);
 
 -- Finca A con su Ganadero; finca B con el suyo. Los datos de A los escribe postgres, que no pasa por RLS.
@@ -27,7 +31,7 @@ insert into public.pesaje_pendiente (id_pesaje_pendiente, id_lectura, codigo, pe
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
 set local role authenticated;
 select is((select count(*) from public.animal), 1::bigint, 'el Ganadero A ve el animal de su finca');
-reset role;
+set local role postgres;
 
 -- El Ganadero B no ve nada de la finca A.
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000b1","role":"authenticated"}', true);
@@ -49,14 +53,14 @@ select throws_ok(
     values ('e0000000-0000-0000-0000-000000000099', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000b1', 'Otro', now(), '', now())$$,
   '23503', null, 'B no puede registrar eventos en un animal de A');
 update public.animal set raza = 'Cambiada por B' where id_animal = 'a0000000-0000-0000-0000-000000000001';
-reset role;
+set local role postgres;
 select is((select raza from public.animal where id_animal = 'a0000000-0000-0000-0000-000000000001'), 'Brahman', 'B no puede modificar un animal de A');
 
 -- Sin sesión no se ve nada.
 set local role anon;
 select throws_ok('select count(*) from public.animal', '42501', null, 'anon no puede leer animales');
 select throws_ok('select count(*) from public.usuario', '42501', null, 'anon no puede leer usuarios');
-reset role;
+set local role postgres;
 
 select * from finish();
 rollback;

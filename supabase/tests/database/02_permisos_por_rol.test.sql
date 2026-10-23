@@ -1,5 +1,9 @@
 -- El Operario no da de baja, no libera ni descarta; nadie borra; nadie escribe Usuarios por la API.
 begin;
+-- En la nube el CLI entra con un rol temporal; las pruebas corren como postgres, igual que en local.
+set local role postgres;
+create extension if not exists pgtap with schema extensions;
+set local search_path = public, extensions;
 select plan(28);
 
 insert into auth.users (id, email) values
@@ -86,7 +90,7 @@ select throws_ok(
   '42501', null, 'el Operario no puede subir un Evento ya dado de baja');
 update public.perfil_finca set nombre_finca = 'Cambiada por el Operario';
 select is((select nombre_finca from public.perfil_finca), 'Finca A', 'el Operario no puede editar la finca');
-reset role;
+set local role postgres;
 
 -- Ganadero
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a1","role":"authenticated"}', true);
@@ -121,7 +125,7 @@ select throws_ok(
   $$insert into public.perfil_finca (id_perfil_finca, nombre_finca, fecha_modificacion)
     values ('0000000c-0000-0000-0000-000000000000', 'Otra finca', now())$$,
   '42501', null, 'las fincas no se crean por la API');
-reset role;
+set local role postgres;
 
 -- Una tabla que agregue una migración futura tampoco se puede borrar desde la API.
 create table public.tabla_futura (id integer);

@@ -37,7 +37,8 @@ Lo crea una sola vez el dueño del proyecto:
 
 1. Crear el proyecto en [supabase.com](https://supabase.com) (región São Paulo, la más cercana).
 2. `npx supabase@2.122.0 login` y `npx supabase@2.122.0 link --project-ref <ref del proyecto>`.
-3. `npx supabase@2.122.0 db push` aplica las migraciones pendientes. Se repite con cada migración nueva que llegue a `main`.
+3. `npx supabase@2.122.0 db push --linked` aplica las migraciones pendientes. Se repite con cada migración nueva que llegue a `main`. Desde ese momento, esas migraciones ya no se editan: un cambio es una migración nueva.
+4. `npx supabase@2.122.0 test db --linked` corre las mismas pruebas pgTAP contra la nube. Cada archivo trabaja dentro de una transacción que se deshace, así que no deja datos.
 
 Mientras no exista Crear cuenta con Supabase (#87), una cuenta de prueba se arma a mano:
 
