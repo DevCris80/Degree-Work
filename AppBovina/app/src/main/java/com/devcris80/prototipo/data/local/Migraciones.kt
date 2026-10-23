@@ -84,3 +84,23 @@ val MIGRACION_11_12: Migration = object : MigracionBovina(11, 12) {
 private const val UUID_V4_SQL =
     "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || " +
         "substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))"
+
+/**
+ * 12 → 13: parentesco, Animal guarda su padre y su madre (#20). Las dos columnas son opcionales,
+ * así que basta con agregarlas: recrear `animal` borraría en cascada sus Eventos, Registros y
+ * Chapetas. Los Animales anteriores quedan sin padre ni madre.
+ */
+val MIGRACION_12_13: Migration = object : MigracionBovina(12, 13) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "ALTER TABLE `animal` ADD COLUMN `idPadre` TEXT " +
+                "REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE SET NULL",
+        )
+        db.execSQL(
+            "ALTER TABLE `animal` ADD COLUMN `idMadre` TEXT " +
+                "REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE SET NULL",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_animal_idPadre` ON `animal` (`idPadre`)")
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_animal_idMadre` ON `animal` (`idMadre`)")
+    }
+}

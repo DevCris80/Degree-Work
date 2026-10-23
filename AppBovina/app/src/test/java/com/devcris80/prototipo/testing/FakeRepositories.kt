@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
@@ -25,13 +26,25 @@ internal class FakeAnimalRepository : AnimalRepository {
     val activos = MutableStateFlow<List<Animal>>(emptyList())
     private val porId = mutableMapOf<String, MutableStateFlow<Animal?>>()
     val bajas = mutableListOf<Pair<String, Long>>()
+    val insertados = mutableListOf<Animal>()
 
     fun set(animal: Animal) {
         porId.getOrPut(animal.idAnimal) { MutableStateFlow(null) }.value = animal
     }
 
-    override suspend fun insert(animal: Animal) = set(animal)
+    override suspend fun insert(animal: Animal) {
+        insertados.add(animal)
+        set(animal)
+    }
     override fun observeActivos(): Flow<List<Animal>> = activos
+    // Como el repositorio real: también los dados de baja, primero los activos y cada grupo por nombre.
+    override fun observePorSexo(sexo: Sexo): Flow<List<Animal>> =
+        activos.map { animales ->
+            (animales + porId.values.mapNotNull { it.value })
+                .distinctBy { it.idAnimal }
+                .filter { it.sexo == sexo }
+                .sortedWith(compareBy({ it.fechaBaja != null }, { it.nombre }))
+        }
     override fun observeById(idAnimal: String): Flow<Animal?> =
         porId.getOrPut(idAnimal) { MutableStateFlow(null) }
     override suspend fun findById(idAnimal: String): Animal? =

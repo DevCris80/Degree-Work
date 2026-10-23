@@ -73,6 +73,9 @@ internal fun ResolucionPesajePendiente.textoGuardado(): String = TEXTO_RESOLUCIO
 
 internal fun EntidadConRevisiones.textoGuardado(): String = TEXTO_ENTIDAD_CON_REVISIONES.aTexto(this)
 
+// Filtrar animales por sexo compara contra el texto guardado.
+internal fun Sexo.textoGuardado(): String = TEXTO_SEXO.aTexto(this)
+
 private fun <E : Enum<E>> Map<E, String>.aTexto(valor: E): String = getValue(valor)
 
 private fun <E : Enum<E>> Map<E, String>.desdeTexto(texto: String): E =
@@ -91,6 +94,8 @@ fun AnimalEntity.toDomain() = Animal(
     proposito = TEXTO_PROPOSITO.desdeTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    idPadre = idPadre,
+    idMadre = idMadre,
 )
 
 fun Animal.toEntity(fechaModificacion: Long, idVersion: String) = AnimalEntity(
@@ -105,6 +110,8 @@ fun Animal.toEntity(fechaModificacion: Long, idVersion: String) = AnimalEntity(
     proposito = TEXTO_PROPOSITO.aTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    idPadre = idPadre,
+    idMadre = idMadre,
     fechaModificacion = fechaModificacion,
     idVersion = idVersion,
 )

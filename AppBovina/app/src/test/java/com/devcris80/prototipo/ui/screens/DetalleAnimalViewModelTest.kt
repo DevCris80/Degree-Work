@@ -88,6 +88,39 @@ class DetalleAnimalViewModelTest {
     }
 
     @Test
+    fun muestraElPadreYLaMadre_aunqueElPadreEsteDadoDeBaja() = runTest {
+        val padre = animal().copy(idAnimal = "padre", nombre = "Zeus", sexo = Sexo.MACHO, etapa = Etapa.TORO, fechaBaja = 3L)
+        val madre = animal().copy(idAnimal = "madre", nombre = "Lola")
+        animalRepository.set(padre)
+        animalRepository.set(madre)
+        animalRepository.set(animal().copy(idPadre = "padre", idMadre = "madre"))
+
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<DetalleAnimalUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(padre, estados.last().padre)
+        assertEquals(madre, estados.last().madre)
+        job.cancel()
+    }
+
+    @Test
+    fun sinPadreNiMadre_ambosQuedanNulos() = runTest {
+        animalRepository.set(animal())
+
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<DetalleAnimalUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals("Manchas", estados.last().animal?.nombre)
+        assertEquals(null, estados.last().padre)
+        assertEquals(null, estados.last().madre)
+        job.cancel()
+    }
+
+    @Test
     fun onDarDeBaja_llamaAlCasoDeUsoConElAnimalCorrecto() = runTest {
         animalRepository.set(animal())
         val viewModel = crearViewModel()

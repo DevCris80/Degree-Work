@@ -15,8 +15,21 @@ import androidx.room.PrimaryKey
             childColumns = ["idPerfilFinca"],
             onDelete = ForeignKey.CASCADE,
         ),
+        // Parentesco: si el padre o la madre desaparecen, la cría queda sin ese dato en vez de borrarse.
+        ForeignKey(
+            entity = AnimalEntity::class,
+            parentColumns = ["idAnimal"],
+            childColumns = ["idPadre"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
+        ForeignKey(
+            entity = AnimalEntity::class,
+            parentColumns = ["idAnimal"],
+            childColumns = ["idMadre"],
+            onDelete = ForeignKey.SET_NULL,
+        ),
     ],
-    indices = [Index("idPerfilFinca")],
+    indices = [Index("idPerfilFinca"), Index("idPadre"), Index("idMadre")],
 )
 data class AnimalEntity(
     @PrimaryKey val idAnimal: String,
@@ -30,6 +43,8 @@ data class AnimalEntity(
     val proposito: String,
     val fotoUri: String? = null,
     val fechaBaja: Long? = null,
+    val idPadre: String? = null,
+    val idMadre: String? = null,
     val sincronizado: Boolean = false,
     val fechaModificacion: Long,
     // Revisiones (ADR-0004). `rev` es la revisión vigente que conoce el celular, nula hasta la primera
