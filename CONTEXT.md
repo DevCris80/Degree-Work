@@ -20,8 +20,12 @@ La medición (código y peso) que reporta el ESP32 cada vez que un bovino pasa p
 _Avoid_: lectura (reservada para la lectura NFC de una `Chapeta` en Escanear), medición
 
 **Registro**:
-Un `Pesaje` ya asignado a un `Animal` que no está dado de baja: solo, porque su código tenía una `Chapeta` activa de ese `Animal`, o por una persona al conciliar un `Pesaje pendiente`. El sustantivo queda reservado para pesajes; el verbo *registrar* sí se usa para dar de alta un `Animal` ("registrar un animal").
+Un `Pesaje` ya asignado a un `Animal` que no está dado de baja: solo, porque su código tenía una `Chapeta` activa de ese `Animal`, o por una persona al conciliar un `Pesaje pendiente`. También lo crea una persona que digita un `Pesaje manual`. El sustantivo queda reservado para pesajes; el verbo *registrar* sí se usa para dar de alta un `Animal` ("registrar un animal").
 _Avoid_: Evento, medición; "Registro" como nombre de la creación de un `Animal` o de una cuenta
+
+**Pesaje manual**:
+Un `Registro` que una persona digita en el celular, sin pasar por el ESP32: no tiene `id_lectura`, queda a nombre del `Usuario` del dispositivo y lleva la fecha y hora del pesaje que se ingresó, que no puede ser futura.
+_Avoid_: medición manual
 
 **Pesaje pendiente**:
 Un `Pesaje` válido que no pudo asignarse a un `Animal`, porque su código no tiene `Chapeta` activa o porque el `Animal` está dado de baja. Está sin resolver hasta que alguien lo concilia; resuelto, se conserva igual, con su motivo.
