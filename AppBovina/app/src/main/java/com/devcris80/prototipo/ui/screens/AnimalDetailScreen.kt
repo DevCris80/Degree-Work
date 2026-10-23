@@ -309,7 +309,7 @@ fun DetalleAnimalScreen(
                     )
                 }
             }
-            if (animal.fechaBaja == null) {
+            if (animal.activo) {
                 item {
                     BovinaPrimaryButton(
                         texto = "Registrar pesaje",

@@ -11,6 +11,7 @@ import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
+import com.devcris80.prototipo.testing.FakeTransaccion
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -42,7 +43,13 @@ class NuevoPesajeViewModelTest {
 
     private fun crearViewModel() = NuevoPesajeViewModel(
         vaca.idAnimal,
-        RegistrarPesajeManual(animalRepository, registroRepository, cuentaRepository, clock = { AHORA }),
+        RegistrarPesajeManual(
+            animalRepository,
+            registroRepository,
+            cuentaRepository,
+            FakeTransaccion(),
+            clock = { AHORA },
+        ),
         clock = { AHORA },
     )
 
@@ -68,7 +75,7 @@ class NuevoPesajeViewModelTest {
     @Test
     fun conUnPesoValido_guardaElPesajeConLaFechaIngresadaANombreDelUsuario() = runTest {
         val viewModel = crearViewModel()
-        viewModel.onPesoCambiado("432,5")
+        viewModel.onPesoCambiado("432.5")
         viewModel.onFechaCambiada(AHORA - 3_600_000)
 
         viewModel.onGuardar()
@@ -85,13 +92,44 @@ class NuevoPesajeViewModelTest {
     @Test
     fun conPesoCeroOMayorA1500_noGuardaYLoIndica() = runTest {
         val viewModel = crearViewModel()
-        for (peso in listOf("0", "1500,1", "abc")) {
+        for (peso in listOf("0", "1500.1", ".")) {
             viewModel.onPesoCambiado(peso)
             viewModel.onGuardar()
 
             assertEquals(NuevoPesajeError.PesoFueraDeRango, viewModel.estado.value.error)
         }
         assertEquals(emptyList<Registro>(), registros())
+    }
+
+    @Test
+    fun elPesoSoloAceptaDigitosYUnPuntoDecimal() {
+        val viewModel = crearViewModel()
+        viewModel.onPesoCambiado("1500")
+
+        for (rechazado in listOf("1,500", "1.500.5", "15a", "-3")) viewModel.onPesoCambiado(rechazado)
+
+        assertEquals("1500", viewModel.estado.value.peso)
+    }
+
+    @Test
+    fun conExactamente1500kg_seGuarda() = runTest {
+        val viewModel = crearViewModel()
+        viewModel.onPesoCambiado("1500")
+
+        viewModel.onGuardar()
+
+        assertEquals(1500f, registros().single().peso)
+    }
+
+    @Test
+    fun unDobleToqueEnGuardar_guardaUnSoloPesaje() = runTest {
+        val viewModel = crearViewModel()
+        viewModel.onPesoCambiado("400")
+
+        viewModel.onGuardar()
+        viewModel.onGuardar()
+
+        assertEquals(1, registros().size)
     }
 
     @Test

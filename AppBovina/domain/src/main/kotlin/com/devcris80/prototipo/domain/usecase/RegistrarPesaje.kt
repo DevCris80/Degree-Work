@@ -44,8 +44,7 @@ class RegistrarPesaje(
 
     suspend operator fun invoke(pesaje: Pesaje): Resultado {
         val recibidoEn = clock()
-        // `!(peso > 0)` en vez de `peso <= 0` para rechazar también un peso que no sea un número.
-        if (!(pesaje.peso > 0f) || pesaje.peso > Pesaje.PESO_MAXIMO_KG) {
+        if (!Pesaje.pesoValido(pesaje.peso)) {
             return Resultado.Invalido(MotivoInvalido.PESO_FUERA_DE_RANGO)
         }
         // Una antigüedad mayor que la hora de recepción daría una hora de medición imposible.
@@ -70,7 +69,7 @@ class RegistrarPesaje(
         val usuario = cuentaRepository.getUsuario() ?: return Resultado.SinUsuario
         val animal = chapetaRepository.findActivaByCodigo(codigo)?.let { animalRepository.findById(it.idAnimal) }
 
-        if (animal == null || animal.fechaBaja != null) {
+        if (animal?.activo != true) {
             val pendiente = PesajePendiente(
                 idPesajePendiente = UUID.randomUUID().toString(),
                 idLectura = pesaje.idLectura,

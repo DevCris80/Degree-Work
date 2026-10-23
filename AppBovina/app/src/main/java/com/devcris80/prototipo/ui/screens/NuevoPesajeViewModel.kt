@@ -19,11 +19,13 @@ sealed interface NuevoPesajeError {
 }
 
 data class NuevoPesajeUiState(
-    /** El peso como se digita; acepta coma o punto decimal. */
+    /** El peso como se digita: solo dígitos y un punto decimal, sin separador de miles. */
     val peso: String = "",
-    /** Fecha y hora de la medición. */
+    /** Fecha y hora del pesaje. */
     val fecha: Long,
     val error: NuevoPesajeError? = null,
+    /** Verdadero desde que se pide guardar hasta que falla: evita guardar dos veces con un doble toque. */
+    val guardando: Boolean = false,
 ) {
     val puedeGuardar: Boolean get() = peso.isNotBlank()
 }
@@ -44,24 +46,35 @@ class NuevoPesajeViewModel(
     private val _eventos = Channel<NuevoPesajeEvento>(Channel.BUFFERED)
     val eventos: Flow<NuevoPesajeEvento> = _eventos.receiveAsFlow()
 
-    fun onPesoCambiado(valor: String) = _estado.update { it.copy(peso = valor, error = null) }
+    fun onPesoCambiado(valor: String) {
+        if (!FORMATO_PESO.matches(valor)) return
+        _estado.update { it.copy(peso = valor, error = null) }
+    }
+
     fun onFechaCambiada(fecha: Long) = _estado.update { it.copy(fecha = fecha, error = null) }
 
     fun onGuardar() {
         val actual = _estado.value
-        if (!actual.puedeGuardar) return
-        // Un texto que no es un número llega como NaN y el caso de uso lo rechaza por rango.
-        val peso = actual.peso.trim().replace(',', '.').toFloatOrNull() ?: Float.NaN
+        if (!actual.puedeGuardar || actual.guardando) return
+        _estado.update { it.copy(guardando = true) }
+        // Un "." solo no es un número: llega como NaN y el caso de uso lo rechaza por rango.
+        val peso = actual.peso.toFloatOrNull() ?: Float.NaN
         viewModelScope.launch {
-            when (registrarPesajeManual(idAnimal, peso, actual.fecha)) {
-                RegistrarPesajeManual.Resultado.Registrado -> _eventos.send(NuevoPesajeEvento.Guardado)
-                RegistrarPesajeManual.Resultado.PesoFueraDeRango ->
-                    _estado.update { it.copy(error = NuevoPesajeError.PesoFueraDeRango) }
-                RegistrarPesajeManual.Resultado.FechaFutura ->
-                    _estado.update { it.copy(error = NuevoPesajeError.FechaFutura) }
-                RegistrarPesajeManual.Resultado.AnimalNoDisponible ->
-                    _estado.update { it.copy(error = NuevoPesajeError.AnimalNoDisponible) }
+            val error = when (registrarPesajeManual(idAnimal, peso, actual.fecha)) {
+                RegistrarPesajeManual.Resultado.Registrado -> null
+                RegistrarPesajeManual.Resultado.PesoFueraDeRango -> NuevoPesajeError.PesoFueraDeRango
+                RegistrarPesajeManual.Resultado.FechaFutura -> NuevoPesajeError.FechaFutura
+                RegistrarPesajeManual.Resultado.AnimalNoDisponible -> NuevoPesajeError.AnimalNoDisponible
+            }
+            if (error == null) {
+                _eventos.send(NuevoPesajeEvento.Guardado)
+            } else {
+                _estado.update { it.copy(error = error, guardando = false) }
             }
         }
+    }
+
+    private companion object {
+        val FORMATO_PESO = Regex("\\d*\\.?\\d*")
     }
 }
