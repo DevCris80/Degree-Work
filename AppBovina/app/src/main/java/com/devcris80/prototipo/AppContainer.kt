@@ -1,7 +1,6 @@
 package com.devcris80.prototipo
 
 import android.content.Context
-import com.devcris80.prototipo.data.SeedData
 import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.remote.SesionCifrada
 import com.devcris80.prototipo.data.remote.crearClienteSupabase
@@ -98,6 +97,4 @@ class AppContainer(context: Context) {
         eventoRepository,
     )
     val observarEvolucionPeso = ObservarEvolucionPeso(registroRepository)
-
-    val seedData = SeedData(cuentaRepository, animalRepository, chapetaRepository, registrarAnimal)
 }
