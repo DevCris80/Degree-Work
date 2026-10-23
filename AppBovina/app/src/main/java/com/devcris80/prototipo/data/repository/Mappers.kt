@@ -70,7 +70,7 @@ fun AnimalEntity.toDomain() = Animal(
     fechaBaja = fechaBaja,
 )
 
-fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
+fun Animal.toEntity(fechaModificacion: Long, idVersion: String) = AnimalEntity(
     idAnimal = idAnimal,
     idPerfilFinca = idPerfilFinca,
     nombre = nombre,
@@ -83,6 +83,7 @@ fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
     fechaModificacion = fechaModificacion,
+    idVersion = idVersion,
 )
 
 fun ChapetaEntity.toDomain() = Chapeta(
@@ -112,7 +113,7 @@ fun EventoEntity.toDomain() = Evento(
     fechaBaja = fechaBaja,
 )
 
-fun Evento.toEntity(fechaModificacion: Long) = EventoEntity(
+fun Evento.toEntity(fechaModificacion: Long, idVersion: String) = EventoEntity(
     idEvento = idEvento,
     idAnimal = idAnimal,
     idUsuario = idUsuario,
@@ -121,6 +122,7 @@ fun Evento.toEntity(fechaModificacion: Long) = EventoEntity(
     detalle = detalle,
     fechaBaja = fechaBaja,
     fechaModificacion = fechaModificacion,
+    idVersion = idVersion,
 )
 
 fun RegistroEntity.toDomain() = Registro(
@@ -133,7 +135,7 @@ fun RegistroEntity.toDomain() = Registro(
     fechaBaja = fechaBaja,
 )
 
-fun Registro.toEntity(fechaModificacion: Long) = RegistroEntity(
+fun Registro.toEntity(fechaModificacion: Long, idVersion: String) = RegistroEntity(
     idRegistro = idRegistro,
     idAnimal = idAnimal,
     idUsuario = idUsuario,
@@ -142,6 +144,7 @@ fun Registro.toEntity(fechaModificacion: Long) = RegistroEntity(
     timestamp = timestamp,
     fechaBaja = fechaBaja,
     fechaModificacion = fechaModificacion,
+    idVersion = idVersion,
 )
 
 fun PesajePendienteEntity.toDomain() = PesajePendiente(
@@ -194,3 +197,4 @@ fun Usuario.toEntity(fechaModificacion: Long) = UsuarioEntity(
     rol = TEXTO_ROL.aTexto(rol),
     fechaModificacion = fechaModificacion,
 )
+
