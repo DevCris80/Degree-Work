@@ -30,6 +30,7 @@ import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
+import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
@@ -94,7 +95,9 @@ class AppContainer(context: Context) {
         chapetaRepository,
         registroRepository,
         pesajePendienteRepository,
+        eventoRepository,
     )
+    val observarEvolucionPeso = ObservarEvolucionPeso(registroRepository)
 
     val seedData = SeedData(cuentaRepository, animalRepository, chapetaRepository, registrarAnimal)
 }

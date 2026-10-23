@@ -4,15 +4,19 @@ import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
+import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
+import com.devcris80.prototipo.domain.usecase.EventosDelMes
 import com.devcris80.prototipo.domain.usecase.GrupoInventario
+import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
+import com.devcris80.prototipo.testing.FakeEventoRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
 import kotlinx.coroutines.Dispatchers
@@ -28,6 +32,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Before
 import org.junit.Test
+import java.util.Calendar
 import java.util.UUID
 
 class IndicadoresViewModelTest {
@@ -35,6 +40,7 @@ class IndicadoresViewModelTest {
     private val chapetaRepository = FakeChapetaRepository()
     private val registroRepository = FakeRegistroRepository()
     private val pesajePendienteRepository = FakePesajePendienteRepository()
+    private val eventoRepository = FakeEventoRepository()
 
     private fun crearViewModel() = IndicadoresViewModel(
         ObservarIndicadoresHato(
@@ -42,8 +48,10 @@ class IndicadoresViewModelTest {
             chapetaRepository,
             registroRepository,
             pesajePendienteRepository,
+            eventoRepository,
             clock = { AHORA },
         ),
+        ObservarEvolucionPeso(registroRepository),
     )
 
     @Before
@@ -94,10 +102,11 @@ class IndicadoresViewModelTest {
         timestamp = timestamp,
     )
 
-    private fun TestScope.ultimoEstado(): IndicadoresUiState {
+    private fun TestScope.ultimoEstado(idAnimalElegido: String? = null): IndicadoresUiState {
         val viewModel = crearViewModel()
         val estados = mutableListOf<IndicadoresUiState>()
         val job = launch { viewModel.estado.collect { estados.add(it) } }
+        idAnimalElegido?.let(viewModel::onAnimalElegido)
         advanceUntilIdle()
         job.cancel()
         return estados.last()
@@ -178,6 +187,74 @@ class IndicadoresViewModelTest {
         assertEquals(emptyList<GrupoInventario>(), indicadores.inventario)
         assertEquals(0, indicadores.pesajesPendientes)
         assertNull(indicadores.pesajePendienteMasAntiguo)
+    }
+
+    @Test
+    fun con400kgElDia1Y430kgElDia31_laGananciaDiariaEsDeUnKiloPorDia() = runTest {
+        val vaca = animal(Etapa.VACA, Proposito.LECHE)
+        animalRepository.activos.value = listOf(vaca)
+        registroRepository.set(
+            vaca.idAnimal,
+            listOf(registro(vaca, timestamp = 31 * DIA).copy(peso = 430f), registro(vaca, timestamp = DIA)),
+        )
+
+        val evolucion = checkNotNull(ultimoEstado(idAnimalElegido = vaca.idAnimal).evolucionPeso)
+
+        assertEquals(listOf(400f, 430f), evolucion.registros.map { it.peso })
+        assertEquals(1.0, checkNotNull(evolucion.gananciaDiariaKg), 1e-9)
+    }
+
+    @Test
+    fun conUnSoloPesaje_noHayGananciaDiaria() = runTest {
+        val vaca = animal(Etapa.VACA, Proposito.LECHE)
+        animalRepository.activos.value = listOf(vaca)
+        registroRepository.set(vaca.idAnimal, listOf(registro(vaca, timestamp = DIA)))
+
+        val evolucion = checkNotNull(ultimoEstado(idAnimalElegido = vaca.idAnimal).evolucionPeso)
+
+        assertEquals(1, evolucion.registros.size)
+        assertNull(evolucion.gananciaDiariaKg)
+    }
+
+    private fun evento(animal: Animal, tipo: String, fecha: Long, fechaBaja: Long? = null) = Evento(
+        idEvento = UUID.randomUUID().toString(),
+        idAnimal = animal.idAnimal,
+        idUsuario = "usuario",
+        tipoEvento = tipo,
+        fecha = fecha,
+        detalle = "",
+        fechaBaja = fechaBaja,
+    )
+
+    private fun fecha(anio: Int, mes: Int, dia: Int): Long =
+        Calendar.getInstance().apply { clear(); set(anio, mes - 1, dia, 12, 0) }.timeInMillis
+
+    @Test
+    fun cuentaLosEventosPorMesYPorTipo_sinLosDadosDeBajaNiLosDeAnimalesDadosDeBaja() = runTest {
+        val vaca = animal(Etapa.VACA, Proposito.LECHE)
+        val dadoDeBaja = animal(Etapa.TORO, Proposito.CARNE).copy(fechaBaja = fecha(2026, 10, 1))
+        animalRepository.activos.value = listOf(vaca)
+        eventoRepository.set(
+            vaca.idAnimal,
+            listOf(
+                evento(vaca, "Vacunación", fecha(2026, 10, 20)),
+                evento(vaca, " vacunación", fecha(2026, 10, 5)),
+                evento(vaca, "Tratamiento", fecha(2026, 10, 7)),
+                evento(vaca, "Vacunación", fecha(2026, 9, 15)),
+                evento(vaca, "Vacunación", fecha(2026, 10, 8), fechaBaja = fecha(2026, 10, 9)),
+            ),
+        )
+        eventoRepository.set(dadoDeBaja.idAnimal, listOf(evento(dadoDeBaja, "Tratamiento", fecha(2026, 9, 1))))
+
+        val indicadores = checkNotNull(ultimoEstado().indicadores)
+
+        assertEquals(
+            listOf(
+                EventosDelMes(anio = 2026, mes = 10, porTipo = mapOf("Vacunación" to 2, "Tratamiento" to 1)),
+                EventosDelMes(anio = 2026, mes = 9, porTipo = mapOf("Vacunación" to 1)),
+            ),
+            indicadores.eventosPorMes,
+        )
     }
 
     private companion object {

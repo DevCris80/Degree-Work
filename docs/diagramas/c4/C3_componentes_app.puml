@@ -25,7 +25,7 @@ Container_Boundary(app, "App MiGanado (Kotlin, Jetpack Compose)") {
     Component(uiEventos, "UI-05 Eventos", "Compose, ViewModel", "Estado: parcial. Registro de eventos. Faltan fecha real, subtipos, edición y baja.", $tags="parcial")
     Component(uiFinca, "UI-06 Finca y usuarios", "Compose, ViewModel, ubicación del sistema", "Invitación, quitar Operario y ubicación de la finca.", $tags="planificado")
     Component(uiSync, "UI-07 Sincronización", "Compose, ViewModel", "Estado y fecha de la última sincronización, bandeja de conflictos y bandeja de rechazos.", $tags="planificado")
-    Component(uiInd, "UI-08 Indicadores", "Compose, ViewModel", "Estado: parcial. Inventario, pendientes y completitud del historial calculados sobre Room. Faltan la evolución de peso y los eventos por mes.", $tags="parcial")
+    Component(uiInd, "UI-08 Indicadores", "Compose, ViewModel", "Inventario, evolución de peso, pendientes, eventos por mes y completitud del historial, calculados sobre Room.")
   }
 
   Boundary(dom, "Capa de dominio (módulo :domain, Kotlin puro)", "módulo Gradle") {
@@ -33,7 +33,7 @@ Container_Boundary(app, "App MiGanado (Kotlin, Jetpack Compose)") {
     Component(domAnimales, "DOM-02 Animales y chapetas", "Kotlin", "Estado: parcial. RegistrarAnimal (con padre y madre), DarDeBajaAnimal, LiberarChapeta, ResolverDestinoEscaneo y normalización del código. Faltan edición y asociar chapeta.", $tags="parcial")
     Component(domPesajes, "DOM-03 Pesajes", "Kotlin", "Estado: parcial. RegistrarPesaje (idempotente, hora = recepción − antiguedad_ms), asignar y descartar pendientes. Falta el pesaje manual.", $tags="parcial")
     Component(domEventos, "DOM-04 Eventos y revisiones", "Kotlin", "Subtipos de evento, edición con rev_base y baja lógica de eventos y pesajes.", $tags="planificado")
-    Component(domInd, "DOM-05 Indicadores", "Kotlin", "Estado: parcial. ObservarIndicadoresHato: inventario, pendientes y completitud del historial. Faltan la ganancia diaria de peso y los eventos por mes.", $tags="parcial")
+    Component(domInd, "DOM-05 Indicadores", "Kotlin", "ObservarIndicadoresHato y ObservarEvolucionPeso: inventario, ganancia diaria de peso, pendientes, eventos por mes y completitud del historial.")
   }
 
   Boundary(data, "Capa de datos (paquete data y service)", "paquete") {
