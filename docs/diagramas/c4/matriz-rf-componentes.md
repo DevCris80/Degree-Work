@@ -1,6 +1,6 @@
 # Matriz de trazabilidad RF – componentes C4
 
-Corte: 22 de octubre de 2026. Fuente de los RF: SRS v0.1 (21-10-2026). Componentes: diagramas C3 `C3_componentes_app.puml` y `C3_componentes_api.puml`.
+Corte: 23 de octubre de 2026. Fuente de los RF: SRS v0.2 (23-10-2026). Componentes: diagramas C3 `C3_componentes_app.puml` y `C3_componentes_bd.puml`.
 
 KPI de OE2: 100 % de los RF asignados a al menos un componente del modelo C4.
 
@@ -20,12 +20,12 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 
 | RF | Requisito (resumen) | Estado del RF (SRS) | Componentes | Contenedores |
 |---|---|---|---|---|
-| RF-01 | Crear cuenta con finca y primer Ganadero | Parcial | UI-01, DOM-01, DAT-03, DAT-04 | App |
+| RF-01 | Crear cuenta con finca y primer Ganadero | Parcial | UI-01, DOM-01, DAT-03, DAT-04, BD-06 | App, Supabase |
 | RF-02 | Iniciar sesión con Supabase Auth | Pendiente | UI-01, DAT-03 | App |
 | RF-03 | Conservar la sesión de forma segura | Pendiente | DAT-03 | App |
-| RF-04 | Autorización de datos personales (Ley 1581) | Pendiente | UI-01, DOM-01, DAT-04 | App |
-| RF-05 | Generar y canjear código de invitación | Pendiente | UI-06, UI-01, DAT-04 | App |
-| RF-06 | Permisos por rol en celular y servidor | Pendiente | DOM-01, UI-02, UI-04, API-01, API-04, API-06 | App, FastAPI |
+| RF-04 | Autorización de datos personales (Ley 1581) | Pendiente | UI-01, DOM-01, DAT-04, BD-06 | App, Supabase |
+| RF-05 | Generar y canjear código de invitación | Pendiente | UI-06, UI-01, DAT-04, BD-06 | App, Supabase |
+| RF-06 | Permisos por rol en celular y servidor | Pendiente | DOM-01, UI-02, UI-04, BD-03, BD-05, BD-06 | App, Supabase |
 | RF-07 | Recuperar contraseña | Pendiente | UI-01, DAT-03 | App |
 | RF-08 | Registrar animal | Implementado | UI-02, DOM-02, DAT-01, DAT-06 | App |
 | RF-09 | Listar animales activos | Implementado | UI-02, DAT-01 | App |
@@ -49,14 +49,14 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-27 | Pesaje manual | Pendiente | UI-04, DOM-03, DAT-01 | App |
 | RF-28 | Registrar evento con fecha real | Parcial | UI-05, DAT-01 | App |
 | RF-29 | Subtipos vacunación y parto | Pendiente | UI-05, DOM-04, DAT-01 | App |
-| RF-30 | Editar eventos y pesajes como revisiones | Pendiente | UI-02, UI-05, DOM-04, DAT-01, API-03 | App, FastAPI |
+| RF-30 | Editar eventos y pesajes como revisiones | Pendiente | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
 | RF-31 | Baja lógica de eventos y pesajes | Pendiente | UI-02, DOM-04, DAT-01 | App |
-| RF-32 | Subir cambios locales | Pendiente | DAT-05, API-01, API-02, API-06 | App, FastAPI |
-| RF-33 | Detectar concurrencia con rev_base (siblings) | Pendiente | DAT-05, API-03 | App, FastAPI |
-| RF-34 | Mostrar y resolver conflictos | Pendiente | UI-07, DAT-05, API-03 | App, FastAPI |
-| RF-35 | Bandeja de rechazos | Pendiente | UI-07, DAT-05, API-04 | App, FastAPI |
-| RF-36 | Descargar cambios por cursor | Pendiente | DAT-05, API-01, API-05, API-06 | App, FastAPI |
-| RF-37 | Quitar a un Operario | Pendiente | UI-06, DAT-04 | App |
+| RF-32 | Subir cambios locales | Pendiente | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
+| RF-33 | Detectar concurrencia con rev_base (siblings) | Pendiente | DAT-05, BD-02, BD-07 | App, Supabase |
+| RF-34 | Mostrar y resolver conflictos | Pendiente | UI-07, DAT-05, BD-02 | App, Supabase |
+| RF-35 | Bandeja de rechazos | Pendiente | UI-07, DAT-05, BD-03 | App, Supabase |
+| RF-36 | Descargar cambios por cursor | Pendiente | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |
+| RF-37 | Quitar a un Operario | Pendiente | UI-06, DAT-04, BD-06 | App, Supabase |
 | RF-38 | Subir y descargar fotos | Pendiente | DAT-06, DAT-05 | App |
 | RF-39 | Inventario activo | Pendiente | UI-08, DOM-05, DAT-01 | App |
 | RF-40 | Evolución de peso y ganancia diaria | Pendiente | UI-08, DOM-05, DAT-01 | App |
@@ -87,15 +87,17 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | DAT-04 | Funciones de finca | App | Planificado | RF-01, RF-04, RF-05, RF-37 |
 | DAT-05 | Motor de sincronización | App | Planificado | RF-32, RF-33, RF-34, RF-35, RF-36, RF-38 |
 | DAT-06 | Gestor de fotos | App | Parcial | RF-08, RF-38 |
-| API-01 | Verificador de JWT | FastAPI | Planificado | RF-06, RF-32, RF-36 |
-| API-02 | Endpoint de subida | FastAPI | Planificado | RF-32 |
-| API-03 | Control de revisiones | FastAPI | Planificado | RF-30, RF-33, RF-34 |
-| API-04 | Clasificador de resultados | FastAPI | Planificado | RF-06, RF-35 |
-| API-05 | Endpoint de descarga | FastAPI | Planificado | RF-36 |
-| API-06 | Sesión de base de datos del usuario | FastAPI | Planificado | RF-06, RF-32, RF-36 |
+| BD-01 | Función subir_cambios | Supabase | Planificado | RF-32 |
+| BD-02 | Control de revisiones | Supabase | Planificado | RF-30, RF-33, RF-34 |
+| BD-03 | Clasificador de resultados | Supabase | Planificado | RF-06, RF-35 |
+| BD-04 | Función descargar_cambios | Supabase | Planificado | RF-36 |
+| BD-05 | Políticas RLS | Supabase | Planificado | RF-06, RF-32, RF-36 |
+| BD-06 | Funciones de finca | Supabase | Planificado | RF-01, RF-04, RF-05, RF-06, RF-37 |
+| BD-07 | Tablas (datos, revisiones, siblings, cursor) | Supabase | Planificado | RF-32, RF-33, RF-36 |
 
 ## 4. Notas
 
-- RF-06 tiene dos barreras: la verificación de rol en el dominio (DOM-01), que funciona sin señal, y las políticas RLS que aplica la sesión de base de datos del usuario (API-06). Las funciones de PostgREST (crear_finca, generar_invitacion, canjear_invitacion, quitar_operario) también validan rol y finca dentro de la base de datos.
-- RF-01, RF-04, RF-05 y RF-37 se ejecutan en el servidor mediante funciones de PostgREST llamadas desde DAT-04, no mediante la sincronización por FastAPI.
+- RF-06 tiene dos barreras: la verificación de rol en el dominio (DOM-01), que funciona sin señal, y las políticas RLS (BD-05), que aplican porque las funciones de sincronización corren como el usuario (`SECURITY INVOKER`). Las funciones de finca (BD-06) corren con `SECURITY DEFINER` y validan rol y finca dentro de la función.
+- RF-01, RF-04, RF-05 y RF-37 se ejecutan en el servidor mediante las funciones de finca (BD-06), llamadas desde DAT-04, no mediante la sincronización.
+- No hay un servicio de sincronización propio: PostgREST verifica el JWT y ejecuta las funciones de Postgres (ADR-0005).
 - El estado de cada componente corresponde a la rama `main` del repositorio en la fecha de corte.

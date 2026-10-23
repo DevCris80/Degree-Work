@@ -8,8 +8,8 @@
 | Autores | Cristian Steven Villamil Rodríguez, Mariana Alvarez |
 | Director | Juan Guillermo Hurtado |
 | Repositorio | `github.com/DevCris80/Degree-Work` |
-| Versión de este documento | 0.1 (borrador) |
-| Fecha de corte del estado | 21 de octubre de 2026 |
+| Versión de este documento | 0.2 (borrador) |
+| Fecha de corte del estado | 23 de octubre de 2026 |
 
 > **Datos por completar antes de `srs-v1.0`** (marcados en el texto con ⚠):
 > 1. Fecha de la visita de campo y fecha de la confirmación del ganadero (sección 2.2 y matriz).
@@ -25,6 +25,7 @@
 | Versión | Fecha | Autor | Cambio | Ciclo TSP | Tag |
 |---|---|---|---|---|---|
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
+| 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -59,7 +60,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 - Recepción de pesajes desde un ESP32 por HTTP local, pesaje manual y conciliación de pesajes no asignados.
 - Registro y edición de eventos sanitarios y de manejo, con subtipos.
 - Cuentas con Supabase Auth, dos roles (Ganadero y Operario) e invitación por código.
-- Sincronización entre dispositivos vía FastAPI y Supabase, con revisiones, conflictos y rechazos.
+- Sincronización entre dispositivos vía Supabase (funciones de Postgres), con revisiones, conflictos y rechazos.
 - Tablero de indicadores (BI) dentro de la app, calculado sobre los datos locales.
 
 **Excluido**
@@ -103,10 +104,11 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | `sincronizado` | Booleano de cada fila local: `false` significa que tiene cambios sin subir. |
 | Revisión (`rev`) | Número que asigna el servidor a cada versión aceptada de una fila editable (Animal, Evento, Registro). |
 | `rev_base` | Revisión de la que partió una edición hecha en el celular. |
-| Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta. |
+| `id_version` | Identificador (UUID) de cada escritura local de una fila editable. Permite reconocer una edición reenviada. |
+| Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta ni se fusiona. Cuenta la fila entera, aunque los campos editados no se pisen. |
 | Conflicto | Estado de una fila que tiene uno o más siblings sin resolver. |
 | Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior. |
-| Rechazo | Fila local que el servidor no aceptó por violar una regla de unicidad o de permisos. |
+| Rechazo | Fila local que el servidor no aceptó por violar una regla de unicidad o de permisos. Sale de su tabla local y queda en la bandeja de rechazos hasta que alguien la corrige. |
 
 **Siglas**
 
@@ -130,7 +132,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Campo | Valores |
 |---|---|
 | Prioridad (MoSCoW) | **M** Must · **S** Should · **C** Could |
-| Estado al 21-10-2026 | **Implementado** (hay código en `main`) · **Parcial** (existe, pero no cumple todo el enunciado) · **Pendiente** (decidido, sin código) |
+| Estado al 23-10-2026 | **Implementado** (hay código en `main`) · **Parcial** (existe, pero no cumple todo el enunciado) · **Pendiente** (decidido, sin código) |
 | Fuente | **CAMPO**: confirmado por el ganadero en la visita de campo (ver 2.2) · **EQUIPO**: decisión del equipo (con su ADR o issue cuando existe) · **NORMA**: exigido por una norma |
 | Objetivo | **OG** objetivo general · **OE1–OE4** objetivos específicos de la propuesta |
 | Verificación | **P** prueba automatizada · **D** demostración manual · **I** inspección · **A** análisis |
@@ -149,8 +151,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Operario | Persona | Trabaja con el ganado. Se une a una finca con un código de invitación. |
 | ESP32 | Sistema externo | Envía cada pesaje por HTTP al celular que comparte el hotspot. |
 | Supabase Auth | Sistema externo | Identidad: crear cuenta, iniciar sesión, recuperar contraseña. |
-| Servicio de sincronización (FastAPI) | Sistema externo | Recibe y entrega cambios, asigna revisiones y detecta conflictos. |
-| Supabase (Postgres y Storage) | Sistema externo | Base de datos central con RLS y almacenamiento de fotos. |
+| Supabase (PostgREST, Postgres y Storage) | Sistema externo | Base de datos central con RLS; funciones de sincronización que reciben y entregan cambios, asignan revisiones y detectan conflictos; almacenamiento de fotos. |
 
 **Matriz de permisos** (✓ permitido · ✗ no permitido · ⚠ propuesta a confirmar)
 
@@ -210,7 +211,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|---|
 | SUP-01 | El ESP32 y la báscula los provee el proyecto IoT complementario y respetan `docs/contrato-pesaje.md`. | Los requisitos RF-20 a RF-24 solo pueden demostrarse con un cliente HTTP simulado (curl). |
 | SUP-02 | El ESP32 se conecta al hotspot del celular que recibe los pesajes. | No llegan pesajes. |
-| SUP-03 | Supabase (Auth, Postgres, Storage) y el servicio FastAPI están disponibles cuando el celular tiene señal. | Las operaciones de LIM-02 esperan; el resto de la app sigue funcionando. |
+| SUP-03 | Supabase (Auth, PostgREST, Postgres, Storage) está disponible cuando el celular tiene señal. | Las operaciones de LIM-02 esperan; el resto de la app sigue funcionando. |
 | SUP-04 | Cada Usuario usa su propio celular; no se comparte dispositivo. | La autoría de los registros deja de ser confiable. |
 | SUP-05 | ⚠ Los dispositivos de verificación son un Samsung Galaxy A15 (referencia) y un Xiaomi 14T. La disponibilidad de NFC en el A15 depende de la variante y está pendiente de verificar. | Si el A15 no tiene NFC, RF-15 se verifica solo en el 14T y se declara. |
 | SUP-06 | Los tags del prototipo son NTAG215 de 13,56 MHz. | — |
@@ -262,11 +263,14 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RN-14 | Toda escritura local deja `sincronizado = false` y actualiza `fechaModificacion`. | EQUIPO (ADR-0001) |
 | RN-15 | Revisiones (solo Animal, Evento, Registro): el servidor asigna `rev`. Si el `rev_base` de una edición es igual a la revisión vigente, se acepta y se asigna `rev + 1`; si es menor, se guarda como sibling. | EQUIPO |
 | RN-16 | Las revisiones y los siblings se conservan siempre; no hay depuración. | EQUIPO / NORMA (Ley 1659) |
-| RN-17 | Mientras una fila esté en conflicto, se muestra la revisión aceptada primero, marcada "en conflicto", sin bloquear la consulta. Cualquier rol puede resolverlo. | EQUIPO |
+| RN-17 | Mientras una fila esté en conflicto, se muestra la revisión aceptada primero, marcada "en conflicto", sin bloquear la consulta. Cualquier rol puede resolverlo. Solo una resolución explícita cierra el conflicto: editar la fila sin resolverlo se acepta como revisión nueva y el conflicto sigue abierto. | EQUIPO (ADR-0004) |
 | RN-18 | Un código de invitación es de un solo uso y vence a los 7 días. | EQUIPO |
 | RN-19 | Evento, Registro, Pesaje pendiente y su conciliación registran el Usuario que los creó o resolvió. | EQUIPO |
 | RN-20 | El primer Usuario de una finca es Ganadero. | EQUIPO |
 | RN-21 | Un Pesaje pendiente tiene como máximo un Registro asociado, en el celular y en el servidor (índice único sobre `id_lectura`). | EQUIPO |
+| RN-22 | Una baja (`fechaBaja`, o `fechaDesasociacion` de una Chapeta) nunca queda como sibling: el servidor la aplica sobre la revisión vigente aunque su `rev_base` sea menor. Si la misma edición cambió otros campos, solo esos pueden quedar como sibling. | EQUIPO (ADR-0004) |
+| RN-23 | Reenviar una edición con un `id_version` ya procesado no crea revisión ni sibling, y recibe la misma respuesta que la primera vez. | EQUIPO (ADR-0004) |
+| RN-24 | Una fila rechazada sale de su tabla local y se conserva completa, con su motivo, en la bandeja de rechazos; no se reenvía mientras siga abierta. | EQUIPO (ADR-0004) |
 
 ---
 
@@ -603,11 +607,11 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Objetivo / Fuente | OE3 / EQUIPO |
 | Actor | Ganadero, Operario ⚠ |
 | Prioridad / Estado | M / Implementado |
-| Flujo principal | 1. El usuario abre la pestaña Conexión.<br>2. La app muestra si el servicio está activo.<br>3. El usuario lo inicia o lo detiene.<br>4. Con el servicio activo, se muestra una notificación persistente con el puerto. |
+| Flujo principal | 1. El usuario abre la pestaña Pesos.<br>2. La app muestra si el servicio está activo.<br>3. El usuario lo inicia o lo detiene.<br>4. Con el servicio activo, se muestra una notificación persistente con el puerto. |
 | Flujos alternos y excepciones | 3a. Android 13 o superior sin permiso de notificaciones: la app lo solicita. |
 | Offline / sincronización | Funciona sin señal. |
 | Criterios de aceptación | 1. **Dado** el servicio iniciado, **entonces** la notificación está visible y la pantalla indica "activo".<br>2. **Dado** el servicio detenido, **entonces** un `POST /pesaje` no recibe respuesta. |
-| Trazas | Issue #39 · `ServiceStatusScreen` · sin prueba automatizada |
+| Trazas | Issue #39 · `PesosScreen` · sin prueba automatizada |
 
 **CU-15 — Conciliar pesajes pendientes**
 
@@ -626,7 +630,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Entidades | Pesaje pendiente, Registro, Animal |
 | Reglas | RN-11, RN-12, RN-19, RN-21 |
 | Criterios de aceptación | 1. **Dado** un pendiente asignado, **entonces** el pesaje aparece en el detalle del animal con su hora de medición original.<br>2. **Dado** un pendiente descartado, **entonces** desaparece de la lista y se conserva en la base de datos como descartado.<br>3. **Dado** que se asignan varios pendientes y uno falla, **entonces** no se asigna ninguno. |
-| Trazas | Issues #52, #53, #61 · `PesajesPendientesScreen` · `PesajesPendientesViewModelTest` |
+| Trazas | Issues #52, #53, #61 · `PesosScreen` · `PesajesPendientesViewModelTest` |
 
 **CU-16 — Registrar pesaje manual**
 
@@ -701,17 +705,17 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Campo | Contenido |
 |---|---|
 | RF cubiertos | RF-32, RF-33, RF-36, RF-38 |
-| Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, por redactar) |
+| Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, ADR-0005) |
 | Actor | Sistema (en nombre del usuario con sesión) |
 | Prioridad / Estado | RF-32, RF-36: M / Pendiente. RF-33, RF-38: S / Pendiente. |
 | Precondiciones | Sesión válida y señal. |
-| Disparador | ⚠ El celular recupera señal, o el usuario elige "Sincronizar ahora". |
-| Flujo principal | 1. El celular envía al servicio FastAPI las filas con `sincronizado = false`; las editables llevan su `rev_base`.<br>2. FastAPI escribe en Supabase con el JWT del usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling.<br>4. FastAPI responde por fila: aceptada (con su `rev`), sibling o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`, las sibling como "en conflicto" y las rechazadas como "rechazadas" (CU-22).<br>6. El celular sube a Storage las fotos pendientes.<br>7. El celular pide los cambios con cursor mayor que el último recibido (con margen de solapamiento), los aplica de forma idempotente por id y `rev`, y guarda el nuevo cursor.<br>8. El celular descarga las fotos nuevas y registra la fecha de la última sincronización. |
-| Flujos alternos y excepciones | 1a. Se pierde la señal a mitad: las filas sin confirmar siguen con `sincronizado = false` y se reenvían; reenviarlas no duplica nada (UUID).<br>2a. Sesión rechazada: la app pide iniciar sesión.<br>4a. Violación de unicidad o de permisos: la fila se rechaza (CU-22). |
+| Disparador | Se abre la app, el usuario elige "Sincronizar ahora" o se guarda un cambio local. Cada disparo encola un único trabajo, que corre cuando hay señal. |
+| Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular sube a Storage las fotos pendientes.<br>7. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>8. El celular descarga las fotos nuevas y registra la fecha de la última sincronización. |
+| Flujos alternos y excepciones | 1a. Se pierde la señal a mitad: los lotes ya confirmados quedan sincronizados; las filas sin confirmar siguen con `sincronizado = false` y se reenvían. Reenviarlas no duplica nada (UUID de la fila, `id_version` de la edición). Una descarga cortada se retoma desde el último cursor guardado.<br>1b. Señal débil: lotes pequeños, tiempos de espera cortos y reintentos con espera creciente; las fotos van al final y por separado, así que nunca retrasan los datos.<br>2a. Sesión rechazada: la app pide iniciar sesión.<br>4a. Violación de unicidad o de permisos: la fila se rechaza (CU-22). |
 | Offline / sincronización | Requiere señal (LIM-02). |
 | Postcondiciones | Servidor y celular con los mismos datos aceptados; conflictos y rechazos visibles. |
 | Entidades | Todas las sincronizadas; revisiones; cursor |
-| Reglas | RN-01, RN-13, RN-14, RN-15, RN-16, RN-21 |
+| Reglas | RN-01, RN-13, RN-14, RN-15, RN-16, RN-21, RN-22, RN-23, RN-24 |
 | Criterios de aceptación | 1. **Dado** 20 animales y 50 pesajes creados sin señal en un celular, **cuando** sincroniza, **entonces** el otro celular de la finca los recibe completos y sin alteración.<br>2. **Dado** dos ediciones del mismo animal desde la misma revisión, **entonces** la primera queda vigente y la segunda queda como sibling.<br>3. **Dado** una sincronización interrumpida y repetida, **entonces** no hay filas duplicadas en el servidor.<br>4. **Dado** un usuario de otra finca, **entonces** no recibe nada de esta. |
 | Trazas | — |
 
@@ -724,8 +728,8 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Actor | Ganadero, Operario |
 | Prioridad / Estado | S / Pendiente |
 | Precondiciones | Hay filas en conflicto. |
-| Flujo principal | 1. La app marca como "en conflicto" la fila y muestra la revisión vigente.<br>2. El usuario abre el conflicto; la app muestra la revisión vigente y los siblings, campo por campo.<br>3. El usuario elige la versión que queda ⚠ (o combina campo por campo).<br>4. El sistema guarda la elección como una edición nueva sobre la revisión vigente; los siblings quedan resueltos y se conservan. |
-| Flujos alternos y excepciones | 3a. El usuario no resuelve: la fila sigue consultable con la marca "en conflicto". |
+| Flujo principal | 1. La app marca como "en conflicto" la fila y muestra la revisión vigente.<br>2. El usuario abre el conflicto; la app muestra la revisión vigente y los siblings, campo por campo.<br>3. El usuario elige la versión que queda ⚠ (o combina campo por campo).<br>4. El sistema guarda la elección como una edición nueva sobre la revisión vigente, que nombra los siblings que resuelve; esos siblings quedan resueltos y se conservan. Un sibling que llegue después queda sin resolver. |
+| Flujos alternos y excepciones | 3a. El usuario no resuelve: la fila sigue consultable con la marca "en conflicto".<br>3b. Alguien edita la fila sin resolver el conflicto: la edición se acepta como revisión nueva y el conflicto sigue abierto (RN-17). |
 | Reglas | RN-15, RN-16, RN-17 |
 | Criterios de aceptación | 1. **Dado** un conflicto resuelto, **entonces** la marca desaparece en todos los celulares tras sincronizar, y el sibling sigue guardado.<br>2. **Dado** un conflicto sin resolver, **entonces** la fila se puede consultar. |
 | Trazas | — |
@@ -739,9 +743,9 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Actor | Ganadero, Operario (según la acción que corrige) |
 | Prioridad / Estado | M / Pendiente |
 | Precondiciones | El servidor rechazó una o más filas. |
-| Flujo principal | 1. La app muestra un aviso y la bandeja de rechazados, con la entidad, el motivo y la acción sugerida.<br>2. Según el motivo:<br>• chapeta duplicada → el usuario libera la chapeta local o asigna otro código;<br>• pendiente ya conciliado en otro celular → el usuario acepta la conciliación del servidor;<br>• permiso denegado → el usuario descarta el cambio local.<br>3. La corrección se guarda como una escritura nueva y se sincroniza. |
+| Flujo principal | 1. La app muestra un aviso y la bandeja de rechazados, con la entidad, el motivo y la acción sugerida.<br>2. Según el motivo:<br>• chapeta duplicada → el usuario asocia otro código al animal, o cierra el rechazo si el código sí es del otro animal;<br>• pendiente ya conciliado en otro celular → el usuario acepta la conciliación del servidor;<br>• permiso denegado → el usuario cierra el rechazo sin reenviar el cambio.<br>3. La corrección se guarda como una escritura nueva y se sincroniza; el rechazo queda cerrado. |
 | Flujos alternos y excepciones | 2a. El usuario no corrige: la fila sigue en la bandeja y no se pierde. |
-| Reglas | RN-01, RN-13, RN-21. ⚠ La fila rechazada se conserva marcada como resuelta; no se borra. |
+| Reglas | RN-01, RN-13, RN-21, RN-24. Un rechazo cerrado se conserva; no se borra. |
 | Criterios de aceptación | 1. **Dado** el escenario E-07, **entonces** el segundo celular ve el rechazo con el nombre del animal que ya tiene ese código.<br>2. **Dado** una fila rechazada sin corregir, **entonces** sigue visible después de cerrar la app. |
 | Trazas | — |
 
@@ -767,7 +771,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 
 #### 3.2.1 Interfaz de usuario
 
-App en Jetpack Compose con Material 3 y navegación inferior de tres pestañas: Animales, Escanear y Conexión.
+App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas: Animales, Escanear, Eventos y Pesos.
 
 | Pantalla | CU | Estado |
 |---|---|---|
@@ -778,8 +782,8 @@ App en Jetpack Compose con Material 3 y navegación inferior de tres pestañas: 
 | Registrar animal | CU-06 | Implementada (sin genealogía) |
 | Registrar evento | CU-17 | Parcial (sin fecha ni subtipos) |
 | Escanear | CU-10 | Implementada |
-| Pesajes pendientes | CU-15 | Implementada |
-| Conexión (servicio de pesaje) | CU-14 | Implementada |
+| Pesos (servicio de pesaje y pesajes pendientes) | CU-14, CU-15 | Implementada |
+| Eventos | CU-17 | Solo visual |
 | Editar animal, evento y pesaje; registrar pesaje manual; asociar chapeta | CU-08, CU-11, CU-16, CU-18, CU-19 | Pendientes |
 | Usuarios e invitación; datos de la finca | CU-04, CU-05, CU-23 | Pendientes |
 | Conflictos; rechazos; estado de sincronización | CU-20 a CU-22 | Pendientes |
@@ -801,8 +805,7 @@ Criterios transversales de la interfaz: RNF-16.
 | Sistema | Uso | Requisitos de la interfaz | Estado |
 |---|---|---|---|
 | Supabase Auth | Crear cuenta, iniciar sesión, renovar sesión, recuperar contraseña | La app lo llama directamente. Los tokens se guardan en el almacenamiento seguro del dispositivo (RNF-11). | Pendiente |
-| Servicio de sincronización (FastAPI) | Subir y descargar cambios | **Subida:** recibe un lote de filas (las editables con `rev_base`) y responde por fila: aceptada con su `rev`, sibling o rechazada con motivo. **Descarga:** recibe el último cursor y devuelve las filas posteriores (con margen de solapamiento) y el nuevo cursor. Exige `Authorization: Bearer <JWT del usuario>` y escribe en Supabase con ese JWT. El contrato detallado va en ADR-0004. | Pendiente |
-| Supabase Postgres | Base de datos central | Políticas RLS por finca y rol en todas las tablas; índice único parcial para RN-01 e índice único para RN-21; secuencia global para el cursor de descarga; tabla de revisiones para Animal, Evento y Registro. | Pendiente |
+| Supabase PostgREST y Postgres | Base de datos central y sincronización | **Subida:** la función `subir_cambios` recibe un lote de filas (las editables con `rev_base` e `id_version`) y responde por fila: aceptada con su `rev`, sibling con la revisión vigente, o rechazada con motivo. **Descarga:** la función `descargar_cambios` recibe el último cursor y un límite, y devuelve una página de filas posteriores (con margen de solapamiento), los siblings sin resolver y el nuevo cursor. PostgREST exige `Authorization: Bearer <JWT del usuario>` y las funciones corren como ese usuario (`SECURITY INVOKER`). Políticas RLS por finca y rol en todas las tablas; índice único parcial para RN-01 e índice único para RN-21; secuencia global para el cursor; tablas de revisiones y siblings para Animal, Evento y Registro. Contrato en ADR-0004 y ADR-0005. | Pendiente |
 | Supabase Storage | Fotos de animales | Archivos WebP con acceso restringido por finca mediante políticas. | Pendiente |
 
 #### 3.2.4 Interfaz de comunicaciones
@@ -810,7 +813,7 @@ Criterios transversales de la interfaz: RNF-16.
 | Enlace | Protocolo | Detalle |
 |---|---|---|
 | ESP32 → celular | HTTP sin cifrar, red local del hotspot, puerto 8080 | `POST /pesaje`. Contrato completo en `docs/contrato-pesaje.md` (resumen abajo). Sin autenticación (LIM-04). |
-| Celular → Supabase y FastAPI | HTTPS | Solo cuando hay señal. |
+| Celular → Supabase | HTTPS | Solo cuando hay señal. |
 
 Resumen del contrato de pesaje:
 
@@ -936,7 +939,7 @@ Resumen del contrato de pesaje:
 | Campo | Contenido |
 |---|---|
 | Categoría | Seguridad — confidencialidad, integridad |
-| Enunciado medible | Todas las tablas y el bucket de fotos tienen políticas RLS por finca y rol. FastAPI escribe con el JWT del usuario, nunca con la clave de servicio para operaciones de usuario. |
+| Enunciado medible | Todas las tablas y el bucket de fotos tienen políticas RLS por finca y rol. Las funciones de sincronización corren con el JWT del usuario (`SECURITY INVOKER`); la clave de servicio nunca se usa para operaciones de usuario. |
 | Fuente | EQUIPO (ADR-0002) |
 | Verificación | D: con dos cuentas de fincas distintas y una de Operario, intentar leer y escribir fuera de los permisos; todos los intentos se rechazan. |
 | RF afectados | RF-06, RF-32, RF-36, RF-38 |
@@ -1037,7 +1040,7 @@ Resumen del contrato de pesaje:
 | RF-10 | CU-07 | CAMPO | ⚠ | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | #37 |
 | RF-11 | CU-09 | NORMA | — | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | — |
 | RF-12 | CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | — |
-| RF-13 | CU-06, CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | — |
+| RF-13 | CU-06, CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #20 |
 | RF-14 | CU-23 | CAMPO | ⚠ | OE3 | S | Pendiente | — | — |
 | RF-15 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | D (lectura de un NTAG215; registro pendiente) | #31 |
 | RF-16 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | P `EscanearViewModelTest` | #31, #36 |
@@ -1090,7 +1093,7 @@ Resumen del contrato de pesaje:
 | RNF-15 | Usabilidad | EQUIPO | — | OE4 | M | Pendiente | — |
 | RNF-16 | Usabilidad | EQUIPO | — | OE3 | S | Implementado | I |
 
-### 4.3 Resumen frente a los KPI (corte: 21-10-2026)
+### 4.3 Resumen frente a los KPI (corte: 23-10-2026)
 
 **Por prioridad y estado (RF)**
 
