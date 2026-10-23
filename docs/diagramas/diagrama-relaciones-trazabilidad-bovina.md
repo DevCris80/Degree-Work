@@ -114,7 +114,7 @@ erDiagram
     }
     SIBLING {
         string idVersion PK
-        string entidad "ANIMAL, EVENTO o REGISTRO"
+        string entidad "animal, evento o registro"
         string idFila
         long revBase
         string contenido "la fila completa, en JSON"

@@ -21,9 +21,6 @@ interface AnimalDao {
     suspend fun findById(idAnimal: String): AnimalEntity?
 
     // Dar de baja es una modificación: la fila vuelve a quedar pendiente de sincronizar.
-    @Query(
-        "UPDATE animal SET fechaBaja = :fecha, sincronizado = 0, fechaModificacion = :fechaModificacion " +
-            "WHERE idAnimal = :idAnimal",
-    )
-    suspend fun darDeBaja(idAnimal: String, fecha: Long, fechaModificacion: Long)
+    @Query("UPDATE animal SET fechaBaja = :fecha, " + EDICION_LOCAL + " WHERE idAnimal = :idAnimal")
+    suspend fun darDeBaja(idAnimal: String, fecha: Long, idVersion: String, fechaModificacion: Long)
 }

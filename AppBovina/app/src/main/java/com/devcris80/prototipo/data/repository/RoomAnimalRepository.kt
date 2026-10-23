@@ -5,12 +5,15 @@ import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import java.util.UUID
 
 class RoomAnimalRepository(
     private val animalDao: AnimalDao,
     private val clock: () -> Long = { System.currentTimeMillis() },
+    private val nuevoIdVersion: () -> String = { UUID.randomUUID().toString() },
 ) : AnimalRepository {
-    override suspend fun insert(animal: Animal) = animalDao.insert(animal.toEntity(fechaModificacion = clock()))
+    override suspend fun insert(animal: Animal) =
+        animalDao.insert(animal.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion()))
 
     override fun observeActivos(): Flow<List<Animal>> =
         animalDao.observeActivos().map { animales -> animales.map { it.toDomain() } }
@@ -21,5 +24,5 @@ class RoomAnimalRepository(
     override suspend fun findById(idAnimal: String): Animal? = animalDao.findById(idAnimal)?.toDomain()
 
     override suspend fun darDeBaja(idAnimal: String, fecha: Long) =
-        animalDao.darDeBaja(idAnimal, fecha, fechaModificacion = clock())
+        animalDao.darDeBaja(idAnimal, fecha, idVersion = nuevoIdVersion(), fechaModificacion = clock())
 }
