@@ -45,7 +45,7 @@ fun AppNavHost() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
     val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository, container.sesionRepository) }
-    // La pantalla de inicio se decide una vez; después, iniciar y cerrar sesión navegan.
+    // InicioViewModel decide una sola vez; después, iniciar y cerrar sesión navegan.
     val puedeEntrar by inicioViewModel.puedeEntrar.collectAsState()
     if (puedeEntrar == null) return
 

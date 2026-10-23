@@ -43,13 +43,14 @@ class InicioViewModelTest {
         assertEquals(false, InicioViewModel(cuentaRepository, sesionRepository).puedeEntrar.value)
     }
 
+    // La pantalla de inicio se decide una vez al abrir la app. Si cambiara con la sesión, iniciar
+    // sesión en un celular con otro Usuario local saltaría a la lista y volvería al Login.
     @Test
-    fun alCerrarSesion_dejaDeEntrar() {
-        sesionRepository.guardada.value = true
+    fun laDecisionSeTomaAlAbrirYNoCambiaConLaSesion() {
         cuentaRepository.usuario.value = usuario
         val viewModel = InicioViewModel(cuentaRepository, sesionRepository)
 
-        sesionRepository.guardada.value = false
+        sesionRepository.guardada.value = true
 
         assertEquals(false, viewModel.puedeEntrar.value)
     }
