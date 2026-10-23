@@ -59,6 +59,30 @@ class MigracionesTest {
         }
     }
 
+    @Test
+    fun de12a13ConservaLosAnimalesSinPadreNiMadre() {
+        helper.createDatabase(BASE, 12).use { db ->
+            db.execSQL("INSERT INTO perfil_finca VALUES ('finca-1', 'Finca', 0, 0)")
+            db.execSQL(
+                "INSERT INTO animal (idAnimal, idPerfilFinca, nombre, raza, sexo, etapa, fechaNacimiento, " +
+                    "fechaNacimientoEsEstimada, proposito, sincronizado, fechaModificacion, rev, revBase, idVersion) " +
+                    "VALUES ('animal-1', 'finca-1', 'Lucero', 'Brahman', 'Hembra', 'Vaca', 0, 0, 'Leche', 1, 0, 3, NULL, " +
+                    "'0f8e2c1a-0000-4000-8000-000000000001')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(BASE, 13, true, MIGRACION_12_13).use { db ->
+            db.query("SELECT nombre, rev, idVersion, idPadre, idMadre FROM animal").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Lucero", fila.getString(0))
+                assertEquals("conserva su revisión", 3, fila.getInt(1))
+                assertEquals("0f8e2c1a-0000-4000-8000-000000000001", fila.getString(2))
+                assertTrue(fila.isNull(3))
+                assertTrue(fila.isNull(4))
+            }
+        }
+    }
+
     private companion object {
         const val BASE = "migracion-test"
         val UUID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
