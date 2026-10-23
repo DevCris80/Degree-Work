@@ -75,8 +75,19 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun conDatosDeOtraFinca_pideDesinstalar() {
-        sesionRepository.resultado = ResultadoInicioSesion.OtraFincaEnElDispositivo
+    fun unErrorDelServidor_muestraUnMensajeGenerico() {
+        sesionRepository.resultado = ResultadoInicioSesion.NoSePudo
+        val viewModel = llenado()
+
+        viewModel.onIniciarSesion()
+
+        assertTrue(viewModel.estado.value.error!!.contains("No se pudo iniciar sesión"))
+        assertFalse(viewModel.estado.value.cargando)
+    }
+
+    @Test
+    fun conDatosDeOtraCuenta_pideDesinstalar() {
+        sesionRepository.resultado = ResultadoInicioSesion.OtraCuentaEnElDispositivo
         val viewModel = llenado()
 
         viewModel.onIniciarSesion()

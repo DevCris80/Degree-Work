@@ -131,7 +131,7 @@ fun LoginScreen(onSesionIniciada: () -> Unit) {
 
                         // Crear una cuenta desde la app llega con #87; mientras tanto la crea quien administra el proyecto.
                         Text(
-                            text = "¿No tienes cuenta? Pídesela a quien administra la finca.",
+                            text = "¿No tienes cuenta? Pídesela al Ganadero de tu finca.",
                             style = MaterialTheme.typography.bodySmall,
                             color = MaterialTheme.colorScheme.onSurfaceVariant,
                             textAlign = TextAlign.Center,

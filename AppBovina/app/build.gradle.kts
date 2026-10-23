@@ -26,6 +26,9 @@ android {
         val local = Properties().apply {
             rootProject.file("local.properties").takeIf { it.exists() }?.inputStream()?.use { load(it) }
         }
+        if (local.getProperty("supabase.url").isNullOrBlank() || local.getProperty("supabase.anonKey").isNullOrBlank()) {
+            logger.warn("Faltan supabase.url o supabase.anonKey en local.properties: iniciar sesión no va a funcionar.")
+        }
         buildConfigField("String", "SUPABASE_URL", "\"${local.getProperty("supabase.url", "")}\"")
         buildConfigField("String", "SUPABASE_ANON_KEY", "\"${local.getProperty("supabase.anonKey", "")}\"")
     }

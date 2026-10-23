@@ -25,6 +25,12 @@ sealed interface ResultadoInicioSesion {
     /** La cuenta existe, pero ninguna finca la tiene como Usuario. */
     data object SinFinca : ResultadoInicioSesion
 
-    /** El dispositivo ya tiene los datos de otra finca: hay que desinstalar la app para empezar limpio. */
-    data object OtraFincaEnElDispositivo : ResultadoInicioSesion
+    /**
+     * El dispositivo ya tiene los datos de otra finca o de otro Usuario: hay que desinstalar la app
+     * para empezar limpio (un dispositivo, un Usuario).
+     */
+    data object OtraCuentaEnElDispositivo : ResultadoInicioSesion
+
+    /** El servidor respondió con un error inesperado. */
+    data object NoSePudo : ResultadoInicioSesion
 }

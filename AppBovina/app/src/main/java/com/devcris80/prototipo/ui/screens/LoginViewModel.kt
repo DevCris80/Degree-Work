@@ -55,6 +55,7 @@ private fun ResultadoInicioSesion.mensaje(): String? = when (this) {
     ResultadoInicioSesion.SinConexion ->
         "Sin conexión. La primera vez en este celular hace falta señal para iniciar sesión."
     ResultadoInicioSesion.SinFinca -> "Esta cuenta todavía no pertenece a ninguna finca."
-    ResultadoInicioSesion.OtraFincaEnElDispositivo ->
-        "Este celular tiene los datos de otra finca. Desinstala la app para empezar limpio."
+    ResultadoInicioSesion.OtraCuentaEnElDispositivo ->
+        "Este celular tiene los datos de otra cuenta. Desinstala la app para empezar limpio."
+    ResultadoInicioSesion.NoSePudo -> "No se pudo iniciar sesión. Inténtalo de nuevo en un momento."
 }

@@ -27,6 +27,10 @@ import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.jsonPrimitive
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // Los enum del dominio se guardan en Room como texto. Sexo, Etapa, Proposito y Rol usan el mismo
 // que ya escribían las pantallas.
@@ -246,3 +250,27 @@ fun RechazoEntity.toDomain() = Rechazo(
     motivo = motivo,
     fechaRechazo = fechaRechazo,
 )
+
+// Filas que llegan del servidor por PostgREST, con sus columnas en snake_case. Ya están sincronizadas.
+
+fun JsonObject.aPerfilFincaEntity() = PerfilFincaEntity(
+    idPerfilFinca = texto("id_perfil_finca"),
+    nombreFinca = texto("nombre_finca"),
+    sincronizado = true,
+    fechaModificacion = fecha("fecha_modificacion"),
+)
+
+// El rol pasa por TEXTO_ROL para rechazar un valor que la app no conoce.
+fun JsonObject.aUsuarioEntity() = UsuarioEntity(
+    idUsuario = texto("id_usuario"),
+    idPerfilFinca = texto("id_perfil_finca"),
+    nombre = texto("nombre"),
+    rol = TEXTO_ROL.aTexto(TEXTO_ROL.desdeTexto(texto("rol"))),
+    sincronizado = true,
+    fechaModificacion = fecha("fecha_modificacion"),
+)
+
+internal fun JsonObject.texto(campo: String): String = getValue(campo).jsonPrimitive.content
+
+@OptIn(ExperimentalTime::class)
+private fun JsonObject.fecha(campo: String): Long = Instant.parse(texto(campo)).toEpochMilliseconds()
