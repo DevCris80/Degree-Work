@@ -23,6 +23,7 @@ Three layers, `ui → domain ← data`. The why is in `docs/adr/0001-capas-con-d
 - **Schema changes** bump `AppDatabase.version`, add an explicit `Migration` and commit the schema Room exports to `AppBovina/app/schemas/`. There is no destructive fallback from version 10 on: a missing Migration crashes the app instead of wiping data.
   - Bump the version before compiling the changed entity: Room rewrites the exported schema of whatever version is current, so compiling first overwrites the previous version's JSON.
   - Migrations go in `data/local/Migraciones.kt` and extend `MigracionBovina`, which drops the partial Chapeta index that Room's post-migration check doesn't know about.
+- **Revisions** (ADR-0004): every UPDATE of an `animal`, `evento` or `registro` row includes `EDICION_LOCAL` (`data/local/dao/EdicionLocal.kt`), which sets the fields the upload needs; every insert takes a new `idVersion` from its repository.
 - **`ui`** has one ViewModel per screen, created with `appViewModel { container -> ... }`. It exposes a `StateFlow` of screen state; the screen receives state and events, and `AppNavHost` only navigates.
 - **Use cases** exist where there is a business rule. A read with no rule goes from the ViewModel straight to the repository.
 - **`AppContainer`** creates the database and wires repositories and use cases by hand. Register new ones there. It is the only class outside `data` that imports from `data`.
