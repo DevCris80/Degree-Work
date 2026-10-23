@@ -17,13 +17,12 @@ import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
-import java.util.Calendar
 
 /** Cuántos Animales activos hay de un propósito y una etapa; la etapa ya dice el sexo. */
 data class GrupoInventario(val proposito: Proposito, val etapa: Etapa, val cantidad: Int)
 
-/** Cuántos Eventos hubo en un mes, por tipo; [mes] va de 1 a 12. */
-data class EventosDelMes(val anio: Int, val mes: Int, val porTipo: Map<String, Int>)
+/** Cuántos Eventos hubo en un mes, por tipo. */
+data class EventosDelMes(val mes: AnioMes, val porTipo: Map<String, Int>)
 
 data class IndicadoresHato(
     /** Solo los grupos con algún Animal, por propósito y luego por etapa. */
@@ -35,8 +34,6 @@ data class IndicadoresHato(
     val animalesSinChapetaActiva: List<Animal>,
     /** Animales sin Registro en los últimos [ObservarIndicadoresHato.DIAS_SIN_PESAJE] días. */
     val animalesSinPesajeReciente: List<Animal>,
-    /** Animales activos, por nombre: entre ellos se elige cuál ver en la evolución de peso. */
-    val animalesActivos: List<Animal>,
     /** Solo los meses con algún Evento, del más reciente al más antiguo (RF-42). */
     val eventosPorMes: List<EventosDelMes>,
 )
@@ -77,29 +74,21 @@ class ObservarIndicadoresHato(
             animalesSinPesajeReciente = animales
                 .filter { it.ultimoRegistro == null || it.ultimoRegistro.timestamp < desde }
                 .map { it.animal },
-            animalesActivos = animales.map { it.animal },
             eventosPorMes = eventosPorMes(eventos.filter { it.idAnimal in idsActivos }),
         )
     }
 
-    // tipoEvento es texto libre: "Vacunación" y " vacunación" cuentan como el mismo tipo.
+    // Cada tipo se muestra como lo escriben más veces, para que "BVD" no pase a "Bvd".
     private fun eventosPorMes(eventos: List<Evento>): List<EventosDelMes> {
-        val calendario = Calendar.getInstance()
+        val nombrePorClave = eventos.groupBy { it.claveDeTipo }.mapValues { (_, delTipo) ->
+            delTipo.groupingBy { it.tipoEscrito }.eachCount().maxBy { it.value }.key
+        }
         return eventos
-            .groupBy { evento ->
-                calendario.timeInMillis = evento.fecha
-                calendario.get(Calendar.YEAR) to calendario.get(Calendar.MONTH) + 1
+            .groupBy { AnioMes.de(it.fecha) }
+            .map { (mes, delMes) ->
+                EventosDelMes(mes, delMes.groupingBy { nombrePorClave.getValue(it.claveDeTipo) }.eachCount())
             }
-            .map { (anioMes, delMes) ->
-                EventosDelMes(
-                    anio = anioMes.first,
-                    mes = anioMes.second,
-                    porTipo = delMes
-                        .groupingBy { it.tipoEvento.trim().lowercase().replaceFirstChar(Char::uppercase) }
-                        .eachCount(),
-                )
-            }
-            .sortedWith(compareByDescending<EventosDelMes> { it.anio }.thenByDescending { it.mes })
+            .sortedByDescending { it.mes }
     }
 
     private data class AnimalConUltimoRegistro(val animal: Animal, val ultimoRegistro: Registro?)
@@ -122,7 +111,5 @@ class ObservarIndicadoresHato(
     companion object {
         /** La N de RF-43: un Animal sin pesaje en este número de días tiene el historial incompleto. */
         const val DIAS_SIN_PESAJE = 30
-
-        private const val MILIS_POR_DIA = 24L * 60 * 60 * 1000
     }
 }

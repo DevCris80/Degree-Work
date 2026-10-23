@@ -30,6 +30,7 @@ import com.devcris80.prototipo.domain.usecase.EventosDelMes
 import com.devcris80.prototipo.domain.usecase.EvolucionPeso
 import com.devcris80.prototipo.domain.usecase.GrupoInventario
 import com.devcris80.prototipo.domain.usecase.IndicadoresHato
+import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaFilterChip
@@ -41,7 +42,6 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import java.text.SimpleDateFormat
-import java.util.Calendar
 import java.util.Date
 import java.util.Locale
 import java.util.concurrent.TimeUnit
@@ -57,7 +57,12 @@ fun IndicadoresScreen(
     onPesajesPendientesClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
-        IndicadoresViewModel(container.observarIndicadoresHato, container.observarEvolucionPeso)
+        IndicadoresViewModel(
+            container.observarIndicadoresHato,
+            container.observarEvolucionPeso,
+            container.animalRepository,
+            container.chapetaRepository,
+        )
     }
     val estado by viewModel.estado.collectAsState()
     val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
@@ -96,7 +101,7 @@ fun IndicadoresScreen(
             item { TarjetaCompletitud(indicadores = indicadores, onAnimalClick = onAnimalClick) }
             item {
                 TarjetaEvolucionPeso(
-                    animales = indicadores.animalesActivos,
+                    animales = estado.animalesElegibles,
                     idAnimalElegido = estado.idAnimalElegido,
                     evolucion = estado.evolucionPeso,
                     formatoFecha = formatoFecha,
@@ -240,7 +245,7 @@ private fun ListaIncompletos(
 
 @Composable
 private fun TarjetaEvolucionPeso(
-    animales: List<Animal>,
+    animales: List<AnimalConCodigo>,
     idAnimalElegido: String?,
     evolucion: EvolucionPeso?,
     formatoFecha: SimpleDateFormat,
@@ -256,9 +261,15 @@ private fun TarjetaEvolucionPeso(
             horizontalArrangement = Arrangement.spacedBy(8.dp),
             modifier = Modifier.padding(vertical = 8.dp),
         ) {
-            items(animales, key = { it.idAnimal }) { animal ->
+            // Dos Animales con el mismo nombre se distinguen por su Chapeta.
+            val nombresRepetidos = animales.groupingBy { it.animal.nombre }.eachCount().filterValues { it > 1 }.keys
+            items(animales, key = { it.animal.idAnimal }) { (animal, codigo) ->
                 BovinaFilterChip(
-                    texto = animal.nombre,
+                    texto = when {
+                        animal.nombre !in nombresRepetidos -> animal.nombre
+                        codigo != null -> "${animal.nombre} #$codigo"
+                        else -> "${animal.nombre} (sin chapeta)"
+                    },
                     seleccionado = animal.idAnimal == idAnimalElegido,
                     onClick = { onAnimalElegido(animal.idAnimal) },
                 )
@@ -270,9 +281,16 @@ private fun TarjetaEvolucionPeso(
             else -> {
                 val ganancia = evolucion.gananciaDiariaKg
                 if (ganancia == null) {
-                    TextoSinDatos("No hay datos suficientes para la ganancia diaria: hace falta otro pesaje.")
+                    TextoSinDatos(
+                        if (evolucion.registros.size < 2) {
+                            "No hay datos suficientes para la ganancia diaria: hace falta otro pesaje."
+                        } else {
+                            "No hay datos suficientes para la ganancia diaria: los pesajes están a menos de " +
+                                "${ObservarEvolucionPeso.DIAS_MINIMOS} día entre el primero y el último."
+                        },
+                    )
                 } else {
-                    val kgPorDia = String.format(Locale.getDefault(), "%.2f", ganancia)
+                    val kgPorDia = String.format(Locale.getDefault(), "%.1f", ganancia)
                     Text(
                         text = "Ganancia diaria promedio: $kgPorDia kg/día",
                         style = MaterialTheme.typography.titleSmall,
@@ -300,9 +318,8 @@ private fun TarjetaEventosPorMes(eventosPorMes: List<EventosDelMes>) {
         }
         eventosPorMes.forEach { delMes ->
             HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-            val inicioDelMes = Calendar.getInstance().apply { clear(); set(delMes.anio, delMes.mes - 1, 1) }
             FilaConteo(
-                etiqueta = formatoMes.format(inicioDelMes.time).replaceFirstChar(Char::uppercase),
+                etiqueta = formatoMes.format(Date(delMes.mes.inicio())).replaceFirstChar(Char::uppercase),
                 cantidad = delMes.porTipo.values.sum(),
                 destacada = true,
             )
