@@ -1,0 +1,67 @@
+@startuml C2_contenedores
+!include <C4/C4_Container>
+
+title [Nivel 2] Diagrama de contenedores — MiGanado
+
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+AddElementTag("planificado", $bgColor="#7f9fc4", $borderStyle=DashedLine(), $legendText="Contenedor planificado (no implementado al 22/10/2026)")
+AddRelTag("planificado", $lineStyle=DashedLine(), $legendText="Comunicación planificada (línea punteada); la continua está implementada")
+
+Person(ganadero, "Ganadero", "Responsable de la finca.")
+Person(operario, "Operario", "Trabaja con el ganado.")
+
+System_Ext(chapeta, "Chapeta NFC", "Tag pasivo NTAG215, 13,56 MHz. Solo aporta su UID.")
+System_Ext(bascula, "Báscula IoT (ESP32)", "Proyecto complementario. UID y peso simulados.")
+
+System_Boundary(sistema, "MiGanado") {
+
+  Boundary(telefono, "Teléfono Android (uno por usuario)", "dispositivo") {
+    Container(app, "App MiGanado", "Kotlin, Jetpack Compose", "Interfaz, reglas de dominio y verificación de rol sin conexión. Incluye la lectura NFC, el servicio en primer plano que recibe los pesajes (NanoHTTPD, puerto 8080) y el proceso de sincronización. Guarda las fotos en el almacenamiento interno.")
+    ContainerDb(room, "Base de datos local", "Room 2.8 sobre SQLite", "Única fuente de verdad de la app. Cada fila lleva sincronizado y fechaModificacion.")
+  }
+
+  Container(api, "API de sincronización", "Python, FastAPI", "Valida el JWT, asigna rev con control de concurrencia optimista, guarda como sibling la edición en conflicto y entrega los cambios de los demás dispositivos. No usa la service_role.", $tags="planificado")
+
+  Boundary(supabase, "Supabase (servicio gestionado)", "plataforma") {
+    Container(auth, "Supabase Auth", "GoTrue", "Cuentas, inicio de sesión, recuperación de contraseña y emisión del JWT.", $tags="planificado")
+    Container(rest, "API de datos", "PostgREST", "Expone las funciones crear_finca, generar_invitacion, canjear_invitacion y quitar_operario.", $tags="planificado")
+    ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", "Datos de todas las fincas, tabla de revisiones, invitaciones e identidades. Las políticas RLS filtran por finca y rol.", $tags="planificado")
+    Container(storage, "Almacenamiento de fotos", "Supabase Storage", "Fotos de los animales en WebP, con políticas por finca.", $tags="planificado")
+  }
+}
+
+Rel(ganadero, app, "Gestiona la finca, los animales y los usuarios; consulta indicadores")
+Rel(operario, app, "Registra animales, eventos y pesajes")
+Rel(app, chapeta, "Lee el UID con el NFC del teléfono", "NFC, ISO/IEC 14443-A")
+Rel(bascula, app, "Envía el UID de la chapeta y el peso; sin autenticación", "HTTP/JSON, POST /pesaje, puerto 8080, hotspot del teléfono")
+Rel(app, room, "Lee y escribe", "Room / SQL")
+
+Rel(app, auth, "Crea la cuenta, inicia sesión y renueva el token", "HTTPS", $tags="planificado")
+Rel(app, rest, "Crea la finca y gestiona invitaciones", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(app, api, "Sube los cambios pendientes con rev_base; recibe rev asignada, conflicto o rechazo", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(app, api, "Descarga los cambios posteriores al último recibido", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(app, storage, "Sube y descarga fotos", "HTTPS + JWT", $tags="planificado")
+
+Rel(api, auth, "Verifica la firma del JWT", "Clave de firma de Supabase Auth", $tags="planificado")
+Rel(api, pg, "Lee y escribe como el usuario: SET LOCAL ROLE authenticated y claims del JWT; RLS aplica", "SQL/TCP", $tags="planificado")
+Rel(rest, pg, "Ejecuta las funciones SECURITY DEFINER", "SQL", $tags="planificado")
+Rel(storage, pg, "Consulta las políticas de acceso", "SQL", $tags="planificado")
+Rel(auth, pg, "Guarda las identidades (esquema auth)", "SQL", $tags="planificado")
+
+Lay_L(app, chapeta)
+
+note as convencion
+  <b>Convención:</b> cada flecha va
+  de quien inicia la interacción
+  hacia quien la recibe.
+  El detalle de subida, descarga,
+  confirmación y conflictos está
+  en los diagramas dinámicos.
+end note
+
+SHOW_LEGEND()
+@enduml

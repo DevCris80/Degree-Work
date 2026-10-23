@@ -1,0 +1,53 @@
+@startuml DS-01_subida
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DS-01] Mecanismo de sincronización 1: subida con control de revisiones (CU-20, RF-32, RF-33, RF-35)
+
+Person(usuario, "Ganadero u Operario")
+Container_Boundary(app, "App MiGanado")
+  Component(uiSync, "UI-07 Sincronización", "Compose", $tags="planificado")
+  Component(motor, "DAT-05 Motor de sincronización", "WorkManager", $tags="planificado")
+  Component(sesion, "DAT-03 Sesión y autenticación", "supabase-kt Auth", $tags="planificado")
+  Component(repos, "DAT-01 Repositorios locales", "Room", $tags="parcial")
+Boundary_End()
+Container_Boundary(api, "API de sincronización (FastAPI)")
+  Component(subida, "API-02 Endpoint de subida", "FastAPI", $tags="planificado")
+  Component(jwt, "API-01 Verificador de JWT", "FastAPI", $tags="planificado")
+  Component(rev, "API-03 Control de revisiones", "Python", $tags="planificado")
+  Component(clasif, "API-04 Clasificador de resultados", "Python", $tags="planificado")
+  Component(sesDb, "API-06 Sesión de BD del usuario", "SQLAlchemy/asyncpg", $tags="planificado")
+Boundary_End()
+ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", $tags="planificado")
+
+Rel(usuario, uiSync, "Toca «Sincronizar ahora» (o WorkManager detecta señal)")
+Rel(uiSync, motor, "Encola la sincronización")
+Rel(motor, repos, "Lee las filas con sincronizado = false; las editables llevan rev_base")
+Rel(motor, sesion, "Pide el JWT vigente (lo renueva si venció)")
+Rel(motor, subida, "Envía el lote de filas", "HTTPS/JSON + JWT")
+Rel(subida, jwt, "Valida la firma y la vigencia del JWT")
+Rel(subida, rev, "Procesa cada fila del lote")
+Rel(rev, sesDb, "Abre la transacción: SET LOCAL ROLE authenticated + claims")
+Rel(sesDb, pg, "Lee la revisión vigente y escribe (RLS filtra finca y rol)", "SQL")
+Rel(rev, clasif, "Clasifica: aceptada (rev + 1), sibling o rechazada")
+Rel(subida, motor, "Responde por fila: aceptada con rev, sibling o rechazada con motivo", "HTTPS/JSON")
+Rel(motor, repos, "Aceptadas: sincronizado = true; siblings: «en conflicto»; rechazadas: bandeja")
+
+note over motor, repos
+  Si se pierde la señal a mitad (CU-20 1a), las filas sin confirmar siguen con sincronizado = false y se reenvían. Reenviar no duplica porque cada fila se identifica por su UUID.
+end note
+note over rev, clasif
+  Entidades sin revisión (Chapeta, Pesaje pendiente): se insertan por UUID; una violación de unicidad (RN-01, RN-21) se devuelve como rechazo, no como error del lote.
+end note
+
+SHOW_LEGEND()
+@enduml

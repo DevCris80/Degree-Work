@@ -1,0 +1,40 @@
+@startuml C1_contexto
+!include <C4/C4_Context>
+
+title [Nivel 1] Diagrama de contexto — MiGanado
+
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nsystem\nexternal_system")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("system", $legendText="Sistema MiGanado")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+AddElementTag("fuera_alcance", $bgColor="#d9d9d9", $fontColor="#333333", $borderColor="#777777", $borderStyle=DottedLine(), $legendText="Sistema externo fuera de alcance")
+
+Person(ganadero, "Ganadero", "Responsable de la finca. Hace lo mismo que el Operario y además da de baja animales, libera chapetas, descarta pesajes pendientes y gestiona los usuarios de la finca.")
+Person(operario, "Operario", "Trabaja con el ganado. Registra animales y eventos, escanea chapetas y asigna pesajes pendientes.")
+
+System(miganado, "MiGanado", "Sistema offline-first para el registro y la trazabilidad individual del ganado bovino: hoja de vida, chapetas, eventos, pesajes e indicadores, con sincronización diferida entre los dispositivos de una finca.")
+
+System_Ext(chapeta, "Chapeta NFC", "Tag pasivo NTAG215 (ISO/IEC 14443-A, 13,56 MHz) fijado al animal. No transmite por sí solo: el teléfono lo energiza y lee su UID.")
+System_Ext(bascula, "Báscula IoT (ESP32)", "Proyecto complementario de otro equipo. En el prototipo, el UID y el peso que envía son simulados.")
+System_Ext(sinigan, "SINIGAN / ICA", "Sistema oficial de identificación e información del ganado en Colombia.", $tags="fuera_alcance")
+
+Rel(ganadero, miganado, "Gestiona la finca, los animales y los usuarios; consulta indicadores, historial y estado de sincronización", "App Android")
+Rel(operario, miganado, "Registra animales, eventos y pesajes; consulta la hoja de vida del animal", "App Android")
+Rel(miganado, chapeta, "Lee el UID con el NFC del teléfono para identificar al animal", "NFC, ISO/IEC 14443-A")
+Rel(bascula, miganado, "Envía el UID de la chapeta y el peso (simulados)", "HTTP/JSON, red local")
+
+note bottom of sinigan
+  Sistema externo de referencia.
+  Sin integración con MiGanado
+  en el alcance del proyecto.
+end note
+
+note as convencion
+  <b>Convención:</b> cada flecha va
+  de quien inicia la interacción
+  hacia quien la recibe.
+end note
+
+SHOW_LEGEND()
+@enduml

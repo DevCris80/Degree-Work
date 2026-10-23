@@ -1,0 +1,38 @@
+@startuml C3_componentes_api
+!include <C4/C4_Component>
+
+title [Nivel 3] Diagrama de componentes — API de sincronización (FastAPI)
+
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("container")
+UpdateElementStyle("container", $legendText="Otro contenedor de MiGanado")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Componente o contenedor planificado")
+AddRelTag("planificado", $lineStyle=DashedLine(), $legendText="Comunicación planificada (línea punteada)")
+
+Container(app, "App MiGanado", "Kotlin, Jetpack Compose")
+Container(auth, "Supabase Auth", "GoTrue", $tags="planificado")
+ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", $tags="planificado")
+
+Container_Boundary(api, "API de sincronización (Python, FastAPI)") {
+  Component(jwt, "API-01 Verificador de JWT", "Dependencia de FastAPI", "Valida la firma y la vigencia del JWT y extrae el id del usuario. Sin JWT válido responde 401.", $tags="planificado")
+  Component(subida, "API-02 Endpoint de subida", "Ruta POST de FastAPI", "Recibe un lote de filas (las editables con rev_base) y devuelve un resultado por fila.", $tags="planificado")
+  Component(revisiones, "API-03 Control de revisiones", "Python", "Compara rev_base con la revisión vigente: acepta con rev + 1 o guarda un sibling. Marca resueltos los siblings cuando llega la resolución.", $tags="planificado")
+  Component(resultados, "API-04 Clasificador de resultados", "Python", "Traduce errores de unicidad (RN-01, RN-21) y de permisos (RLS) en rechazos con motivo, sin abortar el lote.", $tags="planificado")
+  Component(descarga, "API-05 Endpoint de descarga", "Ruta GET de FastAPI", "Devuelve las filas con cursor mayor que el recibido, con margen de solapamiento, y el nuevo cursor.", $tags="planificado")
+  Component(sesionDb, "API-06 Sesión de base de datos del usuario", "SQLAlchemy o asyncpg", "Abre una transacción por petición con SET LOCAL ROLE authenticated y los claims del JWT, para que apliquen las RLS. No usa la service_role.", $tags="planificado")
+}
+
+Rel(app, subida, "Sube los cambios pendientes", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(app, descarga, "Pide los cambios desde su cursor", "HTTPS/JSON + JWT", $tags="planificado")
+
+Rel(subida, jwt, "Autentica la petición", $tags="planificado")
+Rel(descarga, jwt, "Autentica la petición", $tags="planificado")
+Rel(jwt, auth, "Verifica con la clave de firma de Supabase Auth", $tags="planificado")
+Rel(subida, revisiones, "Procesa cada fila", $tags="planificado")
+Rel(revisiones, resultados, "Clasifica el resultado de cada fila", $tags="planificado")
+Rel(revisiones, sesionDb, "Lee la revisión vigente y escribe", $tags="planificado")
+Rel(descarga, sesionDb, "Consulta por cursor", $tags="planificado")
+Rel(sesionDb, pg, "SQL con el rol y los claims del usuario", "SQL/TCP", $tags="planificado")
+
+SHOW_LEGEND()
+@enduml

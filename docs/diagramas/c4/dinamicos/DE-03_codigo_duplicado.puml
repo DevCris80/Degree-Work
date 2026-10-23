@@ -1,0 +1,42 @@
+@startuml DE-03_codigo_duplicado
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DE-03] Escenario sin conexión 3: dos celulares asocian el mismo código sin señal (E-07, RF-35, RN-01)
+
+Person(ganadero, "Ganadero")
+Person(operario, "Operario")
+Container(appA, "App MiGanado — celular A", "Kotlin, Room", $tags="parcial")
+Container(appB, "App MiGanado — celular B", "Kotlin, Room", $tags="parcial")
+Container(api, "API de sincronización", "FastAPI", $tags="planificado")
+ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", $tags="planificado")
+
+Rel(ganadero, appA, "Sin señal: registra el animal X con el código C")
+Rel(appA, appA, "RN-01 local: C no tiene chapeta activa en A; la guarda")
+Rel(operario, appB, "Sin señal: registra el animal Y con el mismo código C")
+Rel(appB, appB, "RN-01 local: C no tiene chapeta activa en B; la guarda")
+Rel(appA, api, "Recupera señal y sube la chapeta C del animal X", "HTTPS/JSON + JWT")
+Rel(api, pg, "Inserta la chapeta activa C", "SQL")
+Rel(api, appA, "Aceptada", "HTTPS/JSON")
+Rel(appB, api, "Recupera señal y sube la chapeta C del animal Y", "HTTPS/JSON + JWT")
+Rel(api, pg, "Viola el índice único parcial de chapeta activa", "SQL")
+Rel(api, appB, "Rechazada: «chapeta duplicada», ya asociada al animal X", "HTTPS/JSON")
+Rel(appB, operario, "Aviso y bandeja de rechazos con el motivo")
+Rel(operario, appB, "Corrige: libera la chapeta local o asigna otro código")
+Rel(appB, api, "Sube la corrección como escritura nueva", "HTTPS/JSON + JWT")
+
+note over appA, appB
+  La fila rechazada no se borra: queda en la bandeja marcada como resuelta (CU-22). El resto del lote se acepta normalmente.
+end note
+
+SHOW_LEGEND()
+@enduml
