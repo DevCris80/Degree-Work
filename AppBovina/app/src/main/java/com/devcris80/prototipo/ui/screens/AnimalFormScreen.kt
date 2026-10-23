@@ -82,6 +82,7 @@ import com.devcris80.prototipo.ui.theme.Prototipo1Theme
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.crearArchivoFotoUri
+import com.devcris80.prototipo.ui.util.nombreConBaja
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -466,7 +467,7 @@ private fun SelectorProgenitor(
     ExposedDropdownMenuBox(expanded = expandido, onExpandedChange = { expandido = it }) {
         CampoConIcono(
             label = label,
-            value = seleccionado?.etiquetaProgenitor() ?: "Sin registrar",
+            value = seleccionado?.nombreConBaja() ?: "Sin registrar",
             onValueChange = {},
             icon = Icons.Filled.Pets,
             readOnly = true,
@@ -482,7 +483,7 @@ private fun SelectorProgenitor(
             )
             candidatos.forEach { candidato ->
                 DropdownMenuItem(
-                    text = { Text(candidato.etiquetaProgenitor()) },
+                    text = { Text(candidato.nombreConBaja()) },
                     onClick = {
                         onSeleccionado(candidato.idAnimal)
                         expandido = false
@@ -492,9 +493,6 @@ private fun SelectorProgenitor(
         }
     }
 }
-
-private fun Animal.etiquetaProgenitor(): String =
-    if (fechaBaja == null) nombre else "$nombre (dado de baja)"
 
 @Composable
 private fun TarjetaSeleccionable(

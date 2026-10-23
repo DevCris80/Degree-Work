@@ -37,8 +37,14 @@ internal class FakeAnimalRepository : AnimalRepository {
         set(animal)
     }
     override fun observeActivos(): Flow<List<Animal>> = activos
+    // Como el repositorio real: también los dados de baja, primero los activos y cada grupo por nombre.
     override fun observePorSexo(sexo: Sexo): Flow<List<Animal>> =
-        activos.map { animales -> animales.filter { it.sexo == sexo } }
+        activos.map { animales ->
+            (animales + porId.values.mapNotNull { it.value })
+                .distinctBy { it.idAnimal }
+                .filter { it.sexo == sexo }
+                .sortedWith(compareBy({ it.fechaBaja != null }, { it.nombre }))
+        }
     override fun observeById(idAnimal: String): Flow<Animal?> =
         porId.getOrPut(idAnimal) { MutableStateFlow(null) }
     override suspend fun findById(idAnimal: String): Animal? =

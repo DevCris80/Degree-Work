@@ -42,25 +42,26 @@ class DetalleAnimalViewModel(
     private val darDeBajaAnimal: DarDeBajaAnimal,
     private val liberarChapeta: LiberarChapeta,
 ) : ViewModel() {
-    private val animal = animalRepository.observeById(idAnimal)
-
-    // El padre y la madre se observan de nuevo cada vez que cambia el Animal.
-    private val padres: Flow<Pair<Animal?, Animal?>> = animal.flatMapLatest { actual ->
-        combine(observarSiHay(actual?.idPadre), observarSiHay(actual?.idMadre)) { padre, madre -> padre to madre }
+    // El padre y la madre se vuelven a observar cada vez que cambia el Animal.
+    private val animalConPadres: Flow<AnimalConPadres> = animalRepository.observeById(idAnimal).flatMapLatest { actual ->
+        combine(observarSiHay(actual?.idPadre), observarSiHay(actual?.idMadre)) { padre, madre ->
+            AnimalConPadres(actual, padre, madre)
+        }
     }
 
     val estado: StateFlow<DetalleAnimalUiState> = combine(
-        animal,
+        animalConPadres,
         eventoRepository.observeByAnimal(idAnimal),
         registroRepository.observeByAnimal(idAnimal),
         chapetaRepository.observeActivaByAnimal(idAnimal),
-        padres,
-    ) { animal, eventos, registros, chapeta, (padre, madre) ->
+    ) { (animal, padre, madre), eventos, registros, chapeta ->
         DetalleAnimalUiState(animal, eventos, registros, chapeta, padre, madre)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetalleAnimalUiState())
 
     private fun observarSiHay(idAnimal: String?): Flow<Animal?> =
         idAnimal?.let(animalRepository::observeById) ?: flowOf(null)
+
+    private data class AnimalConPadres(val animal: Animal?, val padre: Animal?, val madre: Animal?)
 
     fun onDarDeBaja() {
         viewModelScope.launch { darDeBajaAnimal(idAnimal) }

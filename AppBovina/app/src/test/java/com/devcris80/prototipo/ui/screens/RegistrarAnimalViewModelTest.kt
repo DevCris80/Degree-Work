@@ -117,6 +117,16 @@ class RegistrarAnimalViewModelTest {
     }
 
     @Test
+    fun unToroDadoDeBajaSigueSiendoCandidato_despuesDeLosActivos() {
+        val vendido = progenitor("Atlas", Sexo.MACHO, Etapa.TORO).copy(fechaBaja = 5L)
+        val activo = progenitor("Zeus", Sexo.MACHO, Etapa.TORO)
+        animalRepository.set(vendido)
+        animalRepository.activos.value = listOf(activo)
+
+        assertEquals(listOf(activo, vendido), crearViewModel().estado.value.candidatosPadre)
+    }
+
+    @Test
     fun guardarConPadreYMadre_losGuardaEnElAnimal() = runTest {
         val toro = progenitor("Zeus", Sexo.MACHO, Etapa.TORO)
         val vaca = progenitor("Lola", Sexo.HEMBRA, Etapa.VACA)

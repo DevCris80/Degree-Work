@@ -42,7 +42,6 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
-import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
@@ -54,6 +53,7 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.formatearEdad
+import com.devcris80.prototipo.ui.util.nombreConBaja
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -190,7 +190,7 @@ fun DetalleAnimalScreen(
                         estado.padre?.let { padre ->
                             DatoTile(
                                 "Padre",
-                                padre.etiquetaGenealogia(),
+                                "${padre.nombreConBaja()} ›",
                                 Modifier.weight(1f),
                                 onClick = { onAnimalClick(padre.idAnimal) },
                             )
@@ -198,7 +198,7 @@ fun DetalleAnimalScreen(
                         estado.madre?.let { madre ->
                             DatoTile(
                                 "Madre",
-                                madre.etiquetaGenealogia(),
+                                "${madre.nombreConBaja()} ›",
                                 Modifier.weight(1f),
                                 onClick = { onAnimalClick(madre.idAnimal) },
                             )
@@ -407,9 +407,6 @@ private fun DatoTile(
         Text(text = valor, style = MaterialTheme.typography.titleMedium)
     }
 }
-
-private fun Animal.etiquetaGenealogia(): String =
-    if (fechaBaja == null) "$nombre ›" else "$nombre (dado de baja) ›"
 
 @Composable
 private fun PestanaPildora(
