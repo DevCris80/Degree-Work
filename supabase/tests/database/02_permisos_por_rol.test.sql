@@ -1,6 +1,6 @@
 -- El Operario no da de baja, no libera ni descarta; nadie borra; nadie escribe Usuarios por la API.
 begin;
-select plan(24);
+select plan(28);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
@@ -16,6 +16,8 @@ insert into public.animal (id_animal, id_perfil_finca, nombre, raza, sexo, etapa
 insert into public.chapeta (id_chapeta, codigo, id_animal, fecha_asociacion, fecha_modificacion) values
   ('c0000000-0000-0000-0000-000000000001', '04A31B2C', 'a0000000-0000-0000-0000-000000000001', now(), now()),
   ('c0000000-0000-0000-0000-000000000002', '04A31B2D', 'a0000000-0000-0000-0000-000000000002', now(), now());
+insert into public.evento (id_evento, id_animal, id_usuario, tipo_evento, fecha, detalle, fecha_modificacion) values
+  ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'Vacunación', now(), 'Aftosa', now());
 insert into public.pesaje_pendiente (id_pesaje_pendiente, id_lectura, codigo, peso, fecha_medicion, id_usuario, motivo, fecha_modificacion) values
   ('d0000000-0000-0000-0000-000000000001', 'lectura-1', '0BADC0DE', 380, now(), '00000000-0000-0000-0000-0000000000a1', 'CODIGO_SIN_CHAPETA_ACTIVA', now()),
   ('d0000000-0000-0000-0000-000000000002', 'lectura-2', '0BADC0DE', 381, now(), '00000000-0000-0000-0000-0000000000a1', 'CODIGO_SIN_CHAPETA_ACTIVA', now()),
@@ -72,6 +74,16 @@ select throws_ok(
   $$insert into public.registro (id_registro, id_animal, id_usuario, peso, fecha_medicion, fecha_modificacion)
     values ('f0000000-0000-0000-0000-000000000009', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a1', 300, now(), now())$$,
   '42501', null, 'el Operario no registra un pesaje manual a nombre de otro');
+select throws_ok(
+  $$update public.evento set fecha_baja = now() where id_evento = 'e0000000-0000-0000-0000-000000000001'$$,
+  '42501', null, 'el Operario no puede dar de baja un Evento, ni uno suyo');
+select throws_ok(
+  $$update public.registro set fecha_baja = now() where id_registro = 'f0000000-0000-0000-0000-000000000002'$$,
+  '42501', null, 'el Operario no puede dar de baja un Registro');
+select throws_ok(
+  $$insert into public.evento (id_evento, id_animal, id_usuario, tipo_evento, fecha, detalle, fecha_baja, fecha_modificacion)
+    values ('e0000000-0000-0000-0000-000000000002', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'Otro', now(), '', now(), now())$$,
+  '42501', null, 'el Operario no puede subir un Evento ya dado de baja');
 update public.perfil_finca set nombre_finca = 'Cambiada por el Operario';
 select is((select nombre_finca from public.perfil_finca), 'Finca A', 'el Operario no puede editar la finca');
 reset role;
@@ -86,6 +98,9 @@ select lives_ok(
 select lives_ok(
   $$update public.chapeta set fecha_desasociacion = now() where id_chapeta = 'c0000000-0000-0000-0000-000000000002'$$,
   'el Ganadero puede liberar una Chapeta');
+select lives_ok(
+  $$update public.evento set fecha_baja = now() where id_evento = 'e0000000-0000-0000-0000-000000000001'$$,
+  'el Ganadero puede dar de baja un Evento');
 select lives_ok(
   $$update public.pesaje_pendiente
     set resolucion = 'DESCARTADO', id_usuario_resolucion = '00000000-0000-0000-0000-0000000000a1', fecha_resolucion = now()
