@@ -15,6 +15,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
+import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
@@ -22,6 +23,8 @@ import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
+import androidx.compose.material3.TextButton
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -29,6 +32,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -60,6 +64,7 @@ fun ListaAnimalesScreen(
     onNuevoAnimalClick: () -> Unit,
     onPesajesPendientesClick: () -> Unit,
     onIndicadoresClick: () -> Unit,
+    onSesionCerrada: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -68,9 +73,19 @@ fun ListaAnimalesScreen(
             container.chapetaRepository,
             container.registroRepository,
             container.observarPesajesPendientes,
+            container.sesionRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
+    var confirmarCierre by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                ListaAnimalesEvento.SesionCerrada -> onSesionCerrada()
+            }
+        }
+    }
 
     var busqueda by remember { mutableStateOf("") }
 
@@ -85,6 +100,9 @@ fun ListaAnimalesScreen(
             BovinaTopBar(titulo = "Animales", mostrarLogo = true) {
                 IconButton(onClick = onIndicadoresClick) {
                     Icon(Icons.Filled.Insights, contentDescription = "Indicadores")
+                }
+                IconButton(onClick = { confirmarCierre = true }) {
+                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar sesión")
                 }
             }
         },
@@ -189,6 +207,23 @@ fun ListaAnimalesScreen(
                 )
             }
         }
+    }
+
+    if (confirmarCierre) {
+        AlertDialog(
+            onDismissRequest = { confirmarCierre = false },
+            title = { Text("¿Cerrar sesión?") },
+            text = { Text("Los datos de la finca quedan en este celular. Para volver a entrar hará falta señal.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    confirmarCierre = false
+                    viewModel.onCerrarSesion()
+                }) { Text("Cerrar sesión") }
+            },
+            dismissButton = {
+                TextButton(onClick = { confirmarCierre = false }) { Text("Cancelar") }
+            },
+        )
     }
 }
 

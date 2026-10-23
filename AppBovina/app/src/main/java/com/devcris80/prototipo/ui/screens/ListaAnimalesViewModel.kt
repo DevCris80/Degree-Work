@@ -1,5 +1,9 @@
 package com.devcris80.prototipo.ui.screens
 
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.flow.receiveAsFlow
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.channels.Channel
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
@@ -9,6 +13,7 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -34,6 +39,10 @@ data class ListaAnimalesUiState(
     val pesajesPendientes: Int = 0,
 )
 
+sealed interface ListaAnimalesEvento {
+    data object SesionCerrada : ListaAnimalesEvento
+}
+
 /** Estado de la Lista de Animales: finca, usuario, animales activos con su Chapeta y último Registro. */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ListaAnimalesViewModel(
@@ -42,7 +51,11 @@ class ListaAnimalesViewModel(
     chapetaRepository: ChapetaRepository,
     registroRepository: RegistroRepository,
     observarPesajesPendientes: ObservarPesajesPendientes,
+    private val sesionRepository: SesionRepository,
 ) : ViewModel() {
+    private val _eventos = Channel<ListaAnimalesEvento>(Channel.BUFFERED)
+    val eventos: Flow<ListaAnimalesEvento> = _eventos.receiveAsFlow()
+
     private val filtro = MutableStateFlow<Proposito?>(null)
 
     private val animalesConResumen = combine(
@@ -82,5 +95,12 @@ class ListaAnimalesViewModel(
 
     fun onFiltroSeleccionado(proposito: Proposito?) {
         filtro.value = proposito
+    }
+
+    fun onCerrarSesion() {
+        viewModelScope.launch {
+            sesionRepository.cerrarSesion()
+            _eventos.send(ListaAnimalesEvento.SesionCerrada)
+        }
     }
 }

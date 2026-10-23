@@ -44,9 +44,10 @@ fun AppNavHost() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
-    val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository) }
-    val tienePerfil by inicioViewModel.tienePerfil.collectAsState()
-    if (tienePerfil == null) return
+    val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository, container.sesionRepository) }
+    // La pantalla de inicio se decide una vez; después, iniciar y cerrar sesión navegan.
+    val puedeEntrar by inicioViewModel.puedeEntrar.collectAsState()
+    if (puedeEntrar == null) return
 
     Scaffold(
         bottomBar = {
@@ -100,7 +101,7 @@ fun AppNavHost() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (tienePerfil == true) Rutas.ListaAnimales.ruta else Rutas.CrearCuenta.ruta,
+            startDestination = if (puedeEntrar == true) Rutas.ListaAnimales.ruta else Rutas.Login.ruta,
             modifier = Modifier.padding(innerPadding),
         ) {
             composable(Rutas.CrearCuenta.ruta) {
@@ -115,12 +116,11 @@ fun AppNavHost() {
             }
             composable(Rutas.Login.ruta) {
                 LoginScreen(
-                    onIniciarSesion = {
+                    onSesionIniciada = {
                         navController.navigate(Rutas.ListaAnimales.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
-                    onCrearCuentaNueva = { navController.navigate(Rutas.CrearCuenta.ruta) },
                 )
             }
             composable(Rutas.ListaAnimales.ruta) {
@@ -133,6 +133,11 @@ fun AppNavHost() {
                         }
                     },
                     onIndicadoresClick = { navController.navigate(Rutas.Indicadores.ruta) },
+                    onSesionCerrada = {
+                        navController.navigate(Rutas.Login.ruta) {
+                            popUpTo(0) { inclusive = true }
+                        }
+                    },
                 )
             }
             composable(Rutas.Indicadores.ruta) {

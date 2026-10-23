@@ -17,11 +17,13 @@ import com.devcris80.prototipo.testing.FakeChapetaRepository
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
+import com.devcris80.prototipo.testing.FakeSesionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
 import kotlinx.coroutines.test.advanceUntilIdle
 import kotlinx.coroutines.test.resetMain
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.coroutines.test.setMain
 import org.junit.After
@@ -36,6 +38,7 @@ class ListaAnimalesViewModelTest {
     private val chapetaRepository = FakeChapetaRepository()
     private val registroRepository = FakeRegistroRepository()
     private val pesajePendienteRepository = FakePesajePendienteRepository()
+    private val sesionRepository = FakeSesionRepository()
 
     private fun crearViewModel() = ListaAnimalesViewModel(
         cuentaRepository,
@@ -43,6 +46,7 @@ class ListaAnimalesViewModelTest {
         chapetaRepository,
         registroRepository,
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository),
+        sesionRepository,
     )
 
     @Before
@@ -131,5 +135,16 @@ class ListaAnimalesViewModelTest {
 
         assertEquals(1, estados.last().pesajesPendientes)
         job.cancel()
+    }
+
+    @Test
+    fun cerrarSesion_olvidaLaSesionYAvisaALaPantalla() = runTest {
+        sesionRepository.guardada.value = true
+        val viewModel = crearViewModel()
+
+        viewModel.onCerrarSesion()
+
+        assertEquals(ListaAnimalesEvento.SesionCerrada, viewModel.eventos.first())
+        assertEquals(false, sesionRepository.guardada.value)
     }
 }
