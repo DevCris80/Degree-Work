@@ -12,6 +12,8 @@ import kotlinx.coroutines.flow.stateIn
 data class IndicadoresUiState(
     /** Nulos mientras se calculan por primera vez. */
     val indicadores: IndicadoresHato? = null,
+    /** Nula mientras no exista la sincronización (#83): la pantalla dice "nunca". */
+    val ultimaSincronizacion: Long? = null,
 )
 
 /** Estado de Indicadores: los del hato, calculados sobre la base local. */

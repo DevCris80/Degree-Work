@@ -18,6 +18,7 @@ import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
+import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Search
 import androidx.compose.material.icons.filled.Warning
@@ -58,6 +59,7 @@ fun ListaAnimalesScreen(
     onAnimalClick: (idAnimal: String) -> Unit,
     onNuevoAnimalClick: () -> Unit,
     onPesajesPendientesClick: () -> Unit,
+    onIndicadoresClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -79,7 +81,13 @@ fun ListaAnimalesScreen(
     }
 
     Scaffold(
-        topBar = { BovinaTopBar(titulo = "Animales", mostrarLogo = true) },
+        topBar = {
+            BovinaTopBar(titulo = "Animales", mostrarLogo = true) {
+                IconButton(onClick = onIndicadoresClick) {
+                    Icon(Icons.Filled.Insights, contentDescription = "Indicadores")
+                }
+            }
+        },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNuevoAnimalClick,

@@ -26,6 +26,7 @@ import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
+import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
@@ -75,6 +76,12 @@ class AppContainer(context: Context) {
     )
     val descartarPesajePendiente =
         DescartarPesajePendiente(pesajePendienteRepository, cuentaRepository, transaccion)
+    val observarIndicadoresHato = ObservarIndicadoresHato(
+        animalRepository,
+        chapetaRepository,
+        registroRepository,
+        pesajePendienteRepository,
+    )
 
     val seedData = SeedData(cuentaRepository, animalRepository, chapetaRepository, registrarAnimal)
 }
