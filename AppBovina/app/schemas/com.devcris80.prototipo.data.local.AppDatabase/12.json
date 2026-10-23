@@ -2,11 +2,11 @@
   "formatVersion": 1,
   "database": {
     "version": 12,
-    "identityHash": "1c18cd0fc9ece827c354dc83ae42ed39",
+    "identityHash": "de4b96b2bcf47a444a2159fadaf3c96d",
     "entities": [
       {
         "tableName": "animal",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idAnimal` TEXT NOT NULL, `idPerfilFinca` TEXT NOT NULL, `nombre` TEXT NOT NULL, `raza` TEXT NOT NULL, `sexo` TEXT NOT NULL, `etapa` TEXT NOT NULL, `fechaNacimiento` INTEGER NOT NULL, `fechaNacimientoEsEstimada` INTEGER NOT NULL, `proposito` TEXT NOT NULL, `fotoUri` TEXT, `fechaBaja` INTEGER, `idPadre` TEXT, `idMadre` TEXT, `sincronizado` INTEGER NOT NULL, `fechaModificacion` INTEGER NOT NULL, PRIMARY KEY(`idAnimal`), FOREIGN KEY(`idPerfilFinca`) REFERENCES `perfil_finca`(`idPerfilFinca`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idPadre`) REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE SET NULL , FOREIGN KEY(`idMadre`) REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE SET NULL )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idAnimal` TEXT NOT NULL, `idPerfilFinca` TEXT NOT NULL, `nombre` TEXT NOT NULL, `raza` TEXT NOT NULL, `sexo` TEXT NOT NULL, `etapa` TEXT NOT NULL, `fechaNacimiento` INTEGER NOT NULL, `fechaNacimientoEsEstimada` INTEGER NOT NULL, `proposito` TEXT NOT NULL, `fotoUri` TEXT, `fechaBaja` INTEGER, `sincronizado` INTEGER NOT NULL, `fechaModificacion` INTEGER NOT NULL, `rev` INTEGER, `revBase` INTEGER, `idVersion` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`idAnimal`), FOREIGN KEY(`idPerfilFinca`) REFERENCES `perfil_finca`(`idPerfilFinca`) ON UPDATE NO ACTION ON DELETE CASCADE )",
         "fields": [
           {
             "fieldPath": "idAnimal",
@@ -73,16 +73,6 @@
             "affinity": "INTEGER"
           },
           {
-            "fieldPath": "idPadre",
-            "columnName": "idPadre",
-            "affinity": "TEXT"
-          },
-          {
-            "fieldPath": "idMadre",
-            "columnName": "idMadre",
-            "affinity": "TEXT"
-          },
-          {
             "fieldPath": "sincronizado",
             "columnName": "sincronizado",
             "affinity": "INTEGER",
@@ -93,6 +83,23 @@
             "columnName": "fechaModificacion",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "rev",
+            "columnName": "rev",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "revBase",
+            "columnName": "revBase",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "idVersion",
+            "columnName": "idVersion",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
           }
         ],
         "primaryKey": {
@@ -110,24 +117,6 @@
             ],
             "orders": [],
             "createSql": "CREATE INDEX IF NOT EXISTS `index_animal_idPerfilFinca` ON `${TABLE_NAME}` (`idPerfilFinca`)"
-          },
-          {
-            "name": "index_animal_idPadre",
-            "unique": false,
-            "columnNames": [
-              "idPadre"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_animal_idPadre` ON `${TABLE_NAME}` (`idPadre`)"
-          },
-          {
-            "name": "index_animal_idMadre",
-            "unique": false,
-            "columnNames": [
-              "idMadre"
-            ],
-            "orders": [],
-            "createSql": "CREATE INDEX IF NOT EXISTS `index_animal_idMadre` ON `${TABLE_NAME}` (`idMadre`)"
           }
         ],
         "foreignKeys": [
@@ -141,34 +130,12 @@
             "referencedColumns": [
               "idPerfilFinca"
             ]
-          },
-          {
-            "table": "animal",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "idPadre"
-            ],
-            "referencedColumns": [
-              "idAnimal"
-            ]
-          },
-          {
-            "table": "animal",
-            "onDelete": "SET NULL",
-            "onUpdate": "NO ACTION",
-            "columns": [
-              "idMadre"
-            ],
-            "referencedColumns": [
-              "idAnimal"
-            ]
           }
         ]
       },
       {
         "tableName": "evento",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idEvento` TEXT NOT NULL, `idAnimal` TEXT NOT NULL, `idUsuario` TEXT NOT NULL, `tipoEvento` TEXT NOT NULL, `fecha` INTEGER NOT NULL, `detalle` TEXT NOT NULL, `fechaBaja` INTEGER, `sincronizado` INTEGER NOT NULL, `fechaModificacion` INTEGER NOT NULL, PRIMARY KEY(`idEvento`), FOREIGN KEY(`idAnimal`) REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idUsuario`) REFERENCES `usuario`(`idUsuario`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idEvento` TEXT NOT NULL, `idAnimal` TEXT NOT NULL, `idUsuario` TEXT NOT NULL, `tipoEvento` TEXT NOT NULL, `fecha` INTEGER NOT NULL, `detalle` TEXT NOT NULL, `fechaBaja` INTEGER, `sincronizado` INTEGER NOT NULL, `fechaModificacion` INTEGER NOT NULL, `rev` INTEGER, `revBase` INTEGER, `idVersion` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`idEvento`), FOREIGN KEY(`idAnimal`) REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idUsuario`) REFERENCES `usuario`(`idUsuario`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
         "fields": [
           {
             "fieldPath": "idEvento",
@@ -222,6 +189,23 @@
             "columnName": "fechaModificacion",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "rev",
+            "columnName": "rev",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "revBase",
+            "columnName": "revBase",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "idVersion",
+            "columnName": "idVersion",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
           }
         ],
         "primaryKey": {
@@ -277,7 +261,7 @@
       },
       {
         "tableName": "registro",
-        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idRegistro` TEXT NOT NULL, `idAnimal` TEXT NOT NULL, `idUsuario` TEXT NOT NULL, `idLectura` TEXT, `peso` REAL NOT NULL, `timestamp` INTEGER NOT NULL, `fechaBaja` INTEGER, `sincronizado` INTEGER NOT NULL, `fechaModificacion` INTEGER NOT NULL, PRIMARY KEY(`idRegistro`), FOREIGN KEY(`idAnimal`) REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idUsuario`) REFERENCES `usuario`(`idUsuario`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idRegistro` TEXT NOT NULL, `idAnimal` TEXT NOT NULL, `idUsuario` TEXT NOT NULL, `idLectura` TEXT, `peso` REAL NOT NULL, `timestamp` INTEGER NOT NULL, `fechaBaja` INTEGER, `sincronizado` INTEGER NOT NULL, `fechaModificacion` INTEGER NOT NULL, `rev` INTEGER, `revBase` INTEGER, `idVersion` TEXT NOT NULL DEFAULT '', PRIMARY KEY(`idRegistro`), FOREIGN KEY(`idAnimal`) REFERENCES `animal`(`idAnimal`) ON UPDATE NO ACTION ON DELETE CASCADE , FOREIGN KEY(`idUsuario`) REFERENCES `usuario`(`idUsuario`) ON UPDATE NO ACTION ON DELETE NO ACTION )",
         "fields": [
           {
             "fieldPath": "idRegistro",
@@ -330,6 +314,23 @@
             "columnName": "fechaModificacion",
             "affinity": "INTEGER",
             "notNull": true
+          },
+          {
+            "fieldPath": "rev",
+            "columnName": "rev",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "revBase",
+            "columnName": "revBase",
+            "affinity": "INTEGER"
+          },
+          {
+            "fieldPath": "idVersion",
+            "columnName": "idVersion",
+            "affinity": "TEXT",
+            "notNull": true,
+            "defaultValue": "''"
           }
         ],
         "primaryKey": {
@@ -719,11 +720,159 @@
             ]
           }
         ]
+      },
+      {
+        "tableName": "sibling",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idVersion` TEXT NOT NULL, `entidad` TEXT NOT NULL, `idFila` TEXT NOT NULL, `revBase` INTEGER NOT NULL, `contenido` TEXT NOT NULL, `idUsuario` TEXT NOT NULL, `fechaRecepcion` INTEGER NOT NULL, PRIMARY KEY(`idVersion`))",
+        "fields": [
+          {
+            "fieldPath": "idVersion",
+            "columnName": "idVersion",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entidad",
+            "columnName": "entidad",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idFila",
+            "columnName": "idFila",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "revBase",
+            "columnName": "revBase",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contenido",
+            "columnName": "contenido",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idUsuario",
+            "columnName": "idUsuario",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaRecepcion",
+            "columnName": "fechaRecepcion",
+            "affinity": "INTEGER",
+            "notNull": true
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idVersion"
+          ]
+        },
+        "indices": [
+          {
+            "name": "index_sibling_entidad_idFila",
+            "unique": false,
+            "columnNames": [
+              "entidad",
+              "idFila"
+            ],
+            "orders": [],
+            "createSql": "CREATE INDEX IF NOT EXISTS `index_sibling_entidad_idFila` ON `${TABLE_NAME}` (`entidad`, `idFila`)"
+          }
+        ]
+      },
+      {
+        "tableName": "rechazo",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`idRechazo` TEXT NOT NULL, `entidad` TEXT NOT NULL, `idFila` TEXT NOT NULL, `contenido` TEXT NOT NULL, `motivo` TEXT NOT NULL, `fechaRechazo` INTEGER NOT NULL, `fechaCorreccion` INTEGER, PRIMARY KEY(`idRechazo`))",
+        "fields": [
+          {
+            "fieldPath": "idRechazo",
+            "columnName": "idRechazo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "entidad",
+            "columnName": "entidad",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "idFila",
+            "columnName": "idFila",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "contenido",
+            "columnName": "contenido",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "motivo",
+            "columnName": "motivo",
+            "affinity": "TEXT",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaRechazo",
+            "columnName": "fechaRechazo",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaCorreccion",
+            "columnName": "fechaCorreccion",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "idRechazo"
+          ]
+        }
+      },
+      {
+        "tableName": "estado_sync",
+        "createSql": "CREATE TABLE IF NOT EXISTS `${TABLE_NAME}` (`id` INTEGER NOT NULL, `cursorDescarga` INTEGER NOT NULL, `fechaUltimaSincronizacion` INTEGER, PRIMARY KEY(`id`))",
+        "fields": [
+          {
+            "fieldPath": "id",
+            "columnName": "id",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "cursorDescarga",
+            "columnName": "cursorDescarga",
+            "affinity": "INTEGER",
+            "notNull": true
+          },
+          {
+            "fieldPath": "fechaUltimaSincronizacion",
+            "columnName": "fechaUltimaSincronizacion",
+            "affinity": "INTEGER"
+          }
+        ],
+        "primaryKey": {
+          "autoGenerate": false,
+          "columnNames": [
+            "id"
+          ]
+        }
       }
     ],
     "setupQueries": [
       "CREATE TABLE IF NOT EXISTS room_master_table (id INTEGER PRIMARY KEY,identity_hash TEXT)",
-      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, '1c18cd0fc9ece827c354dc83ae42ed39')"
+      "INSERT OR REPLACE INTO room_master_table (id,identity_hash) VALUES(42, 'de4b96b2bcf47a444a2159fadaf3c96d')"
     ]
   }
 }

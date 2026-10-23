@@ -4,23 +4,17 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
-import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.rememberScrollState
-import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowForward
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
-import androidx.compose.material3.Button
-import androidx.compose.material3.Card
-import androidx.compose.material3.CardDefaults
-import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -35,12 +29,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.ui.components.BannerInformativo
+import com.devcris80.prototipo.ui.components.BovinaCard
+import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.CampoConIcono
+import com.devcris80.prototipo.ui.components.EncabezadoAuth
 import com.devcris80.prototipo.ui.components.PillBadge
-import com.devcris80.prototipo.ui.theme.BovinaMinFieldHeight
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.appViewModel
 
@@ -76,94 +71,83 @@ fun CrearCuentaScreen(
                 .verticalScroll(rememberScrollState())
                 .padding(BovinaScreenGutter),
             horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.spacedBy(16.dp),
+            verticalArrangement = Arrangement.spacedBy(20.dp),
         ) {
-            Card(
-                shape = RoundedCornerShape(16.dp),
-                colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.primaryContainer),
-            ) {
-                Icon(
-                    imageVector = Icons.Filled.Home,
-                    contentDescription = null,
-                    tint = MaterialTheme.colorScheme.onPrimaryContainer,
-                    modifier = Modifier
-                        .padding(20.dp)
-                        .size(40.dp),
-                )
-            }
-            Text(
-                text = "Crear cuenta",
-                style = MaterialTheme.typography.headlineLarge,
-                textAlign = TextAlign.Center,
-            )
-            Text(
-                text = "Regístrese para empezar a llevar el control de su ganado.",
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                textAlign = TextAlign.Center,
+            EncabezadoAuth(
+                etiqueta = "MIGANADO",
+                titulo = "Crear cuenta",
+                subtitulo = "Regístrese para empezar a llevar el control de su ganado.",
             )
 
-            CampoConIcono(
-                label = "Nombre completo",
-                value = estado.nombreGanadero,
-                onValueChange = viewModel::onNombreGanaderoCambiado,
-                icon = Icons.Filled.Person,
-            )
-            CampoConIcono(
-                label = "Nombre de la finca",
-                value = estado.nombreFinca,
-                onValueChange = viewModel::onNombreFincaCambiado,
-                icon = Icons.Filled.Home,
-            )
-            CampoConIcono(
-                label = "Correo electrónico",
-                value = correo,
-                onValueChange = { correo = it },
-                icon = Icons.Filled.Email,
-                keyboardType = KeyboardType.Email,
-            )
-            CampoConIcono(
-                label = "Contraseña",
-                value = password,
-                onValueChange = { password = it },
-                icon = Icons.Filled.Lock,
-                helperText = "Mínimo 6 caracteres",
-                esPassword = true,
-                passwordVisible = passwordVisible,
-                onTogglePasswordVisible = { passwordVisible = !passwordVisible },
-            )
-            CampoConIcono(
-                label = "Confirmar contraseña",
-                value = confirmarPassword,
-                onValueChange = { confirmarPassword = it },
-                icon = Icons.Filled.Shield,
-                esPassword = true,
-                passwordVisible = confirmarVisible,
-                onTogglePasswordVisible = { confirmarVisible = !confirmarVisible },
-            )
+            BovinaCard(modifier = Modifier.fillMaxWidth()) {
+                Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    CampoConIcono(
+                        label = "Nombre completo",
+                        value = estado.nombreGanadero,
+                        onValueChange = viewModel::onNombreGanaderoCambiado,
+                        icon = Icons.Filled.Person,
+                    )
+                    CampoConIcono(
+                        label = "Nombre de la finca",
+                        value = estado.nombreFinca,
+                        onValueChange = viewModel::onNombreFincaCambiado,
+                        icon = Icons.Filled.Home,
+                    )
+                    CampoConIcono(
+                        label = "Correo electrónico",
+                        value = correo,
+                        onValueChange = { correo = it },
+                        icon = Icons.Filled.Email,
+                        keyboardType = KeyboardType.Email,
+                    )
+                    CampoConIcono(
+                        label = "Contraseña",
+                        value = password,
+                        onValueChange = { password = it },
+                        icon = Icons.Filled.Lock,
+                        helperText = "Mínimo 6 caracteres",
+                        esPassword = true,
+                        passwordVisible = passwordVisible,
+                        onTogglePasswordVisible = { passwordVisible = !passwordVisible },
+                    )
+                    CampoConIcono(
+                        label = "Confirmar contraseña",
+                        value = confirmarPassword,
+                        onValueChange = { confirmarPassword = it },
+                        icon = Icons.Filled.Shield,
+                        esPassword = true,
+                        passwordVisible = confirmarVisible,
+                        onTogglePasswordVisible = { confirmarVisible = !confirmarVisible },
+                    )
 
-            BannerInformativo(
-                texto = "Sus registros de pesaje y ganado se guardan automáticamente en este " +
-                    "celular sin gastar sus datos.",
-                icon = Icons.Filled.CheckCircle,
-            )
+                    BannerInformativo(
+                        texto = "Sus registros de pesaje y ganado se guardan automáticamente en este " +
+                            "celular sin gastar sus datos.",
+                        icon = Icons.Filled.CheckCircle,
+                    )
 
-            Button(
-                onClick = viewModel::onCrearCuenta,
-                enabled = puedeCrear,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(BovinaMinFieldHeight),
-                shape = RoundedCornerShape(12.dp),
-            ) {
-                Text("Crear cuenta →", style = MaterialTheme.typography.labelLarge)
+                    BovinaPrimaryButton(
+                        texto = "Crear cuenta",
+                        onClick = viewModel::onCrearCuenta,
+                        enabled = puedeCrear,
+                        modifier = Modifier.fillMaxWidth(),
+                        trailingIcon = Icons.AutoMirrored.Filled.ArrowForward,
+                    )
+                }
             }
 
             TextButton(onClick = onIrALogin) {
-                Text("¿Ya tiene una cuenta? Iniciar sesión")
+                Text(
+                    text = "¿Ya tiene una cuenta? Iniciar sesión",
+                    style = MaterialTheme.typography.labelLarge,
+                    color = MaterialTheme.colorScheme.primary,
+                )
             }
 
-            PillBadge(texto = "Funciona también sin señal de internet en su finca.")
+            PillBadge(
+                texto = "Funciona también sin señal de internet en su finca.",
+                containerColor = MaterialTheme.colorScheme.surfaceContainer,
+            )
         }
     }
 }

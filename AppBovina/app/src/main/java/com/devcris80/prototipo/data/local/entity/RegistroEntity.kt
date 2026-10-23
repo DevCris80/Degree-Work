@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -33,4 +34,8 @@ data class RegistroEntity(
     val fechaBaja: Long? = null,
     val sincronizado: Boolean = false,
     val fechaModificacion: Long,
+    // Revisiones: ver AnimalEntity.
+    val rev: Int? = null,
+    val revBase: Int? = null,
+    @ColumnInfo(defaultValue = "") val idVersion: String,
 )

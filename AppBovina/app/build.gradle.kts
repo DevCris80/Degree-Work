@@ -71,4 +71,7 @@ dependencies {
     androidTestImplementation(libs.kotlinx.coroutines.test)
     debugImplementation(libs.androidx.compose.ui.test.manifest)
     debugImplementation(libs.androidx.compose.ui.tooling)
+    // room-testing (MigrationTestHelper) necesita esta versión, y el APK de pruebas usa la de la app.
+    // Solo en debug: la app no usa serialización y el release se queda con la que traen sus dependencias.
+    debugImplementation(libs.kotlinx.serialization.core)
 }

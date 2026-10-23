@@ -1,0 +1,42 @@
+@startuml DE-01_jornada_pesaje
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DE-01] Escenario sin conexión 1: jornada de pesaje en la manga, sin señal (E-01, RF-20 a RF-24)
+
+Person(operario, "Operario")
+System_Ext(bascula, "Báscula IoT (ESP32)", "Pesajes simulados")
+Container_Boundary(app, "App MiGanado (celular con hotspot, sin datos móviles)")
+  Component(uiPes, "UI-04 Pesajes", "Compose", $tags="parcial")
+  Component(srv, "DAT-02 Servidor de pesajes", "NanoHTTPD, servicio en primer plano")
+  Component(dom, "DOM-03 Pesajes", "Kotlin", $tags="parcial")
+  Component(repos, "DAT-01 Repositorios locales", "Room", $tags="parcial")
+  Component(uiAni, "UI-02 Animales", "Compose", $tags="parcial")
+Boundary_End()
+ContainerDb(room, "Base de datos local", "Room sobre SQLite")
+
+Rel(operario, uiPes, "Inicia el servicio de pesaje")
+Rel(bascula, srv, "POST /pesaje {id_lectura, id_chip, peso, antiguedad_ms}", "HTTP/JSON, red del hotspot")
+Rel(srv, dom, "Valida el cuerpo y registra el pesaje")
+Rel(dom, repos, "Busca el id_lectura (idempotencia) y la chapeta activa del código")
+Rel(repos, room, "En una transacción: Registro o Pesaje pendiente, sincronizado = false", "SQL")
+Rel(srv, bascula, "201 (registrado) o 202 (pendiente con motivo)", "HTTP/JSON")
+Rel(bascula, srv, "Reintento con el mismo id_lectura si no recibió respuesta", "HTTP/JSON")
+Rel(srv, bascula, "Misma respuesta que la primera vez; no se guarda nada nuevo", "HTTP/JSON")
+Rel(uiAni, repos, "Observa el historial del animal abierto; el pesaje nuevo aparece en pantalla", "Flow")
+
+note over srv, room
+  Ningún paso necesita internet: el ESP32 y el celular se comunican por la red local del hotspot. Los pesajes suben al servidor en la siguiente sincronización (DS-01).
+end note
+
+SHOW_LEGEND()
+@enduml

@@ -49,11 +49,48 @@ val MIGRACION_10_11: Migration = object : MigracionBovina(10, 11) {
 }
 
 /**
- * 11 → 12: parentesco, Animal guarda su padre y su madre (#20). Las dos columnas son opcionales,
+ * 11 → 12: revisiones, siblings y rechazos (#80, ADR-0004). Animal, Evento y Registro ganan `rev`,
+ * `revBase` e `idVersion`. Las filas existentes nunca se subieron, así que quedan sin revisión, y
+ * cada una recibe un `idVersion` propio: un UUID v4 armado en SQL, porque el servidor lo guarda como
+ * uuid. Las tablas sibling, rechazo y estado_sync nacen vacías.
+ */
+val MIGRACION_11_12: Migration = object : MigracionBovina(11, 12) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        for (tabla in listOf("animal", "evento", "registro")) {
+            db.execSQL("ALTER TABLE `$tabla` ADD COLUMN `rev` INTEGER")
+            db.execSQL("ALTER TABLE `$tabla` ADD COLUMN `revBase` INTEGER")
+            db.execSQL("ALTER TABLE `$tabla` ADD COLUMN `idVersion` TEXT NOT NULL DEFAULT ''")
+            db.execSQL("UPDATE `$tabla` SET idVersion = $UUID_V4_SQL")
+        }
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `sibling` (`idVersion` TEXT NOT NULL, `entidad` TEXT NOT NULL, " +
+                "`idFila` TEXT NOT NULL, `revBase` INTEGER NOT NULL, `contenido` TEXT NOT NULL, " +
+                "`idUsuario` TEXT NOT NULL, `fechaRecepcion` INTEGER NOT NULL, PRIMARY KEY(`idVersion`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_sibling_entidad_idFila` ON `sibling` (`entidad`, `idFila`)")
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `rechazo` (`idRechazo` TEXT NOT NULL, `entidad` TEXT NOT NULL, " +
+                "`idFila` TEXT NOT NULL, `contenido` TEXT NOT NULL, `motivo` TEXT NOT NULL, " +
+                "`fechaRechazo` INTEGER NOT NULL, `fechaCorreccion` INTEGER, PRIMARY KEY(`idRechazo`))",
+        )
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `estado_sync` (`id` INTEGER NOT NULL, `cursorDescarga` INTEGER NOT NULL, " +
+                "`fechaUltimaSincronizacion` INTEGER, PRIMARY KEY(`id`))",
+        )
+    }
+}
+
+/** Un UUID v4 en minúsculas, distinto en cada fila de un UPDATE. */
+private const val UUID_V4_SQL =
+    "lower(hex(randomblob(4)) || '-' || hex(randomblob(2)) || '-4' || substr(hex(randomblob(2)), 2) || '-' || " +
+        "substr('89ab', 1 + (abs(random()) % 4), 1) || substr(hex(randomblob(2)), 2) || '-' || hex(randomblob(6)))"
+
+/**
+ * 12 → 13: parentesco, Animal guarda su padre y su madre (#20). Las dos columnas son opcionales,
  * así que basta con agregarlas: recrear `animal` borraría en cascada sus Eventos, Registros y
  * Chapetas. Los Animales anteriores quedan sin padre ni madre.
  */
-val MIGRACION_11_12: Migration = object : MigracionBovina(11, 12) {
+val MIGRACION_12_13: Migration = object : MigracionBovina(12, 13) {
     override fun migrar(db: SupportSQLiteDatabase) {
         db.execSQL(
             "ALTER TABLE `animal` ADD COLUMN `idPadre` TEXT " +

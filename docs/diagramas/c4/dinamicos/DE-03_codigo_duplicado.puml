@@ -1,0 +1,42 @@
+@startuml DE-03_codigo_duplicado
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DE-03] Escenario sin conexión 3: dos celulares asocian el mismo código sin señal (E-07, RF-35, RN-01)
+
+Person(ganadero, "Ganadero")
+Person(operario, "Operario")
+Container(appA, "App MiGanado — celular A", "Kotlin, Room", $tags="parcial")
+Container(appB, "App MiGanado — celular B", "Kotlin, Room", $tags="parcial")
+Container(rest, "API de datos", "PostgREST + funciones de sincronización", $tags="planificado")
+ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", $tags="planificado")
+
+Rel(ganadero, appA, "Sin señal: registra el animal X con el código C")
+Rel(appA, appA, "RN-01 local: C no tiene chapeta activa en A; la guarda")
+Rel(operario, appB, "Sin señal: registra el animal Y con el mismo código C")
+Rel(appB, appB, "RN-01 local: C no tiene chapeta activa en B; la guarda")
+Rel(appA, rest, "Recupera señal y sube la chapeta C del animal X", "HTTPS/JSON + JWT")
+Rel(rest, pg, "Inserta la chapeta activa C", "SQL")
+Rel(rest, appA, "Aceptada", "HTTPS/JSON")
+Rel(appB, rest, "Recupera señal y sube la chapeta C del animal Y", "HTTPS/JSON + JWT")
+Rel(rest, pg, "Viola el índice único parcial de chapeta activa", "SQL")
+Rel(rest, appB, "Rechazada: «chapeta duplicada», ya asociada al animal X", "HTTPS/JSON")
+Rel(appB, operario, "Aviso y bandeja de rechazos con el motivo")
+Rel(operario, appB, "Corrige: asocia otro código al animal Y, o cierra el rechazo si C sí es de X")
+Rel(appB, rest, "Sube la corrección como escritura nueva", "HTTPS/JSON + JWT")
+
+note over appA, appB
+  La chapeta rechazada sale de su tabla en B y queda completa en la bandeja, así que la chapeta C de X puede descargarse sin chocar con el índice único local. Al corregirla, el rechazo queda cerrado y se conserva (CU-22, ADR-0004). El resto del lote se acepta normalmente.
+end note
+
+SHOW_LEGEND()
+@enduml
