@@ -19,21 +19,21 @@ Container_Boundary(app, "App MiGanado (Kotlin, Jetpack Compose)") {
 
   Boundary(ui, "Capa de presentación (pantallas Compose + ViewModel)", "paquete ui") {
     Component(uiCuenta, "UI-01 Cuenta y acceso", "Compose, ViewModel", "Estado: parcial. Crear cuenta, iniciar sesión, recuperar contraseña y autorización Ley 1581.", $tags="parcial")
-    Component(uiAnimales, "UI-02 Animales", "Compose, ViewModel", "Estado: parcial. Lista, detalle con historial, registro, baja y liberación de chapeta. Faltan edición, genealogía y asociar chapeta.", $tags="parcial")
+    Component(uiAnimales, "UI-02 Animales", "Compose, ViewModel", "Estado: parcial. Lista, detalle con historial y genealogía, registro, baja y liberación de chapeta. Faltan edición y asociar chapeta.", $tags="parcial")
     Component(uiEscanear, "UI-03 Escanear", "Compose, NfcAdapter (modo lector NFC-A)", "Lee el UID de la chapeta y decide el destino del código.")
     Component(uiPesajes, "UI-04 Pesajes", "Compose, ViewModel", "Estado: parcial. Inicia y detiene el servicio de pesaje y concilia pendientes. Falta el pesaje manual.", $tags="parcial")
     Component(uiEventos, "UI-05 Eventos", "Compose, ViewModel", "Estado: parcial. Registro de eventos. Faltan fecha real, subtipos, edición y baja.", $tags="parcial")
     Component(uiFinca, "UI-06 Finca y usuarios", "Compose, ViewModel, ubicación del sistema", "Invitación, quitar Operario y ubicación de la finca.", $tags="planificado")
     Component(uiSync, "UI-07 Sincronización", "Compose, ViewModel", "Estado y fecha de la última sincronización, bandeja de conflictos y bandeja de rechazos.", $tags="planificado")
-    Component(uiInd, "UI-08 Indicadores", "Compose, ViewModel", "Tablero de indicadores calculados sobre Room.", $tags="planificado")
+    Component(uiInd, "UI-08 Indicadores", "Compose, ViewModel", "Estado: parcial. Inventario, pendientes y completitud del historial calculados sobre Room. Faltan la evolución de peso y los eventos por mes.", $tags="parcial")
   }
 
   Boundary(dom, "Capa de dominio (módulo :domain, Kotlin puro)", "módulo Gradle") {
     Component(domCuenta, "DOM-01 Cuenta y permisos", "Kotlin", "Estado: parcial. Caso de uso CrearCuenta. Falta la política de permisos por rol (verificación sin señal).", $tags="parcial")
-    Component(domAnimales, "DOM-02 Animales y chapetas", "Kotlin", "Estado: parcial. RegistrarAnimal, DarDeBajaAnimal, LiberarChapeta, ResolverDestinoEscaneo y normalización del código. Faltan edición, genealogía y asociar chapeta.", $tags="parcial")
+    Component(domAnimales, "DOM-02 Animales y chapetas", "Kotlin", "Estado: parcial. RegistrarAnimal (con padre y madre), DarDeBajaAnimal, LiberarChapeta, ResolverDestinoEscaneo y normalización del código. Faltan edición y asociar chapeta.", $tags="parcial")
     Component(domPesajes, "DOM-03 Pesajes", "Kotlin", "Estado: parcial. RegistrarPesaje (idempotente, hora = recepción − antiguedad_ms), asignar y descartar pendientes. Falta el pesaje manual.", $tags="parcial")
     Component(domEventos, "DOM-04 Eventos y revisiones", "Kotlin", "Subtipos de evento, edición con rev_base y baja lógica de eventos y pesajes.", $tags="planificado")
-    Component(domInd, "DOM-05 Indicadores", "Kotlin", "Cálculo de inventario, ganancia diaria de peso, pendientes, eventos por mes y completitud del historial.", $tags="planificado")
+    Component(domInd, "DOM-05 Indicadores", "Kotlin", "Estado: parcial. ObservarIndicadoresHato: inventario, pendientes y completitud del historial. Faltan la ganancia diaria de peso y los eventos por mes.", $tags="parcial")
   }
 
   Boundary(data, "Capa de datos (paquete data y service)", "paquete") {
@@ -62,7 +62,7 @@ Rel(uiEventos, repos, "Registra eventos")
 Rel(uiEventos, domEventos, "Edita y da de baja", $tags="planificado")
 Rel(uiFinca, funciones, "Invita, quita y crea la finca", $tags="planificado")
 Rel(uiSync, motorSync, "Sincronizar ahora; consulta estado", $tags="planificado")
-Rel(uiInd, domInd, "Pide los indicadores", $tags="planificado")
+Rel(uiInd, domInd, "Pide los indicadores")
 Rel(uiAnimales, repos, "Observa animales e historial", "Flow")
 
 Rel(srvPesaje, domPesajes, "Registra el pesaje recibido")
@@ -70,7 +70,7 @@ Rel(domCuenta, repos, "Guarda finca y usuario")
 Rel(domAnimales, repos, "Lee y escribe")
 Rel(domPesajes, repos, "Lee y escribe")
 Rel(domEventos, repos, "Lee y escribe", $tags="planificado")
-Rel(domInd, repos, "Lee", $tags="planificado")
+Rel(domInd, repos, "Lee")
 Rel(domCuenta, sesion, "Inicia sesión y crea la identidad", $tags="planificado")
 Rel(domCuenta, funciones, "Crea la finca o canjea el código", $tags="planificado")
 

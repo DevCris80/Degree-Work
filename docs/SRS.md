@@ -25,7 +25,7 @@
 |---|---|---|---|---|---|
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
 | 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
-| 0.3 | 2026-10-23 | C. Villamil | RF-13 (padre y madre) pasa a implementado (#20). | Ciclo 2 | — |
+| 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), y RF-39, RF-41 y RF-43, indicadores del hato (#97). | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -327,11 +327,11 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Pendiente | EQUIPO | OE2, OE3 | CU-20 |
 | RF-38 | Subir las fotos a Supabase Storage y descargar las de otros dispositivos. | S | Pendiente | EQUIPO | OE3 | CU-20 |
 | **C7. Indicadores (BI)** | | | | | | |
-| RF-39 | Mostrar el inventario activo por propósito, sexo y etapa. | S | Pendiente | EQUIPO | OE3 | CU-24 |
+| RF-39 | Mostrar el inventario activo por propósito, sexo y etapa. | S | Implementado | EQUIPO | OE3 | CU-24 |
 | RF-40 | Mostrar la evolución de peso por animal y la ganancia diaria de peso promedio. | S | Pendiente | EQUIPO | OE3 | CU-24 |
-| RF-41 | Mostrar los pesajes pendientes sin conciliar y su antigüedad. | S | Pendiente | EQUIPO | OE3 | CU-24 |
+| RF-41 | Mostrar los pesajes pendientes sin conciliar y su antigüedad. | S | Implementado | EQUIPO | OE3 | CU-24 |
 | RF-42 | Mostrar los eventos por tipo y por mes. | C | Pendiente | EQUIPO | OE3 | CU-24 |
-| RF-43 | Mostrar la completitud del historial: animales sin chapeta activa o sin pesaje en los últimos N días. | S | Pendiente | EQUIPO | OG, OE3 | CU-24 |
+| RF-43 | Mostrar la completitud del historial: animales sin chapeta activa o sin pesaje en los últimos N días. | S | Implementado | EQUIPO | OG, OE3 | CU-24 |
 
 #### 3.1.2 Requisito transversal
 
@@ -758,14 +758,14 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | Objetivo / Fuente | OG, OE3 / EQUIPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | S (RF-42: C) / Pendiente |
+| Prioridad / Estado | S (RF-42: C) / Parcial: RF-39, RF-41 y RF-43 implementados; RF-40 y RF-42 pendientes (#98). |
 | Precondiciones | Sesión iniciada. |
 | Flujo principal | 1. El usuario abre Indicadores.<br>2. La app muestra, calculados sobre Room:<br>• inventario activo por propósito, sexo y etapa;<br>• evolución de peso de un animal elegido y ganancia diaria de peso promedio;<br>• pesajes pendientes sin conciliar y el más antiguo;<br>• eventos por tipo y por mes;<br>• animales sin chapeta activa y sin pesaje en los últimos N días (⚠ N = 30 por defecto).<br>3. La app muestra la fecha de la última sincronización. |
 | Flujos alternos y excepciones | 2a. Sin datos suficientes para un indicador (por ejemplo, un solo pesaje para la ganancia diaria): la app lo indica en lugar de mostrar un valor. |
 | Offline / sincronización | Funciona sin señal (LIM-05). |
 | Reglas | RN-04 (no cuenta lo dado de baja) |
 | Criterios de aceptación | 1. **Dado** 3 vacas de leche y 2 novillos de carne activos, **entonces** el inventario muestra esos conteos.<br>2. **Dado** un animal con 400 kg el día 1 y 430 kg el día 31, **entonces** su ganancia diaria es 1,0 kg/día.<br>3. **Dado** un animal dado de baja, **entonces** no aparece en ningún indicador. |
-| Trazas | — |
+| Trazas | Issue #97 · `IndicadoresScreen` · `IndicadoresViewModelTest` |
 
 ### 3.2 Requisitos de interfaz externa
 
@@ -787,7 +787,7 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Editar animal, evento y pesaje; registrar pesaje manual; asociar chapeta | CU-08, CU-11, CU-16, CU-18, CU-19 | Pendientes |
 | Usuarios e invitación; datos de la finca | CU-04, CU-05, CU-23 | Pendientes |
 | Conflictos; rechazos; estado de sincronización | CU-20 a CU-22 | Pendientes |
-| Indicadores | CU-24 | Pendiente |
+| Indicadores | CU-24 | Parcial (falta la evolución de peso y los eventos por mes) |
 
 Criterios transversales de la interfaz: RNF-16.
 
@@ -1066,11 +1066,11 @@ Resumen del contrato de pesaje:
 | RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #82 |
 | RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | #90 |
 | RF-38 | CU-20 | EQUIPO | — | OE3 | S | Pendiente | — | #86 |
-| RF-39 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | #97 |
+| RF-39 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
 | RF-40 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | #43, #98 |
-| RF-41 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | #97 |
+| RF-41 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
 | RF-42 | CU-24 | EQUIPO | — | OE3 | C | Pendiente | — | #98 |
-| RF-43 | CU-24 | EQUIPO | — | OG, OE3 | S | Pendiente | — | #97 |
+| RF-43 | CU-24 | EQUIPO | — | OG, OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
 
 ### 4.2 Requisitos no funcionales
 
@@ -1100,9 +1100,9 @@ Resumen del contrato de pesaje:
 | Prioridad | Total | Implementado | Parcial | Pendiente |
 |---|---|---|---|---|
 | Must | 26 | 15 | 2 | 9 |
-| Should | 12 | 1 | 0 | 11 |
+| Should | 12 | 4 | 0 | 8 |
 | Could | 5 | 0 | 0 | 5 |
-| **Total** | **43** | **16** | **2** | **25** |
+| **Total** | **43** | **19** | **2** | **22** |
 
 **KPI de la propuesta**
 
@@ -1112,7 +1112,7 @@ Resumen del contrato de pesaje:
 | OE1 — Requisitos no funcionales documentados | ≥ 5 | 16 |
 | OE1 — Ganaderos participantes | ≥ 3 | 1 |
 | OE1 — Requisitos confirmados por ganaderos | ≥ 80 % | Pendiente. Los marcados CAMPO son 14 de 59 (24 %). |
-| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 16 implementados (37 %); 9 con prueba automatizada y 7 que dependen de una demostración por registrar |
+| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 19 implementados (44 %); 12 con prueba automatizada y 7 que dependen de una demostración por registrar |
 
 La trazabilidad de requisitos a módulos (KPI de OE2) se documenta en la arquitectura (modelo C4, Fase 3).
 
