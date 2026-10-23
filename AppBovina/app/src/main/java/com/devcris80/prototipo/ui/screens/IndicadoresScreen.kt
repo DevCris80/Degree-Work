@@ -3,11 +3,11 @@ package com.devcris80.prototipo.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
-import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material3.CircularProgressIndicator
@@ -31,6 +31,7 @@ import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
+import com.devcris80.prototipo.ui.theme.BovinaMinTouchTarget
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
@@ -104,11 +105,13 @@ private fun TarjetaInventario(inventario: List<GrupoInventario>) {
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Text(text = "Inventario activo", style = MaterialTheme.typography.headlineSmall)
-            PillBadge(
-                texto = "${inventario.sumOf { it.cantidad }} animales",
-                containerColor = BovinaForest,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            )
+            if (inventario.isNotEmpty()) {
+                PillBadge(
+                    texto = "${inventario.sumOf { it.cantidad }} animales",
+                    containerColor = BovinaForest,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                )
+            }
         }
         if (inventario.isEmpty()) {
             TextoSinDatos("Todavía no hay animales activos.")
@@ -141,15 +144,16 @@ private fun TarjetaPesajesPendientes(
     onClick: () -> Unit,
 ) {
     BovinaCard(onClick = onClick, modifier = Modifier.fillMaxWidth()) {
-        FilaConteo(
-            etiqueta = "Pesajes pendientes sin conciliar",
-            cantidad = indicadores.pesajesPendientes,
-            destacada = true,
-        )
         val masAntiguo = indicadores.pesajePendienteMasAntiguo
         if (masAntiguo == null) {
+            Text(text = "Pesajes pendientes sin conciliar", style = MaterialTheme.typography.titleSmall)
             TextoSinDatos("No hay pesajes pendientes.")
         } else {
+            FilaConteo(
+                etiqueta = "Pesajes pendientes sin conciliar",
+                cantidad = indicadores.pesajesPendientes,
+                destacada = true,
+            )
             Text(
                 text = "El más antiguo llegó el ${formatoFecha.format(Date(masAntiguo.timestamp))} " +
                     "(hace ${diasDesde(masAntiguo.timestamp)} días).",
@@ -197,15 +201,19 @@ private fun ListaIncompletos(
         TextoSinDatos("Ninguno.")
     }
     animales.forEach { animal ->
-        Text(
-            text = animal.nombre,
-            style = MaterialTheme.typography.bodyLarge,
-            color = MaterialTheme.colorScheme.primary,
+        Box(
             modifier = Modifier
                 .fillMaxWidth()
-                .clickable { onAnimalClick(animal.idAnimal) }
-                .padding(vertical = 6.dp),
-        )
+                .heightIn(min = BovinaMinTouchTarget)
+                .clickable { onAnimalClick(animal.idAnimal) },
+            contentAlignment = Alignment.CenterStart,
+        ) {
+            Text(
+                text = animal.nombre,
+                style = MaterialTheme.typography.bodyLarge,
+                color = MaterialTheme.colorScheme.primary,
+            )
+        }
     }
 }
 
@@ -225,13 +233,12 @@ private fun FilaConteo(etiqueta: String, cantidad: Int, destacada: Boolean = fal
 
 @Composable
 private fun TextoSinDatos(texto: String) {
-    Column(modifier = Modifier.padding(top = 4.dp)) {
-        Text(
-            text = texto,
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-        )
-    }
+    Text(
+        text = texto,
+        style = MaterialTheme.typography.bodyMedium,
+        color = MaterialTheme.colorScheme.onSurfaceVariant,
+        modifier = Modifier.padding(top = 4.dp),
+    )
 }
 
 private fun diasDesde(timestamp: Long): Long =

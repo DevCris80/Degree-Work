@@ -52,29 +52,33 @@ class ObservarIndicadoresHato(
         val desde = clock() - DIAS_SIN_PESAJE * MILIS_POR_DIA
         IndicadoresHato(
             inventario = animales
-                .groupingBy { (animal, _) -> animal.proposito to animal.etapa }
+                .groupingBy { it.animal.proposito to it.animal.etapa }
                 .eachCount()
                 .map { (grupo, cantidad) -> GrupoInventario(grupo.first, grupo.second, cantidad) }
                 .sortedWith(compareBy({ it.proposito }, { it.etapa })),
             pesajesPendientes = pendientes.size,
             pesajePendienteMasAntiguo = pendientes.minByOrNull { it.timestamp },
             animalesSinChapetaActiva = animales
-                .map { (animal, _) -> animal }
+                .map { it.animal }
                 .filter { it.idAnimal !in conChapetaActiva },
             animalesSinPesajeReciente = animales
-                .filter { (_, ultimo) -> ultimo == null || ultimo.timestamp < desde }
-                .map { (animal, _) -> animal },
+                .filter { it.ultimoRegistro == null || it.ultimoRegistro.timestamp < desde }
+                .map { it.animal },
         )
     }
 
-    private fun animalesConUltimoRegistro(): Flow<List<Pair<Animal, Registro?>>> =
+    private data class AnimalConUltimoRegistro(val animal: Animal, val ultimoRegistro: Registro?)
+
+    private fun animalesConUltimoRegistro(): Flow<List<AnimalConUltimoRegistro>> =
         animalRepository.observeActivos().flatMapLatest { animales ->
             if (animales.isEmpty()) {
                 flowOf(emptyList())
             } else {
                 combine(
                     animales.map { animal ->
-                        registroRepository.observeUltimoByAnimal(animal.idAnimal).map { animal to it }
+                        registroRepository.observeUltimoByAnimal(animal.idAnimal).map { ultimo ->
+                            AnimalConUltimoRegistro(animal, ultimo)
+                        }
                     },
                 ) { it.toList() }
             }
