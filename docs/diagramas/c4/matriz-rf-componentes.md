@@ -59,9 +59,9 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-37 | Quitar a un Operario | Pendiente | UI-06, DAT-04, BD-06 | App, Supabase |
 | RF-38 | Subir y descargar fotos | Pendiente | DAT-06, DAT-05 | App |
 | RF-39 | Inventario activo | Implementado | UI-08, DOM-05, DAT-01 | App |
-| RF-40 | Evolución de peso y ganancia diaria | Pendiente | UI-08, DOM-05, DAT-01 | App |
+| RF-40 | Evolución de peso y ganancia diaria | Implementado | UI-08, DOM-05, DAT-01 | App |
 | RF-41 | Pesajes pendientes y antigüedad | Implementado | UI-08, DOM-05, DAT-01 | App |
-| RF-42 | Eventos por tipo y mes | Pendiente | UI-08, DOM-05, DAT-01 | App |
+| RF-42 | Eventos por tipo y mes | Implementado | UI-08, DOM-05, DAT-01 | App |
 | RF-43 | Completitud del historial | Implementado | UI-08, DOM-05, DAT-01 | App |
 
 ## 3. Componentes → RF
@@ -75,12 +75,12 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | UI-05 | Eventos | App | Parcial | RF-28, RF-29, RF-30 |
 | UI-06 | Finca y usuarios | App | Planificado | RF-05, RF-14, RF-37 |
 | UI-07 | Sincronización | App | Planificado | RF-34, RF-35 |
-| UI-08 | Indicadores | App | Parcial | RF-39, RF-40, RF-41, RF-42, RF-43 |
+| UI-08 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DOM-01 | Cuenta y permisos | App | Parcial | RF-01, RF-04, RF-06 |
 | DOM-02 | Animales y chapetas | App | Parcial | RF-08, RF-11, RF-12, RF-13, RF-15, RF-16, RF-17, RF-18, RF-19 |
 | DOM-03 | Pesajes | App | Parcial | RF-21, RF-22, RF-23, RF-24, RF-26, RF-27 |
 | DOM-04 | Eventos y revisiones | App | Planificado | RF-29, RF-30, RF-31 |
-| DOM-05 | Indicadores | App | Parcial | RF-39, RF-40, RF-41, RF-42, RF-43 |
+| DOM-05 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-01 | Repositorios locales | App | Parcial | RF-08, RF-09, RF-10, RF-11, RF-12, RF-13, RF-14, RF-17, RF-18, RF-19, RF-22, RF-23, RF-26, RF-27, RF-28, RF-29, RF-30, RF-31, RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-02 | Servidor de pesajes | App | Implementado | RF-20, RF-21, RF-25 |
 | DAT-03 | Sesión y autenticación | App | Planificado | RF-01, RF-02, RF-03, RF-07 |
