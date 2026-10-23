@@ -16,7 +16,6 @@
 > 2. Ubicación del texto de autorización de la Ley 1581 (RF-04, RNF-13).
 > 3. Ubicación del registro de la prueba de 15 minutos con pantalla apagada (RNF-03).
 > 4. Verificación de NFC en el Samsung Galaxy A15 (SUP-05).
-> 5. Permisos marcados como propuesta en la matriz de la sección 2.1.
 
 ---
 
@@ -25,7 +24,7 @@
 | Versión | Fecha | Autor | Cambio | Ciclo TSP | Tag |
 |---|---|---|---|---|---|
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
-| 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. | Ciclo 2 | — |
+| 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -153,24 +152,24 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Supabase Auth | Sistema externo | Identidad: crear cuenta, iniciar sesión, recuperar contraseña. |
 | Supabase (PostgREST, Postgres y Storage) | Sistema externo | Base de datos central con RLS; funciones de sincronización que reciben y entregan cambios, asignan revisiones y detectan conflictos; almacenamiento de fotos. |
 
-**Matriz de permisos** (✓ permitido · ✗ no permitido · ⚠ propuesta a confirmar)
+**Matriz de permisos** (✓ permitido · ✗ no permitido)
 
 | Acción | Ganadero | Operario | RF |
 |---|---|---|---|
 | Ver animales, detalle e indicadores | ✓ | ✓ | RF-09, RF-10, RF-39–43 |
 | Escanear chapeta | ✓ | ✓ | RF-15, RF-16 |
 | Registrar animal | ✓ | ✓ | RF-08 |
-| Editar animal | ✓ | ✓ ⚠ | RF-12 |
+| Editar animal | ✓ | ✓ | RF-12 |
 | Dar de baja animal | ✓ | ✗ | RF-11 |
-| Asociar chapeta a un animal sin chapeta activa | ✓ | ✓ ⚠ | RF-19 |
+| Asociar chapeta a un animal sin chapeta activa | ✓ | ✓ | RF-19 |
 | Liberar chapeta | ✓ | ✗ | RF-18 |
 | Registrar evento o pesaje manual | ✓ | ✓ | RF-27, RF-28 |
-| Editar evento o pesaje | ✓ | ✓ ⚠ | RF-30 |
-| Dar de baja evento o pesaje | ✓ | ✗ ⚠ | RF-31 |
+| Editar evento o pesaje | ✓ | ✓ | RF-30 |
+| Dar de baja evento o pesaje | ✓ | ✗ | RF-31 |
 | Asignar pesaje pendiente | ✓ | ✓ | RF-26 |
 | Descartar pesaje pendiente | ✓ | ✗ | RF-26 |
-| Iniciar y detener el servicio de pesaje | ✓ | ✓ ⚠ | RF-25 |
-| Registrar ubicación de la finca | ✓ | ✗ ⚠ | RF-14 |
+| Iniciar y detener el servicio de pesaje | ✓ | ✓ | RF-25 |
+| Registrar ubicación de la finca | ✓ | ✗ | RF-14 |
 | Invitar y quitar Operarios | ✓ | ✗ | RF-05, RF-37 |
 | Resolver conflictos | ✓ | ✓ | RF-34 |
 | Corregir rechazos | ✓ | ✓ (según la acción que corrige) | RF-35 |
@@ -481,7 +480,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|
 | RF cubiertos | RF-12, RF-13 |
 | Objetivo / Fuente | OE3 / CAMPO |
-| Actor | Ganadero, Operario ⚠ |
+| Actor | Ganadero, Operario |
 | Prioridad / Estado | S / Pendiente |
 | Precondiciones | El animal está activo. |
 | Flujo principal | 1. En el detalle, el usuario elige Editar.<br>2. Modifica los datos (mismas validaciones que CU-06, incluida la genealogía).<br>3. Guarda.<br>4. El sistema guarda la nueva versión con `rev_base` igual a la revisión que tenía el celular. |
@@ -516,7 +515,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|
 | RF cubiertos | RF-14 |
 | Objetivo / Fuente | OE3 / CAMPO |
-| Actor | Ganadero ⚠ |
+| Actor | Ganadero |
 | Prioridad / Estado | S / Pendiente. El modelo actual de PerfilFinca no tiene latitud ni longitud. |
 | Flujo principal | 1. El Ganadero abre los datos de la finca y elige Registrar ubicación.<br>2. La app pide permiso de ubicación y toma la posición del GPS.<br>3. El Ganadero confirma y el sistema guarda latitud y longitud. |
 | Flujos alternos y excepciones | 2a. Permiso denegado: la app permite ingresar las coordenadas a mano ⚠. |
@@ -549,7 +548,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|
 | RF cubiertos | RF-19 |
 | Objetivo / Fuente | OE3 / CAMPO |
-| Actor | Ganadero, Operario ⚠ |
+| Actor | Ganadero, Operario |
 | Prioridad / Estado | M / Pendiente. Hoy solo se crea una chapeta al registrar un animal nuevo. |
 | Precondiciones | El animal está activo y no tiene chapeta activa. |
 | Disparador | "Asociar chapeta" en el detalle del animal, o "Asociar a un animal existente" tras escanear un código libre. |
@@ -605,7 +604,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|
 | RF cubiertos | RF-25 |
 | Objetivo / Fuente | OE3 / EQUIPO |
-| Actor | Ganadero, Operario ⚠ |
+| Actor | Ganadero, Operario |
 | Prioridad / Estado | M / Implementado |
 | Flujo principal | 1. El usuario abre la pestaña Pesos.<br>2. La app muestra si el servicio está activo.<br>3. El usuario lo inicia o lo detiene.<br>4. Con el servicio activo, se muestra una notificación persistente con el puerto. |
 | Flujos alternos y excepciones | 3a. Android 13 o superior sin permiso de notificaciones: la app lo solicita. |
@@ -674,7 +673,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|
 | RF cubiertos | RF-30 |
 | Objetivo / Fuente | OE3 / EQUIPO |
-| Actor | Ganadero, Operario ⚠ |
+| Actor | Ganadero, Operario |
 | Prioridad / Estado | S / Pendiente |
 | Precondiciones | El evento o pesaje no está dado de baja. |
 | Flujo principal | 1. En el historial del animal, el usuario abre un evento o pesaje y elige Editar.<br>2. Modifica los campos (mismas validaciones del registro).<br>3. Guarda; el sistema crea una nueva versión con `rev_base` igual a la revisión que tenía el celular. |
@@ -690,7 +689,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 |---|---|
 | RF cubiertos | RF-31 |
 | Objetivo / Fuente | OE3 / NORMA (Ley 1659) |
-| Actor | Ganadero ⚠ |
+| Actor | Ganadero |
 | Prioridad / Estado | C / Pendiente. El campo `fechaBaja` ya existe en el esquema. |
 | Flujo principal | 1. En el historial, el usuario elige Dar de baja sobre un evento o pesaje.<br>2. Confirma.<br>3. El sistema registra `fechaBaja`; el elemento deja de aparecer en el historial. |
 | Offline / sincronización | Funciona sin señal. |
