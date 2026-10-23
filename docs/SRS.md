@@ -1028,25 +1028,25 @@ Resumen del contrato de pesaje:
 
 | RF | CU | Fuente | Conf. | Obj. | Pri. | Estado | Verificación | Issue |
 |---|---|---|---|---|---|---|---|---|
-| RF-01 | CU-01 | EQUIPO | — | OE3 | M | Parcial | P `CrearCuentaViewModelTest` (solo la parte local) | #40 |
-| RF-02 | CU-02 | EQUIPO | — | OE3 | M | Pendiente | — | #40 |
-| RF-03 | CU-02 | EQUIPO | — | OE3 | M | Pendiente | — | — |
-| RF-04 | CU-01 | NORMA | — | OE3 | M | Pendiente | — | — |
-| RF-05 | CU-04 | CAMPO | ⚠ | OE3 | M | Pendiente | — | — |
-| RF-06 | Transv. | CAMPO | ⚠ | OE3 | M | Pendiente | — | — |
-| RF-07 | CU-03 | EQUIPO | — | OE3 | C | Pendiente | — | — |
+| RF-01 | CU-01 | EQUIPO | — | OE3 | M | Parcial | P `CrearCuentaViewModelTest` (solo la parte local) | #40, #87 |
+| RF-02 | CU-02 | EQUIPO | — | OE3 | M | Pendiente | — | #40, #23 |
+| RF-03 | CU-02 | EQUIPO | — | OE3 | M | Pendiente | — | #23 |
+| RF-04 | CU-01 | NORMA | — | OE3 | M | Pendiente | — | #87 |
+| RF-05 | CU-04 | CAMPO | ⚠ | OE3 | M | Pendiente | — | #88 |
+| RF-06 | Transv. | CAMPO | ⚠ | OE3 | M | Pendiente | — | #79, #89 |
+| RF-07 | CU-03 | EQUIPO | — | OE3 | C | Pendiente | — | #91 |
 | RF-08 | CU-06 | CAMPO | ⚠ | OE3 | M | Implementado | P `RegistrarAnimalViewModelTest` | #38 |
 | RF-09 | CU-07 | EQUIPO | — | OE3 | M | Implementado | P `ListaAnimalesViewModelTest` | #37 |
 | RF-10 | CU-07 | CAMPO | ⚠ | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | #37 |
 | RF-11 | CU-09 | NORMA | — | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | — |
-| RF-12 | CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | — |
+| RF-12 | CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #92 |
 | RF-13 | CU-06, CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #20 |
-| RF-14 | CU-23 | CAMPO | ⚠ | OE3 | S | Pendiente | — | — |
+| RF-14 | CU-23 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #93 |
 | RF-15 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | D (lectura de un NTAG215; registro pendiente) | #31 |
 | RF-16 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | P `EscanearViewModelTest` | #31, #36 |
 | RF-17 | CU-06 | CAMPO | ⚠ | OE3 | M | Implementado | P `RegistrarAnimalViewModelTest` | #38 |
 | RF-18 | CU-12 | CAMPO | ⚠ | OE3 | M | Implementado | P `DetalleAnimalViewModelTest`, `EscanearViewModelTest` | — |
-| RF-19 | CU-11 | CAMPO | ⚠ | OE3 | M | Pendiente | — | — |
+| RF-19 | CU-11 | CAMPO | ⚠ | OE3 | M | Pendiente | — | #94 |
 | RF-20 | CU-13 | EQUIPO | — | OE3 | M | Implementado | D (repetir con el contrato vigente) | — |
 | RF-21 | CU-13 | EQUIPO | — | OE3 | M | Implementado | D (repetir con el contrato vigente) | — |
 | RF-22 | CU-13 | EQUIPO | — | OE3 | M | Implementado | D (repetir con el contrato vigente) | #52 |
@@ -1054,23 +1054,23 @@ Resumen del contrato de pesaje:
 | RF-24 | CU-13 | EQUIPO | — | OE3 | M | Implementado | D (repetir con el contrato vigente) | — |
 | RF-25 | CU-14 | EQUIPO | — | OE3 | M | Implementado | D | #39 |
 | RF-26 | CU-15 | EQUIPO | — | OE3 | M | Implementado | P `PesajesPendientesViewModelTest` | #53, #61 |
-| RF-27 | CU-16 | CAMPO | ⚠ | OE3 | S | Pendiente | — | — |
+| RF-27 | CU-16 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #95 |
 | RF-28 | CU-17 | EQUIPO / NORMA | — | OE3 | M | Parcial | P `NuevoEventoViewModelTest` (sin fecha real) | #22, #39, #44 |
 | RF-29 | CU-17 | EQUIPO | — | OE3 | C | Pendiente | — | — |
-| RF-30 | CU-18 | EQUIPO | — | OE3 | S | Pendiente | — | — |
-| RF-31 | CU-19 | NORMA | — | OE3 | C | Pendiente | — | — |
-| RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | — |
-| RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | — |
-| RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | — |
-| RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | — |
-| RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | — |
-| RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | — |
-| RF-38 | CU-20 | EQUIPO | — | OE3 | S | Pendiente | — | — |
-| RF-39 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | — |
-| RF-40 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | — |
-| RF-41 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | — |
-| RF-42 | CU-24 | EQUIPO | — | OE3 | C | Pendiente | — | — |
-| RF-43 | CU-24 | EQUIPO | — | OG, OE3 | S | Pendiente | — | — |
+| RF-30 | CU-18 | EQUIPO | — | OE3 | S | Pendiente | — | #96 |
+| RF-31 | CU-19 | NORMA | — | OE3 | C | Pendiente | — | #96 |
+| RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #81, #83 |
+| RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #80, #81 |
+| RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #84 |
+| RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #85 |
+| RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #82 |
+| RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | #90 |
+| RF-38 | CU-20 | EQUIPO | — | OE3 | S | Pendiente | — | #86 |
+| RF-39 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | #97 |
+| RF-40 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | #43, #98 |
+| RF-41 | CU-24 | EQUIPO | — | OE3 | S | Pendiente | — | #97 |
+| RF-42 | CU-24 | EQUIPO | — | OE3 | C | Pendiente | — | #98 |
+| RF-43 | CU-24 | EQUIPO | — | OG, OE3 | S | Pendiente | — | #97 |
 
 ### 4.2 Requisitos no funcionales
 
