@@ -5,21 +5,27 @@ import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.PesajePendienteEntity
+import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Conciliacion
+import com.devcris80.prototipo.domain.model.EntidadConRevisiones
+import com.devcris80.prototipo.domain.model.EntidadSincronizada
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.Rechazo
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
 
 // Los enum del dominio se guardan en Room como texto. Sexo, Etapa, Proposito y Rol usan el mismo
@@ -47,8 +53,26 @@ private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
     ResolucionPesajePendiente.DESCARTADO to "DESCARTADO",
 )
 
+// Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor.
+private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
+    EntidadSincronizada.PERFIL_FINCA to "perfil_finca",
+    EntidadSincronizada.USUARIO to "usuario",
+    EntidadSincronizada.ANIMAL to "animal",
+    EntidadSincronizada.EVENTO to "evento",
+    EntidadSincronizada.REGISTRO to "registro",
+    EntidadSincronizada.CHAPETA to "chapeta",
+    EntidadSincronizada.PESAJE_PENDIENTE to "pesaje_pendiente",
+)
+private val TEXTO_ENTIDAD_CON_REVISIONES = mapOf(
+    EntidadConRevisiones.ANIMAL to "animal",
+    EntidadConRevisiones.EVENTO to "evento",
+    EntidadConRevisiones.REGISTRO to "registro",
+)
+
 // Conciliar escribe la resolución sola, sin pasar por toEntity.
 internal fun ResolucionPesajePendiente.textoGuardado(): String = TEXTO_RESOLUCION_PESAJE_PENDIENTE.aTexto(this)
+
+internal fun EntidadConRevisiones.textoGuardado(): String = TEXTO_ENTIDAD_CON_REVISIONES.aTexto(this)
 
 private fun <E : Enum<E>> Map<E, String>.aTexto(valor: E): String = getValue(valor)
 
@@ -198,3 +222,21 @@ fun Usuario.toEntity(fechaModificacion: Long) = UsuarioEntity(
     fechaModificacion = fechaModificacion,
 )
 
+fun SiblingEntity.toDomain() = Sibling(
+    idVersion = idVersion,
+    entidad = TEXTO_ENTIDAD_CON_REVISIONES.desdeTexto(entidad),
+    idFila = idFila,
+    revBase = revBase,
+    contenido = contenido,
+    idUsuario = idUsuario,
+    fechaRecepcion = fechaRecepcion,
+)
+
+fun RechazoEntity.toDomain() = Rechazo(
+    idRechazo = idRechazo,
+    entidad = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad),
+    idFila = idFila,
+    contenido = contenido,
+    motivo = motivo,
+    fechaRechazo = fechaRechazo,
+)
