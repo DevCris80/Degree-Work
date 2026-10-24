@@ -707,7 +707,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-32, RF-33, RF-36, RF-38 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, ADR-0005) |
 | Actor | Sistema (en nombre del usuario con sesión) |
-| Prioridad / Estado | RF-32: M / Parcial: la subida (pasos 1 a 5) corre con "Sincronizar ahora"; los disparadores automáticos llegan con #83. RF-36: M / Parcial: la descarga (paso 7) corre después de la subida, con el mismo botón; falta correr `MotorSincronizacionDescargaTest` en un dispositivo. RF-33: S / Implementado. RF-38: S / Pendiente. |
+| Prioridad / Estado | RF-32: M / Parcial: la sincronización corre al abrir la app, al iniciar sesión, 30 segundos después de la última escritura local y con "Sincronizar ahora", como un único trabajo de WorkManager que espera la señal y reintenta con espera creciente (#83); falta probar los disparadores en un dispositivo y correr las pruebas nuevas de `MotorSincronizacionTest`. RF-36: M / Parcial: la descarga (paso 7) corre después de la subida, con el mismo botón; falta correr `MotorSincronizacionDescargaTest` en un dispositivo. RF-33: S / Implementado. RF-38: S / Pendiente. |
 | Precondiciones | Sesión válida y señal. |
 | Disparador | Se abre la app, el usuario elige "Sincronizar ahora" o se guarda un cambio local. Cada disparo encola un único trabajo, que corre cuando hay señal. |
 | Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular sube a Storage las fotos pendientes.<br>7. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>8. El celular descarga las fotos nuevas y registra la fecha de la última sincronización. |
@@ -787,7 +787,8 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Registrar pesaje manual | CU-16 | Implementada |
 | Editar animal, evento y pesaje; asociar chapeta | CU-08, CU-11, CU-18, CU-19 | Pendientes |
 | Usuarios e invitación; datos de la finca | CU-04, CU-05, CU-23 | Pendientes |
-| Conflictos; rechazos; estado de sincronización | CU-20 a CU-22 | Pendientes |
+| Conflictos; rechazos | CU-21, CU-22 | Pendientes |
+| Estado de sincronización (cambios sin subir y última sincronización, en Indicadores) | CU-20 | Implementada |
 | Indicadores | CU-24 | Implementada |
 
 Criterios transversales de la interfaz: RNF-16.
@@ -1060,7 +1061,7 @@ Resumen del contrato de pesaje:
 | RF-29 | CU-17 | EQUIPO | — | OE3 | C | Pendiente | — | — |
 | RF-30 | CU-18 | EQUIPO | — | OE3 | S | Pendiente | — | #96 |
 | RF-31 | CU-19 | NORMA | — | OE3 | C | Pendiente | — | #96 |
-| RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `04_subir_cambios`, `MotorSincronizacionTest` | #81, #83 |
+| RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `04_subir_cambios`, `MotorSincronizacionTest`, `DisparosDeSincronizacionTest` | #81, #83 |
 | RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest` | #80, #81 |
 | RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #84 |
 | RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #85 |
