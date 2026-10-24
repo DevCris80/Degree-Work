@@ -25,7 +25,7 @@
 |---|---|---|---|---|---|
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
 | 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
-| 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), y RF-39 a RF-43, indicadores (#97 y #98). | Ciclo 2 | — |
+| 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), RF-39 a RF-43, indicadores (#97 y #98), y RF-27, pesaje manual (#95). | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -313,7 +313,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-24 | Calcular la hora de medición como hora de recepción menos `antiguedad_ms`. | M | Implementado | EQUIPO (ADR-0003) | OE3 | CU-13 |
 | RF-25 | Permitir iniciar y detener el servicio de pesaje y ver si está activo. | M | Implementado | EQUIPO | OE3 | CU-14 |
 | RF-26 | Permitir conciliar los pesajes pendientes: asignarlos a un animal activo o descartarlos. | M | Implementado | EQUIPO (ADR-0003) | OE3 | CU-15 |
-| RF-27 | Permitir registrar un pesaje manual a un animal activo. | S | Pendiente | CAMPO | OE3 | CU-16 |
+| RF-27 | Permitir registrar un pesaje manual a un animal activo. | S | Implementado | CAMPO | OE3 | CU-16 |
 | **C5. Eventos** | | | | | | |
 | RF-28 | Registrar un evento con tipo, fecha real del evento y detalle. | M | Parcial | EQUIPO / NORMA (Ley 1659) | OE3 | CU-17 |
 | RF-29 | Registrar los subtipos vacunación (producto, días de retiro de leche y carne) y parto (cría resultante, peso al nacer). | C | Pendiente | EQUIPO | OE3 | CU-17 |
@@ -639,14 +639,14 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-27 |
 | Objetivo / Fuente | OE3 / CAMPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | S / Pendiente. Hoy el botón "Registrar Pesaje o Evento" solo abre el formulario de evento. |
+| Prioridad / Estado | S / Implementado. |
 | Precondiciones | El animal está activo. |
 | Flujo principal | 1. En el detalle, el usuario elige Registrar pesaje.<br>2. Ingresa el peso y la fecha y hora de la medición (por defecto, el momento actual).<br>3. El sistema guarda el Registro sin `id_lectura`, a nombre del usuario. |
 | Flujos alternos y excepciones | 2a. Peso fuera de 0 < peso ≤ 1500 kg: la app lo indica.<br>2b. ⚠ Fecha futura: la app no la acepta. |
 | Offline / sincronización | Funciona sin señal. La idempotencia por `id_lectura` (RN-09) no aplica a pesajes manuales. |
 | Reglas | RN-07, RN-12, RN-19 |
 | Criterios de aceptación | 1. **Dado** un peso válido, **entonces** el pesaje aparece en el historial del animal con la fecha ingresada.<br>2. **Dado** un peso de 0, **entonces** no se guarda. |
-| Trazas | — |
+| Trazas | Issue #95 · `PesajeFormScreen` · `NuevoPesajeViewModelTest` |
 
 ##### C5. Eventos
 
@@ -784,7 +784,8 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Escanear | CU-10 | Implementada |
 | Pesos (servicio de pesaje y pesajes pendientes) | CU-14, CU-15 | Implementada |
 | Eventos | CU-17 | Solo visual |
-| Editar animal, evento y pesaje; registrar pesaje manual; asociar chapeta | CU-08, CU-11, CU-16, CU-18, CU-19 | Pendientes |
+| Registrar pesaje manual | CU-16 | Implementada |
+| Editar animal, evento y pesaje; asociar chapeta | CU-08, CU-11, CU-18, CU-19 | Pendientes |
 | Usuarios e invitación; datos de la finca | CU-04, CU-05, CU-23 | Pendientes |
 | Conflictos; rechazos; estado de sincronización | CU-20 a CU-22 | Pendientes |
 | Indicadores | CU-24 | Implementada |
@@ -1054,7 +1055,7 @@ Resumen del contrato de pesaje:
 | RF-24 | CU-13 | EQUIPO | — | OE3 | M | Implementado | D (repetir con el contrato vigente) | — |
 | RF-25 | CU-14 | EQUIPO | — | OE3 | M | Implementado | D | #39 |
 | RF-26 | CU-15 | EQUIPO | — | OE3 | M | Implementado | P `PesajesPendientesViewModelTest` | #53, #61 |
-| RF-27 | CU-16 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #95 |
+| RF-27 | CU-16 | CAMPO | ⚠ | OE3 | S | Implementado | P `NuevoPesajeViewModelTest` | #95 |
 | RF-28 | CU-17 | EQUIPO / NORMA | — | OE3 | M | Parcial | P `NuevoEventoViewModelTest` (sin fecha real) | #22, #39, #44 |
 | RF-29 | CU-17 | EQUIPO | — | OE3 | C | Pendiente | — | — |
 | RF-30 | CU-18 | EQUIPO | — | OE3 | S | Pendiente | — | #96 |
@@ -1100,9 +1101,9 @@ Resumen del contrato de pesaje:
 | Prioridad | Total | Implementado | Parcial | Pendiente |
 |---|---|---|---|---|
 | Must | 26 | 15 | 2 | 9 |
-| Should | 12 | 5 | 0 | 7 |
+| Should | 12 | 6 | 0 | 6 |
 | Could | 5 | 1 | 0 | 4 |
-| **Total** | **43** | **21** | **2** | **20** |
+| **Total** | **43** | **22** | **2** | **19** |
 
 **KPI de la propuesta**
 
@@ -1112,7 +1113,7 @@ Resumen del contrato de pesaje:
 | OE1 — Requisitos no funcionales documentados | ≥ 5 | 16 |
 | OE1 — Ganaderos participantes | ≥ 3 | 1 |
 | OE1 — Requisitos confirmados por ganaderos | ≥ 80 % | Pendiente. Los marcados CAMPO son 14 de 59 (24 %). |
-| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 21 implementados (49 %); 14 con prueba automatizada y 7 que dependen de una demostración por registrar |
+| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 22 implementados (51 %); 15 con prueba automatizada y 7 que dependen de una demostración por registrar |
 
 La trazabilidad de requisitos a módulos (KPI de OE2) se documenta en la arquitectura (modelo C4, Fase 3).
 

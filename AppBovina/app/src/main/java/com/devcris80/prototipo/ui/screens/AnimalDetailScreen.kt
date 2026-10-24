@@ -63,6 +63,7 @@ import java.util.concurrent.TimeUnit
 fun DetalleAnimalScreen(
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
+    onNuevoPesajeClick: () -> Unit,
     onEditarClick: () -> Unit = {},
     onAnimalClick: (idAnimal: String) -> Unit = {},
 ) {
@@ -308,9 +309,19 @@ fun DetalleAnimalScreen(
                     )
                 }
             }
+            if (animal.activo) {
+                item {
+                    BovinaPrimaryButton(
+                        texto = "Registrar pesaje",
+                        onClick = onNuevoPesajeClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        icon = Icons.Filled.MonitorWeight,
+                    )
+                }
+            }
             item {
-                BovinaPrimaryButton(
-                    texto = "Registrar Pesaje o Evento",
+                BovinaSecondaryButton(
+                    texto = "Registrar evento",
                     onClick = onNuevoEventoClick,
                     modifier = Modifier.fillMaxWidth(),
                     icon = Icons.Filled.Add,

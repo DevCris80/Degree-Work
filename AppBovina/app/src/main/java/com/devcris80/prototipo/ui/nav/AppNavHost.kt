@@ -29,6 +29,7 @@ import com.devcris80.prototipo.ui.screens.EventosScreen
 import com.devcris80.prototipo.ui.screens.IndicadoresScreen
 import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
+import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
 import com.devcris80.prototipo.ui.util.appViewModel
@@ -176,6 +177,7 @@ fun AppNavHost() {
                 DetalleAnimalScreen(
                     onVolver = { navController.popBackStack() },
                     onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
+                    onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
                 )
             }
@@ -185,6 +187,15 @@ fun AppNavHost() {
             ) {
                 EventoFormScreen(
                     onGuardado = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Rutas.NuevoPesaje.ruta,
+                arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
+            ) {
+                PesajeFormScreen(
+                    onGuardado = { navController.popBackStack() },
+                    onVolver = { navController.popBackStack() },
                 )
             }
             composable(Rutas.Escanear.ruta) {
