@@ -163,6 +163,7 @@ class ListaAnimalesViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, sincronizacionRepository.sincronizaciones)
+        assertEquals(0, sincronizacionRepository.programaciones)
         assertEquals(false, estados.last().sincronizando)
         assertEquals("Sincronizado. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
         viewModel.onAvisoMostrado()
@@ -172,7 +173,7 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun sincronizarSinSenal_avisaQueSeSincronizaDespues() = runTest {
+    fun sincronizarSinSenal_dejaProgramadoElTrabajoYAvisaQueSeSincronizaDespues() = runTest {
         sincronizacionRepository.resultado = ResultadoSincronizacion.SinConexion
         val viewModel = crearViewModel()
         val estados = mutableListOf<ListaAnimalesUiState>()
@@ -181,6 +182,7 @@ class ListaAnimalesViewModelTest {
         viewModel.onSincronizar()
         advanceUntilIdle()
 
+        assertEquals(1, sincronizacionRepository.programaciones)
         assertEquals("Sin señal. Lo que falta se sincroniza después.", estados.last().avisoSincronizacion)
         job.cancel()
     }

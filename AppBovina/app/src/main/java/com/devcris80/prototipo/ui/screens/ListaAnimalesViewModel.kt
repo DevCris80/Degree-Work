@@ -43,7 +43,7 @@ data class ListaAnimalesUiState(
     val avisoSincronizacion: String? = null,
 )
 
-private data class EstadoSincronizacion(val sincronizando: Boolean = false, val aviso: String? = null)
+private data class SincronizacionManual(val sincronizando: Boolean = false, val aviso: String? = null)
 
 /**
  * Estado de la Lista de Animales: finca, usuario, animales activos con su Chapeta y último Registro. Desde
@@ -61,7 +61,7 @@ class ListaAnimalesViewModel(
 ) : ViewModel() {
 
     private val filtro = MutableStateFlow<Proposito?>(null)
-    private val sincronizacion = MutableStateFlow(EstadoSincronizacion())
+    private val sincronizacion = MutableStateFlow(SincronizacionManual())
 
     private val animalesConResumen = combine(
         animalRepository.observeActivos(),
@@ -106,10 +106,12 @@ class ListaAnimalesViewModel(
 
     fun onSincronizar() {
         if (sincronizacion.value.sincronizando) return
-        sincronizacion.value = EstadoSincronizacion(sincronizando = true)
+        sincronizacion.value = SincronizacionManual(sincronizando = true)
         viewModelScope.launch {
             val resultado = sincronizacionRepository.sincronizar()
-            sincronizacion.value = EstadoSincronizacion(aviso = resultado.aviso())
+            // El trabajo en segundo plano espera la señal y sincroniza solo.
+            if (resultado == ResultadoSincronizacion.SinConexion) sincronizacionRepository.programar()
+            sincronizacion.value = SincronizacionManual(aviso = resultado.aviso())
         }
     }
 

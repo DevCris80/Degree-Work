@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
+import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.usecase.EvolucionPeso
 import com.devcris80.prototipo.domain.usecase.IndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
@@ -26,17 +27,21 @@ data class IndicadoresUiState(
     /** El Animal cuya evolución de peso se muestra; nulo hasta que se elige uno o si se da de baja. */
     val idAnimalElegido: String? = null,
     val evolucionPeso: EvolucionPeso? = null,
-    /** Nula mientras no exista la sincronización (#83): la pantalla dice "nunca". */
+    val cambiosSinSubir: Int = 0,
+    /** Nula si nunca terminó una sincronización: la pantalla dice "nunca". */
     val ultimaSincronizacion: Long? = null,
 )
 
-/** Estado de Indicadores: los del hato y la evolución de peso del Animal elegido. */
+/**
+ * Estado de Indicadores: los del hato, la evolución de peso del Animal elegido y cómo va la sincronización.
+ */
 @OptIn(ExperimentalCoroutinesApi::class)
 class IndicadoresViewModel(
     observarIndicadoresHato: ObservarIndicadoresHato,
     observarEvolucionPeso: ObservarEvolucionPeso,
     animalRepository: AnimalRepository,
     chapetaRepository: ChapetaRepository,
+    sincronizacionRepository: SincronizacionRepository,
 ) : ViewModel() {
     private val idAnimalElegido = MutableStateFlow<String?>(null)
 
@@ -62,12 +67,15 @@ class IndicadoresViewModel(
         animalesElegibles,
         idAnimalVigente,
         evolucionPeso,
-    ) { indicadores, animales, idAnimal, evolucion ->
+        sincronizacionRepository.observeEstado(),
+    ) { indicadores, animales, idAnimal, evolucion, sincronizacion ->
         IndicadoresUiState(
             indicadores = indicadores,
             animalesElegibles = animales,
             idAnimalElegido = idAnimal,
             evolucionPeso = evolucion,
+            cambiosSinSubir = sincronizacion.cambiosSinSubir,
+            ultimaSincronizacion = sincronizacion.ultimaSincronizacion,
         )
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), IndicadoresUiState())
 

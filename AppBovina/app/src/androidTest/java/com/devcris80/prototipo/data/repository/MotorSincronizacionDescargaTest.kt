@@ -34,7 +34,14 @@ class MotorSincronizacionDescargaTest {
     private val servidor = ServidorFalso()
 
     private fun motor(tamanoPagina: Int = 100, margen: Long = 0) =
-        MotorSincronizacion(servidor, db, clock = { 9_000 }, tamanoPagina = tamanoPagina, margenSolapamiento = margen)
+        MotorSincronizacion(
+            servidor,
+            db,
+            programarTrabajo = {},
+            clock = { 9_000 },
+            tamanoPagina = tamanoPagina,
+            margenSolapamiento = margen,
+        )
 
     @Before
     fun crearBase() = runTest {

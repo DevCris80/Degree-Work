@@ -3,6 +3,7 @@ package com.devcris80.prototipo.ui.screens
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
@@ -15,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -62,6 +64,7 @@ fun IndicadoresScreen(
             container.observarEvolucionPeso,
             container.animalRepository,
             container.chapetaRepository,
+            container.sincronizacionRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -110,13 +113,23 @@ fun IndicadoresScreen(
             }
             item { TarjetaEventosPorMes(indicadores.eventosPorMes) }
             item {
-                Text(
-                    text = "Última sincronización: " +
-                        (estado.ultimaSincronizacion?.let { formatoFecha.format(Date(it)) } ?: "nunca"),
-                    style = MaterialTheme.typography.bodySmall,
-                    color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    modifier = Modifier.padding(start = 4.dp),
-                )
+                ProvideTextStyle(
+                    MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                ) {
+                    Column(modifier = Modifier.padding(start = 4.dp)) {
+                        Text(
+                            when (estado.cambiosSinSubir) {
+                                0 -> "No quedan cambios sin subir."
+                                1 -> "Queda 1 cambio sin subir."
+                                else -> "Quedan ${estado.cambiosSinSubir} cambios sin subir."
+                            },
+                        )
+                        Text(
+                            "Última sincronización: " +
+                                (estado.ultimaSincronizacion?.let { formatoFecha.format(Date(it)) } ?: "nunca"),
+                        )
+                    }
+                }
             }
         }
     }

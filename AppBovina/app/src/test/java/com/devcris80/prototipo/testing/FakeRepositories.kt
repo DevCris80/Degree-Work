@@ -12,6 +12,7 @@ import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
@@ -193,6 +194,8 @@ internal class FakeSesionRepository : SesionRepository {
 internal class FakeSincronizacionRepository : SincronizacionRepository {
     var resultado: ResultadoSincronizacion = ResultadoSincronizacion.Completa(0, 0, 0)
     var sincronizaciones = 0
+    var programaciones = 0
+    val estado = MutableStateFlow(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = null))
 
     /** Si no es nulo, la subida espera a que se complete. */
     var espera: CompletableDeferred<Unit>? = null
@@ -202,4 +205,10 @@ internal class FakeSincronizacionRepository : SincronizacionRepository {
         espera?.await()
         return resultado
     }
+
+    override fun programar() {
+        programaciones++
+    }
+
+    override fun observeEstado(): Flow<EstadoSincronizacion> = estado
 }

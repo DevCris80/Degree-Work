@@ -39,6 +39,7 @@ import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
+import com.devcris80.prototipo.service.ProgramadorSincronizacion
 
 /**
  * Arma a mano los repositorios y casos de uso de la app (ver docs/adr/0001). Es el único lugar,
@@ -68,8 +69,11 @@ class AppContainer(context: Context) {
         database.usuarioDao(),
         transaccion,
     )
-    val sincronizacionRepository: SincronizacionRepository =
-        MotorSincronizacion(SupabaseServidorSincronizacion(supabase), database)
+    val sincronizacionRepository: SincronizacionRepository = MotorSincronizacion(
+        SupabaseServidorSincronizacion(supabase),
+        database,
+        programarTrabajo = ProgramadorSincronizacion(context)::programar,
+    )
 
     val registrarPesaje = RegistrarPesaje(
         chapetaRepository,
