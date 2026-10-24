@@ -34,6 +34,7 @@ import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
 import com.devcris80.prototipo.ui.screens.ProgramarEventoScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
+import com.devcris80.prototipo.ui.screens.ResolverConflictoScreen
 import com.devcris80.prototipo.ui.util.appViewModel
 
 private val RUTAS_CON_NAV_INFERIOR = setOf(
@@ -182,6 +183,21 @@ fun AppNavHost() {
                     onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
                     onEditarClick = { navController.navigate(Rutas.EditarAnimal.crear(idAnimal)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
+                    onResolverConflictoClick = { entidad, idFila ->
+                        navController.navigate(Rutas.ResolverConflicto.crear(entidad, idFila))
+                    },
+                )
+            }
+            composable(
+                route = Rutas.ResolverConflicto.ruta,
+                arguments = listOf(
+                    navArgument("entidad") { type = NavType.StringType },
+                    navArgument("idFila") { type = NavType.StringType },
+                ),
+            ) {
+                ResolverConflictoScreen(
+                    onVolver = { navController.popBackStack() },
+                    onResuelto = { navController.popBackStack() },
                 )
             }
             composable(

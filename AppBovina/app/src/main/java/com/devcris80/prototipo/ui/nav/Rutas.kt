@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.ui.nav
 
 import android.net.Uri
+import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 
 sealed class Rutas(val ruta: String) {
     data object CrearCuenta : Rutas("crear-cuenta")
@@ -26,6 +27,9 @@ sealed class Rutas(val ruta: String) {
     }
     data object NuevoPesaje : Rutas("animales/{idAnimal}/pesaje") {
         fun crear(idAnimal: String) = "animales/$idAnimal/pesaje"
+    }
+    data object ResolverConflicto : Rutas("conflicto/{entidad}/{idFila}") {
+        fun crear(entidad: EntidadConRevisiones, idFila: String) = "conflicto/${entidad.name}/$idFila"
     }
     data object Indicadores : Rutas("indicadores")
     data object Escanear : Rutas("escanear")

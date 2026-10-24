@@ -15,6 +15,8 @@ import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
+import com.devcris80.prototipo.testing.FakeConflictoRepository
+import com.devcris80.prototipo.testing.conflictoDeAnimal
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
@@ -43,6 +45,7 @@ class ListaAnimalesViewModelTest {
     private val pesajePendienteRepository = FakePesajePendienteRepository()
     private val sesionRepository = FakeSesionRepository()
     private val sincronizacionRepository = FakeSincronizacionRepository()
+    private val conflictoRepository = FakeConflictoRepository()
 
     private fun crearViewModel() = ListaAnimalesViewModel(
         cuentaRepository,
@@ -52,6 +55,7 @@ class ListaAnimalesViewModelTest {
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository),
         sesionRepository,
         sincronizacionRepository,
+        conflictoRepository,
     )
 
     @Before
@@ -74,6 +78,23 @@ class ListaAnimalesViewModelTest {
         fechaNacimiento = 1L,
         proposito = proposito,
     )
+
+    @Test
+    fun marcaLosAnimalesQueTienenUnSiblingSinResolver() = runTest {
+        val manchas = animal("Manchas")
+        animalRepository.activos.value = listOf(manchas, animal("Lola"))
+        conflictoRepository.conflictos.value = listOf(conflictoDeAnimal(manchas.idAnimal, "v1" to "Jersey"))
+
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(setOf(manchas.idAnimal), estados.last().animalesEnConflicto)
+        // Una fila en Conflicto se consulta normalmente: sigue en la lista.
+        assertEquals(2, estados.last().animales.size)
+        job.cancel()
+    }
 
     @Test
     fun combinaFincaUsuarioAnimalesChapetaYUltimoRegistro() = runTest {
@@ -163,6 +184,7 @@ class ListaAnimalesViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, sincronizacionRepository.sincronizaciones)
+        assertEquals(0, sincronizacionRepository.programaciones)
         assertEquals(false, estados.last().sincronizando)
         assertEquals("Sincronizado. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
         viewModel.onAvisoMostrado()
@@ -172,7 +194,7 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun sincronizarSinSenal_avisaQueSeSincronizaDespues() = runTest {
+    fun sincronizarSinSenal_dejaProgramadoElTrabajoYAvisaQueSeSincronizaDespues() = runTest {
         sincronizacionRepository.resultado = ResultadoSincronizacion.SinConexion
         val viewModel = crearViewModel()
         val estados = mutableListOf<ListaAnimalesUiState>()
@@ -181,6 +203,7 @@ class ListaAnimalesViewModelTest {
         viewModel.onSincronizar()
         advanceUntilIdle()
 
+        assertEquals(1, sincronizacionRepository.programaciones)
         assertEquals("Sin señal. Lo que falta se sincroniza después.", estados.last().avisoSincronizacion)
         job.cancel()
     }

@@ -9,19 +9,28 @@ import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.entity.ResolucionEntity
+import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.EntidadSincronizada
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
@@ -34,6 +43,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 
 /** La subida de cambios (CU-20, DS-01) contra un servidor falso que habla el contrato de supabase/README.md. */
 @RunWith(AndroidJUnit4::class)
@@ -42,7 +52,7 @@ class MotorSincronizacionTest {
     private val servidor = ServidorFalso()
 
     private fun motor(tamanoLote: Int = 25) =
-        MotorSincronizacion(servidor, db, clock = { 1_000 }, tamanoLote = tamanoLote)
+        MotorSincronizacion(servidor, db, programarTrabajo = {}, clock = { 1_000 }, tamanoLote = tamanoLote)
 
     @Before
     fun crearBase() = runTest {
@@ -143,12 +153,90 @@ class MotorSincronizacionTest {
         assertEquals(2, guardado.rev)
         assertTrue(guardado.sincronizado)
         assertEquals("content://foto", guardado.fotoUri)
-        val conflictos = RoomConflictoRepository(db.siblingDao())
+        val conflictos = RoomConflictoRepository(db)
         assertTrue(conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
         val sibling = conflictos.observeSiblings(EntidadConRevisiones.ANIMAL, "animal-1").first().single()
         assertEquals("version-local", sibling.idVersion)
         assertEquals(1, sibling.revBase)
         assertTrue(sibling.contenido.contains("\"raza\":\"Gyr\""))
+    }
+
+    @Test
+    fun laEdicionQueResuelveNombraAlServidorSusSiblingsYLosOlvidaAlSubir() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(rev = 2, revBase = 2))
+        db.resolucionDao().insert(
+            listOf(
+                ResolucionEntity("version-b", "animal", "animal-1"),
+                ResolucionEntity("version-c", "animal", "animal-1"),
+                ResolucionEntity("version-otra-fila", "animal", "animal-2"),
+            ),
+        )
+
+        motor().sincronizar()
+
+        val cambio = servidor.lotes.single().single().jsonObject
+        assertEquals(2, cambio.getValue("rev_base").jsonPrimitive.intOrNull)
+        assertEquals(listOf("version-b", "version-c"), cambio.getValue("resuelve").jsonArray.map { it.jsonPrimitive.content })
+        assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+        assertEquals(listOf("version-otra-fila"), db.resolucionDao().idsDeLaFila("animal", "animal-2"))
+    }
+
+    @Test
+    fun siElServidorAceptaLaResolucionLosSiblingsSalenDeLaTabla() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(rev = 2, revBase = 2))
+        db.siblingDao().insert(siblingDe("version-b"))
+        db.resolucionDao().insert(listOf(ResolucionEntity("version-b", "animal", "animal-1")))
+
+        motor().sincronizar()
+
+        val conflictos = RoomConflictoRepository(db)
+        assertFalse(conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
+        assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+        // Ya no está ni oculto: el servidor lo cerró.
+        assertEquals(0, filasEnSibling())
+    }
+
+    @Test
+    fun siElServidorContestaSiblingALaResolucionElConflictoSigueAbierto() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(rev = 2, revBase = 2))
+        db.siblingDao().insert(siblingDe("version-b"))
+        db.resolucionDao().insert(listOf(ResolucionEntity("version-b", "animal", "animal-1")))
+        servidor.responder = { lote ->
+            val cambio = lote.single().jsonObject
+            // Otro celular avanzó la fila: la resolución llega con una revisión base vieja.
+            val vigente = JsonObject(cambio.getValue("fila").jsonObject + mapOf("rev" to JsonPrimitive(3)))
+            JsonArray(listOf(resultado(cambio, "sibling", rev = 3, fila = vigente)))
+        }
+
+        motor().sincronizar()
+
+        val conflictos = RoomConflictoRepository(db)
+        assertTrue("el Conflicto sigue abierto en el servidor", conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
+        val abiertos = conflictos.observeSiblings(EntidadConRevisiones.ANIMAL, "animal-1").first().map { it.idVersion }
+        assertTrue("version-b" in abiertos)
+        assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+    }
+
+    private fun siblingDe(idVersion: String) = SiblingEntity(
+        idVersion = idVersion,
+        entidad = "animal",
+        idFila = "animal-1",
+        revBase = 1,
+        contenido = """{"raza":"Gyr"}""",
+        idUsuario = "usuario-1",
+        fechaRecepcion = 0,
+    )
+
+    private fun filasEnSibling(): Int =
+        db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM sibling").use { it.moveToFirst(); it.getInt(0) }
+
+    @Test
+    fun unaEdicionSinSiblingsPorResolverNoLlevaResuelve() = runTest {
+        db.animalDao().insert(animal("animal-1"))
+
+        motor().sincronizar()
+
+        assertFalse("resuelve" in servidor.lotes.single().single().jsonObject)
     }
 
     @Test
@@ -319,6 +407,39 @@ class MotorSincronizacionTest {
         motor(tamanoLote = 2).sincronizar()
         assertEquals(1, servidor.lotes.single().size)
         assertEquals(emptyList<AnimalEntity>(), db.animalDao().findPendientes())
+    }
+
+    @Test
+    fun losCambiosSinSubirSonLasFilasPendientesYLaFechaQuedaAlTerminar() = runTest {
+        db.animalDao().insert(animal("animal-1"))
+        db.registroDao().insert(registro("registro-1", idAnimal = "animal-1"))
+        val motor = motor()
+        assertEquals(EstadoSincronizacion(cambiosSinSubir = 2, ultimaSincronizacion = null), motor.observeEstado().first())
+
+        motor.sincronizar()
+
+        assertEquals(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = 1_000), motor.observeEstado().first())
+    }
+
+    @Test
+    fun dosSincronizacionesALaVezNoSeSolapanNiSubenDosVecesLoMismo() = runTest {
+        db.animalDao().insert(animal("animal-1"))
+        val subiendo = AtomicInteger()
+        val maximo = AtomicInteger()
+        servidor.responder = { lote ->
+            maximo.accumulateAndGet(subiendo.incrementAndGet(), ::maxOf)
+            delay(200)
+            subiendo.decrementAndGet()
+            aceptarTodo(lote)
+        }
+        val motor = motor()
+
+        // En hilos de verdad, como el botón y el trabajo en segundo plano.
+        withContext(Dispatchers.Default) { List(2) { async { motor.sincronizar() } }.awaitAll() }
+
+        assertEquals(1, maximo.get())
+        assertEquals("la segunda encuentra el Animal ya sincronizado", 1, servidor.lotes.size)
+        assertEquals(2, servidor.descargas.size)
     }
 
     private fun animal(idAnimal: String, idMadre: String? = null, fechaModificacion: Long = 0) = AnimalEntity(

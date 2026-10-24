@@ -42,11 +42,14 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
+import com.devcris80.prototipo.domain.model.EntidadConRevisiones
+import com.devcris80.prototipo.ui.components.BannerConflicto
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.FotoAnimal
+import com.devcris80.prototipo.ui.components.MarcaEnConflicto
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
@@ -66,6 +69,7 @@ fun DetalleAnimalScreen(
     onNuevoPesajeClick: () -> Unit,
     onEditarClick: () -> Unit = {},
     onAnimalClick: (idAnimal: String) -> Unit = {},
+    onResolverConflictoClick: (entidad: EntidadConRevisiones, idFila: String) -> Unit = { _, _ -> },
 ) {
     val viewModel = appViewModel { container ->
         val idAnimal = createSavedStateHandle().get<String>("idAnimal").orEmpty()
@@ -77,6 +81,7 @@ fun DetalleAnimalScreen(
             container.chapetaRepository,
             container.darDeBajaAnimal,
             container.liberarChapeta,
+            container.conflictoRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -167,6 +172,14 @@ fun DetalleAnimalScreen(
                         }
                         PillBadge(texto = animal.proposito.aEtiqueta())
                     }
+                }
+            }
+            if (estado.animalEnConflicto) {
+                item {
+                    BannerConflicto(
+                        texto = "Dos personas editaron este animal a la vez. Elija qué datos quedan.",
+                        onResolver = { onResolverConflictoClick(EntidadConRevisiones.ANIMAL, animal.idAnimal) },
+                    )
                 }
             }
             item {
@@ -297,6 +310,8 @@ fun DetalleAnimalScreen(
                         } else {
                             "Base inicial"
                         },
+                        enConflicto = registro.idRegistro in estado.registrosEnConflicto,
+                        onClick = { onResolverConflictoClick(EntidadConRevisiones.REGISTRO, registro.idRegistro) },
                     )
                 }
             } else {
@@ -308,6 +323,8 @@ fun DetalleAnimalScreen(
                         subtitulo = evento.detalle,
                         valor = formatoFecha.format(Date(evento.fecha)),
                         valorSecundario = null,
+                        enConflicto = evento.idEvento in estado.eventosEnConflicto,
+                        onClick = { onResolverConflictoClick(EntidadConRevisiones.EVENTO, evento.idEvento) },
                     )
                 }
             }
@@ -452,8 +469,11 @@ private fun FilaDetalle(
     subtitulo: String?,
     valor: String,
     valorSecundario: String?,
+    enConflicto: Boolean,
+    onClick: () -> Unit,
 ) {
-    BovinaCard(modifier = Modifier.fillMaxWidth()) {
+    // Solo una fila en Conflicto abre la pantalla de resolver; las demás no se tocan.
+    BovinaCard(modifier = Modifier.fillMaxWidth(), onClick = if (enConflicto) onClick else null) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -481,6 +501,7 @@ private fun FilaDetalle(
             }
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = titulo, style = MaterialTheme.typography.titleSmall)
+                if (enConflicto) MarcaEnConflicto()
                 if (subtitulo != null) {
                     Text(
                         text = subtitulo,

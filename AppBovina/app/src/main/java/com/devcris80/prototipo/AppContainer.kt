@@ -39,7 +39,9 @@ import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
+import com.devcris80.prototipo.domain.usecase.ResolverConflicto
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
+import com.devcris80.prototipo.service.ProgramadorSincronizacion
 
 /**
  * Arma a mano los repositorios y casos de uso de la app (ver docs/adr/0001). Es el único lugar,
@@ -57,7 +59,7 @@ class AppContainer(context: Context) {
         RoomPesajePendienteRepository(database.pesajePendienteDao())
     val cuentaRepository: CuentaRepository =
         RoomCuentaRepository(database.perfilFincaDao(), database.usuarioDao())
-    val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database.siblingDao())
+    val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database)
     val rechazoRepository: RechazoRepository = RoomRechazoRepository(database.rechazoDao())
 
     private val sesionCifrada = SesionCifrada(context)
@@ -69,8 +71,11 @@ class AppContainer(context: Context) {
         database.usuarioDao(),
         transaccion,
     )
-    val sincronizacionRepository: SincronizacionRepository =
-        MotorSincronizacion(SupabaseServidorSincronizacion(supabase), database)
+    val sincronizacionRepository: SincronizacionRepository = MotorSincronizacion(
+        SupabaseServidorSincronizacion(supabase),
+        database,
+        programarTrabajo = ProgramadorSincronizacion(context)::programar,
+    )
 
     val registrarPesaje = RegistrarPesaje(
         chapetaRepository,
@@ -86,6 +91,7 @@ class AppContainer(context: Context) {
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val actualizarAnimal = ActualizarAnimal(animalRepository, transaccion)
+    val resolverConflicto = ResolverConflicto(conflictoRepository)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository)
     val crearCuenta = CrearCuenta(cuentaRepository, transaccion)

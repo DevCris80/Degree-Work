@@ -1,12 +1,16 @@
 package com.devcris80.prototipo.data.repository
 
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.dao.ResolucionDao
 import com.devcris80.prototipo.data.local.entity.AnimalEntity
 import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.PesajePendienteEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.domain.model.FilaEnConflicto
+import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.int
@@ -52,14 +56,17 @@ internal abstract class TablaSincronizada<E : Any>(val entidad: String) {
     /** Saca de su tabla una fila que el servidor rechazó y no tiene, con sus dependientes (ADR-0004, regla 7). */
     abstract suspend fun sacar(fila: E): List<Dependiente>
 
-    open fun aCambio(fila: E): JsonObject = buildJsonObject {
+    open suspend fun aCambio(fila: E): JsonObject = buildJsonObject {
         put("entidad", entidad)
         put("fila", aFila(fila))
     }
 }
 
 /** Animal, Evento y Registro: cada cambio viaja con su `idVersion` y la revisión de la que partió. */
-internal abstract class TablaConRevisiones<E : Any>(entidad: String) : TablaSincronizada<E>(entidad) {
+internal abstract class TablaConRevisiones<E : Any>(
+    entidad: String,
+    private val resoluciones: ResolucionDao,
+) : TablaSincronizada<E>(entidad) {
     abstract fun idVersion(fila: E): String
     abstract fun rev(fila: E): Int?
     abstract fun revBase(fila: E): Int?
@@ -73,15 +80,32 @@ internal abstract class TablaConRevisiones<E : Any>(entidad: String) : TablaSinc
     override fun alDia(delServidor: JsonObject, local: E): Boolean =
         delServidor.getValue("rev").jsonPrimitive.int >= (rev(local) ?: 0)
 
-    override fun aCambio(fila: E): JsonObject = buildJsonObject {
-        put("entidad", entidad)
-        put("id_version", idVersion(fila))
-        put("rev_base", revBase(fila))
-        put("fila", aFila(fila))
+    /**
+     * [local] con el contenido de [elegida] como una edición nueva sobre la revisión vigente (`revBase` es `rev`),
+     * pendiente de subir (ADR-0004, regla 5). Una baja ya hecha se conserva: es definitiva.
+     */
+    abstract fun resolviendo(local: E, elegida: E, idVersion: String, fechaModificacion: Long): E
+
+    /** La fila como la muestra un Conflicto. */
+    abstract fun enConflicto(fila: E): FilaEnConflicto
+
+    // Si la edición resuelve Siblings, los nombra para que el servidor los cierre.
+    override suspend fun aCambio(fila: E): JsonObject {
+        val resueltos = resoluciones.idsDeLaFila(entidad, id(fila))
+        return buildJsonObject {
+            put("entidad", entidad)
+            put("id_version", idVersion(fila))
+            put("rev_base", revBase(fila))
+            put("fila", aFila(fila))
+            if (resueltos.isNotEmpty()) put("resuelve", JsonArray(resueltos.map(::JsonPrimitive)))
+        }
     }
 }
 
-/** De padres a hijos: cada tabla sube y baja después de las tablas a las que apuntan sus filas. */
+/**
+ * De padres a hijos: cada tabla sube y baja después de las tablas a las que apuntan sus filas. Una tabla nueva
+ * también entra en el conteo de `EstadoSyncDao.observeCambiosSinSubir`.
+ */
 internal fun tablasSincronizadas(db: AppDatabase): List<TablaSincronizada<*>> {
     val eventos = TablaEventos(db)
     val registros = TablaRegistros(db)
@@ -125,7 +149,7 @@ private class TablaAnimales(
     private val chapetas: TablaChapetas,
     private val eventos: TablaEventos,
     private val registros: TablaRegistros,
-) : TablaConRevisiones<AnimalEntity>("animal") {
+) : TablaConRevisiones<AnimalEntity>("animal", db.resolucionDao()) {
     private val dao = db.animalDao()
 
     // El padre y la madre suben antes que la cría, aunque su cambio sea más reciente.
@@ -154,6 +178,19 @@ private class TablaAnimales(
     override fun desdeElServidor(fila: JsonObject) = fila.aAnimalEntity()
     override suspend fun insertar(fila: AnimalEntity) = dao.insert(fila)
     override suspend fun rebasar(id: String, rev: Int) = dao.rebasar(id, rev)
+    override fun enConflicto(fila: AnimalEntity) = FilaEnConflicto.DeAnimal(fila.toDomain())
+
+    // La foto no viaja al servidor: la del Animal local se queda.
+    override fun resolviendo(local: AnimalEntity, elegida: AnimalEntity, idVersion: String, fechaModificacion: Long) =
+        elegida.copy(
+            fotoUri = local.fotoUri,
+            fechaBaja = local.fechaBaja ?: elegida.fechaBaja,
+            sincronizado = false,
+            rev = local.rev,
+            revBase = local.rev,
+            idVersion = idVersion,
+            fechaModificacion = fechaModificacion,
+        )
 
     // Sin el Animal en el servidor, sus Chapetas, Eventos, Registros y crías tampoco pueden subir. Salen con él
     // en vez de que el CASCADE las borre, o que la cría pierda en silencio a su padre o su madre.
@@ -177,7 +214,7 @@ private class TablaAnimales(
     }
 }
 
-private class TablaEventos(db: AppDatabase) : TablaConRevisiones<EventoEntity>("evento") {
+private class TablaEventos(db: AppDatabase) : TablaConRevisiones<EventoEntity>("evento", db.resolucionDao()) {
     private val dao = db.eventoDao()
 
     override suspend fun pendientes() = dao.findPendientes()
@@ -193,6 +230,17 @@ private class TablaEventos(db: AppDatabase) : TablaConRevisiones<EventoEntity>("
     override fun desdeElServidor(fila: JsonObject) = fila.aEventoEntity()
     override suspend fun insertar(fila: EventoEntity) = dao.insert(fila)
     override suspend fun rebasar(id: String, rev: Int) = dao.rebasar(id, rev)
+    override fun enConflicto(fila: EventoEntity) = FilaEnConflicto.DeEvento(fila.toDomain())
+
+    override fun resolviendo(local: EventoEntity, elegida: EventoEntity, idVersion: String, fechaModificacion: Long) =
+        elegida.copy(
+            fechaBaja = local.fechaBaja ?: elegida.fechaBaja,
+            sincronizado = false,
+            rev = local.rev,
+            revBase = local.rev,
+            idVersion = idVersion,
+            fechaModificacion = fechaModificacion,
+        )
 
     override suspend fun sacar(fila: EventoEntity): List<Dependiente> {
         dao.delete(fila.idEvento)
@@ -205,7 +253,7 @@ private class TablaEventos(db: AppDatabase) : TablaConRevisiones<EventoEntity>("
     }
 }
 
-private class TablaRegistros(db: AppDatabase) : TablaConRevisiones<RegistroEntity>("registro") {
+private class TablaRegistros(db: AppDatabase) : TablaConRevisiones<RegistroEntity>("registro", db.resolucionDao()) {
     private val dao = db.registroDao()
 
     override suspend fun pendientes() = dao.findPendientes()
@@ -224,6 +272,17 @@ private class TablaRegistros(db: AppDatabase) : TablaConRevisiones<RegistroEntit
         listOfNotNull(fila.idLectura?.let { dao.findByIdLectura(it) }).filter { it.idRegistro != fila.idRegistro }
     override val motivoDelChoque = "Ya hay un pesaje con esta lectura en la finca"
     override suspend fun rebasar(id: String, rev: Int) = dao.rebasar(id, rev)
+    override fun enConflicto(fila: RegistroEntity) = FilaEnConflicto.DeRegistro(fila.toDomain())
+
+    override fun resolviendo(local: RegistroEntity, elegida: RegistroEntity, idVersion: String, fechaModificacion: Long) =
+        elegida.copy(
+            fechaBaja = local.fechaBaja ?: elegida.fechaBaja,
+            sincronizado = false,
+            rev = local.rev,
+            revBase = local.rev,
+            idVersion = idVersion,
+            fechaModificacion = fechaModificacion,
+        )
 
     override suspend fun sacar(fila: RegistroEntity): List<Dependiente> {
         dao.delete(fila.idRegistro)

@@ -6,6 +6,7 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.ResolucionEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
@@ -34,7 +35,14 @@ class MotorSincronizacionDescargaTest {
     private val servidor = ServidorFalso()
 
     private fun motor(tamanoPagina: Int = 100, margen: Long = 0) =
-        MotorSincronizacion(servidor, db, clock = { 9_000 }, tamanoPagina = tamanoPagina, margenSolapamiento = margen)
+        MotorSincronizacion(
+            servidor,
+            db,
+            programarTrabajo = {},
+            clock = { 9_000 },
+            tamanoPagina = tamanoPagina,
+            margenSolapamiento = margen,
+        )
 
     @Before
     fun crearBase() = runTest {
@@ -167,7 +175,7 @@ class MotorSincronizacionDescargaTest {
     fun unSiblingSinResolverDejaLaFilaEnConflictoHastaQueLlegaResuelto() = runTest {
         servidor.filas += CambioDelServidor("animal", 11, filaAnimal("animal-1", rev = 2))
         servidor.filas += CambioDelServidor("sibling", 12, filaSibling("version-otro", "animal-1"))
-        val conflictos = RoomConflictoRepository(db.siblingDao())
+        val conflictos = RoomConflictoRepository(db)
 
         motor().sincronizar()
 
@@ -179,6 +187,20 @@ class MotorSincronizacionDescargaTest {
         servidor.filas += CambioDelServidor("sibling", 13, filaSibling("version-otro", "animal-1", resueltoPor = "version-resolucion"))
         motor().sincronizar()
 
+        assertFalse(conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
+    }
+
+    @Test
+    fun unSiblingQueEstaPersonaYaResolvioNoVuelveAAbrirseAntesDeSubir() = runTest {
+        servidor.filas += CambioDelServidor("animal", 11, filaAnimal("animal-1", rev = 2))
+        motor().sincronizar()
+        // El servidor todavía lo tiene abierto: la resolución de este celular no ha subido.
+        db.resolucionDao().insert(listOf(ResolucionEntity("version-otro", "animal", "animal-1")))
+        servidor.filas += CambioDelServidor("sibling", 12, filaSibling("version-otro", "animal-1"))
+
+        motor().sincronizar()
+
+        val conflictos = RoomConflictoRepository(db)
         assertFalse(conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
     }
 
