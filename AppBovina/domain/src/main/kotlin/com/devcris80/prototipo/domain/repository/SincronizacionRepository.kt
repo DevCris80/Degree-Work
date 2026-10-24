@@ -8,8 +8,15 @@ interface SincronizacionRepository {
      * Sube por lotes los cambios locales pendientes y aplica la respuesta fila por fila: una aceptada queda
      * sincronizada, un sibling deja la fila en Conflicto y un Rechazo pasa a la bandeja (ADR-0004). Después
      * descarga por páginas lo que los demás celulares de la finca subieron, sin pisar los cambios pendientes.
+     * Nunca corren dos a la vez: si ya hay una en curso, espera a que termine.
      */
     suspend fun sincronizar(): ResultadoSincronizacion
+
+    /**
+     * Encola la sincronización como un único trabajo, que corre en segundo plano cuando hay señal y reintenta con
+     * espera creciente. Si ya hay uno esperando o en curso, no encola otro.
+     */
+    fun programar()
 
     fun observeEstado(): Flow<EstadoSincronizacion>
 }

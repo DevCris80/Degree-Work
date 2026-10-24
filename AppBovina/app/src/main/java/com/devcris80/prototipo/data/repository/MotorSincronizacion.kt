@@ -13,6 +13,8 @@ import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
+import kotlinx.coroutines.sync.Mutex
+import kotlinx.coroutines.sync.withLock
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -35,10 +37,14 @@ import java.util.UUID
  * Sus escrituras no llevan EDICION_LOCAL. Una aceptada o un sibling solo tocan la fila si no cambió mientras el
  * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización. La descarga
  * nunca pisa una fila con cambios pendientes.
+ *
+ * Es uno solo en la app: el botón y el trabajo en segundo plano lo comparten, y nunca corren dos sincronizaciones
+ * a la vez. [encolar] encola ese trabajo.
  */
 class MotorSincronizacion(
     private val servidor: ServidorSincronizacion,
     private val database: AppDatabase,
+    private val encolar: () -> Unit,
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val nuevoIdRechazo: () -> String = { UUID.randomUUID().toString() },
     private val tamanoLote: Int = TAMANO_LOTE,
@@ -46,16 +52,21 @@ class MotorSincronizacion(
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
+    private val enCurso = Mutex()
 
-    override suspend fun sincronizar(): ResultadoSincronizacion = try {
-        val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
-        descargar()
-        subida
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        if (e.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo
+    override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
+        try {
+            val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
+            descargar()
+            subida
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            if (e.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo
+        }
     }
+
+    override fun programar() = encolar()
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
         database.estadoSyncDao().observeCambiosSinSubir(),

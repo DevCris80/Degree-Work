@@ -194,6 +194,7 @@ internal class FakeSesionRepository : SesionRepository {
 internal class FakeSincronizacionRepository : SincronizacionRepository {
     var resultado: ResultadoSincronizacion = ResultadoSincronizacion.Completa(0, 0, 0)
     var sincronizaciones = 0
+    var programaciones = 0
     val estado = MutableStateFlow(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = null))
 
     /** Si no es nulo, la subida espera a que se complete. */
@@ -203,6 +204,10 @@ internal class FakeSincronizacionRepository : SincronizacionRepository {
         sincronizaciones++
         espera?.await()
         return resultado
+    }
+
+    override fun programar() {
+        programaciones++
     }
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = estado

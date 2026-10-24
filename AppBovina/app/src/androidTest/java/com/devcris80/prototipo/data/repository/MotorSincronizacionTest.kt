@@ -15,8 +15,13 @@ import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.EntidadSincronizada
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
+import kotlinx.coroutines.awaitAll
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
@@ -35,6 +40,7 @@ import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.IOException
+import java.util.concurrent.atomic.AtomicInteger
 
 /** La subida de cambios (CU-20, DS-01) contra un servidor falso que habla el contrato de supabase/README.md. */
 @RunWith(AndroidJUnit4::class)
@@ -43,7 +49,7 @@ class MotorSincronizacionTest {
     private val servidor = ServidorFalso()
 
     private fun motor(tamanoLote: Int = 25) =
-        MotorSincronizacion(servidor, db, clock = { 1_000 }, tamanoLote = tamanoLote)
+        MotorSincronizacion(servidor, db, encolar = {}, clock = { 1_000 }, tamanoLote = tamanoLote)
 
     @Before
     fun crearBase() = runTest {
@@ -332,6 +338,27 @@ class MotorSincronizacionTest {
         motor.sincronizar()
 
         assertEquals(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = 1_000), motor.observeEstado().first())
+    }
+
+    @Test
+    fun dosSincronizacionesALaVezNoSeSolapanNiSubenDosVecesLoMismo() = runTest {
+        db.animalDao().insert(animal("animal-1"))
+        val subiendo = AtomicInteger()
+        val maximo = AtomicInteger()
+        servidor.responder = { lote ->
+            maximo.accumulateAndGet(subiendo.incrementAndGet(), ::maxOf)
+            delay(200)
+            subiendo.decrementAndGet()
+            aceptarTodo(lote)
+        }
+        val motor = motor()
+
+        // En hilos de verdad, como el botón y el trabajo en segundo plano.
+        withContext(Dispatchers.Default) { List(2) { async { motor.sincronizar() } }.awaitAll() }
+
+        assertEquals(1, maximo.get())
+        assertEquals("la segunda encuentra el Animal ya sincronizado", 1, servidor.lotes.size)
+        assertEquals(2, servidor.descargas.size)
     }
 
     private fun animal(idAnimal: String, idMadre: String? = null, fechaModificacion: Long = 0) = AnimalEntity(
