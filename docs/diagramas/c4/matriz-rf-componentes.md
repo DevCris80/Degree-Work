@@ -55,7 +55,7 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-33 | Detectar concurrencia con rev_base (siblings) | Implementado | DAT-05, BD-02, BD-07 | App, Supabase |
 | RF-34 | Mostrar y resolver conflictos | Pendiente | UI-07, DAT-05, BD-02 | App, Supabase |
 | RF-35 | Bandeja de rechazos | Pendiente | UI-07, DAT-05, BD-03 | App, Supabase |
-| RF-36 | Descargar cambios por cursor | Pendiente | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |
+| RF-36 | Descargar cambios por cursor | Parcial | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |
 | RF-37 | Quitar a un Operario | Pendiente | UI-06, DAT-04, BD-06 | App, Supabase |
 | RF-38 | Subir y descargar fotos | Pendiente | DAT-06, DAT-05 | App |
 | RF-39 | Inventario activo | Implementado | UI-08, DOM-05, DAT-01 | App |

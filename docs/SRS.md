@@ -107,7 +107,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | `id_version` | Identificador (UUID) de cada escritura local de una fila editable. Permite reconocer una edición reenviada. |
 | Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta ni se fusiona. Cuenta la fila entera, aunque los campos editados no se pisen. |
 | Conflicto | Estado de una fila que tiene uno o más siblings sin resolver. |
-| Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior. |
+| Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior, desde un margen de solapamiento antes, porque dos escrituras pueden confirmar en orden distinto al de sus cursores. |
 | Rechazo | Cambio local que el servidor no aceptó por violar una regla de unicidad o de permisos. Queda en la bandeja de rechazos hasta que alguien lo corrige; la fila local vuelve a la versión del servidor, o sale de su tabla si el servidor no la tiene (RN-24). |
 
 **Siglas**
@@ -324,7 +324,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-33 | Detectar ediciones concurrentes con `rev_base` y guardarlas como siblings. | S | Implementado | EQUIPO | OE2, OE3 | CU-20 |
 | RF-34 | Mostrar las filas en conflicto y permitir resolverlas. | S | Pendiente | EQUIPO | OE2, OE3 | CU-21 |
 | RF-35 | Mostrar las filas rechazadas por el servidor, con su motivo, y permitir corregirlas. | M | Pendiente | EQUIPO | OE2, OE3 | CU-22 |
-| RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Pendiente | EQUIPO | OE2, OE3 | CU-20 |
+| RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
 | RF-38 | Subir las fotos a Supabase Storage y descargar las de otros dispositivos. | S | Pendiente | EQUIPO | OE3 | CU-20 |
 | **C7. Indicadores (BI)** | | | | | | |
 | RF-39 | Mostrar el inventario activo por propósito, sexo y etapa. | S | Implementado | EQUIPO | OE3 | CU-24 |
@@ -707,7 +707,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-32, RF-33, RF-36, RF-38 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, ADR-0005) |
 | Actor | Sistema (en nombre del usuario con sesión) |
-| Prioridad / Estado | RF-32: M / Parcial: la subida (pasos 1 a 5) corre con "Sincronizar ahora"; los disparadores automáticos llegan con #83. RF-36: M / Pendiente. RF-33: S / Implementado. RF-38: S / Pendiente. |
+| Prioridad / Estado | RF-32: M / Parcial: la subida (pasos 1 a 5) corre con "Sincronizar ahora"; los disparadores automáticos llegan con #83. RF-36: M / Parcial: la descarga (paso 7) corre después de la subida, con el mismo botón; falta correr `MotorSincronizacionDescargaTest` en un dispositivo. RF-33: S / Implementado. RF-38: S / Pendiente. |
 | Precondiciones | Sesión válida y señal. |
 | Disparador | Se abre la app, el usuario elige "Sincronizar ahora" o se guarda un cambio local. Cada disparo encola un único trabajo, que corre cuando hay señal. |
 | Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular sube a Storage las fotos pendientes.<br>7. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>8. El celular descarga las fotos nuevas y registra la fecha de la última sincronización. |
@@ -852,7 +852,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO (RES-02: conectividad limitada) |
 | Verificación | A/D: dos sincronizaciones seguidas sin cambios; la segunda devuelve solo filas del margen. |
 | RF afectados | RF-36 |
-| Prioridad / Estado | M / Pendiente |
+| Prioridad / Estado | M / Parcial |
 
 **RNF-10 — Tamaño de las fotos**
 
@@ -1064,7 +1064,7 @@ Resumen del contrato de pesaje:
 | RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest` | #80, #81 |
 | RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #84 |
 | RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #85 |
-| RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #82 |
+| RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr | #82 |
 | RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | #90 |
 | RF-38 | CU-20 | EQUIPO | — | OE3 | S | Pendiente | — | #86 |
 | RF-39 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
@@ -1085,7 +1085,7 @@ Resumen del contrato de pesaje:
 | RNF-06 | Compatibilidad | EQUIPO | — | OE3 | M | Implementado | I; D pendiente |
 | RNF-07 | Mantenibilidad | EQUIPO | — | OE3 | M | Parcial | P (44 pruebas de ViewModel) |
 | RNF-08 | Fiabilidad | EQUIPO | — | OG | M | Pendiente | — |
-| RNF-09 | Rendimiento | EQUIPO | — | OE2 | M | Pendiente | — |
+| RNF-09 | Rendimiento | EQUIPO | — | OE2 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr |
 | RNF-10 | Rendimiento | EQUIPO | — | OE3 | S | Pendiente | — |
 | RNF-11 | Seguridad | EQUIPO | — | OE3 | M | Pendiente | — |
 | RNF-12 | Seguridad | EQUIPO | — | OE3 | M | Pendiente | — |
