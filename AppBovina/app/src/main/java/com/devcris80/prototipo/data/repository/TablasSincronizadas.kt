@@ -81,7 +81,10 @@ internal abstract class TablaConRevisiones<E : Any>(entidad: String) : TablaSinc
     }
 }
 
-/** De padres a hijos: cada tabla sube y baja después de las tablas a las que apuntan sus filas. */
+/**
+ * De padres a hijos: cada tabla sube y baja después de las tablas a las que apuntan sus filas. Una tabla nueva
+ * también entra en el conteo de `EstadoSyncDao.observeCambiosSinSubir`.
+ */
 internal fun tablasSincronizadas(db: AppDatabase): List<TablaSincronizada<*>> {
     val eventos = TablaEventos(db)
     val registros = TablaRegistros(db)

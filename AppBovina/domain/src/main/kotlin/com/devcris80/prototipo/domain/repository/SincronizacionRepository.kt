@@ -13,11 +13,12 @@ interface SincronizacionRepository {
     suspend fun sincronizar(): ResultadoSincronizacion
 
     /**
-     * Encola la sincronización como un único trabajo, que corre en segundo plano cuando hay señal y reintenta con
-     * espera creciente. Si ya hay uno esperando o en curso, no encola otro.
+     * Deja la sincronización pendiente para que corra sola, en segundo plano, cuando haya señal. Si ya hay una
+     * pendiente o en curso, no agrega otra.
      */
     fun programar()
 
+    /** Cuántos cambios faltan por subir y cuándo terminó la última sincronización; se lee de Room, no de la red. */
     fun observeEstado(): Flow<EstadoSincronizacion>
 }
 

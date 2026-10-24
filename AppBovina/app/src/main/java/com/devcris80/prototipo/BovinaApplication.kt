@@ -1,7 +1,7 @@
 package com.devcris80.prototipo
 
 import android.app.Application
-import com.devcris80.prototipo.service.programarSincronizacionAutomatica
+import com.devcris80.prototipo.service.programarSincronizacionTrasEscrituras
 import kotlinx.coroutines.MainScope
 
 class BovinaApplication : Application() {
@@ -9,6 +9,6 @@ class BovinaApplication : Application() {
 
     override fun onCreate() {
         super.onCreate()
-        MainScope().programarSincronizacionAutomatica(container.sesionRepository, container.sincronizacionRepository)
+        MainScope().programarSincronizacionTrasEscrituras(container.sincronizacionRepository)
     }
 }

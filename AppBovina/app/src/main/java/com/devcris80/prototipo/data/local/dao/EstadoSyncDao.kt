@@ -18,7 +18,7 @@ interface EstadoSyncDao {
     @Query("SELECT * FROM estado_sync WHERE id = 0")
     suspend fun getOnce(): EstadoSyncEntity?
 
-    /** Las filas con cambios por subir, de todas las tablas que suben. */
+    /** Las filas con cambios por subir, de todas las tablas que suben: las de `tablasSincronizadas`. */
     @Query(
         "SELECT (SELECT COUNT(*) FROM perfil_finca WHERE sincronizado = 0)" +
             " + (SELECT COUNT(*) FROM animal WHERE sincronizado = 0)" +

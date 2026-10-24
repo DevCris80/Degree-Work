@@ -39,12 +39,12 @@ import java.util.UUID
  * nunca pisa una fila con cambios pendientes.
  *
  * Es uno solo en la app: el botón y el trabajo en segundo plano lo comparten, y nunca corren dos sincronizaciones
- * a la vez. [encolar] encola ese trabajo.
+ * a la vez. [programarTrabajo] deja programado ese trabajo.
  */
 class MotorSincronizacion(
     private val servidor: ServidorSincronizacion,
     private val database: AppDatabase,
-    private val encolar: () -> Unit,
+    private val programarTrabajo: () -> Unit,
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val nuevoIdRechazo: () -> String = { UUID.randomUUID().toString() },
     private val tamanoLote: Int = TAMANO_LOTE,
@@ -66,7 +66,7 @@ class MotorSincronizacion(
         }
     }
 
-    override fun programar() = encolar()
+    override fun programar() = programarTrabajo()
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
         database.estadoSyncDao().observeCambiosSinSubir(),

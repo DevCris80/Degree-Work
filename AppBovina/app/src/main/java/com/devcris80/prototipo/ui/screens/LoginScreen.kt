@@ -42,7 +42,7 @@ import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
 fun LoginScreen(onSesionIniciada: () -> Unit) {
-    val viewModel = appViewModel { container -> LoginViewModel(container.sesionRepository) }
+    val viewModel = appViewModel { container -> LoginViewModel(container.sesionRepository, container.sincronizacionRepository) }
     val estado by viewModel.estado.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
 

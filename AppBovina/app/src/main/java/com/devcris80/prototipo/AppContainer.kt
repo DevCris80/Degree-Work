@@ -72,7 +72,7 @@ class AppContainer(context: Context) {
     val sincronizacionRepository: SincronizacionRepository = MotorSincronizacion(
         SupabaseServidorSincronizacion(supabase),
         database,
-        encolar = ProgramadorSincronizacion(context)::programar,
+        programarTrabajo = ProgramadorSincronizacion(context)::programar,
     )
 
     val registrarPesaje = RegistrarPesaje(

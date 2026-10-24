@@ -7,19 +7,17 @@ import androidx.work.ExistingWorkPolicy
 import androidx.work.NetworkType
 import androidx.work.OneTimeWorkRequestBuilder
 import androidx.work.WorkManager
-import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.FlowPreview
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.debounce
-import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.flow.filter
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.launch
 import java.util.concurrent.TimeUnit
 import kotlin.time.Duration
-import kotlin.time.Duration.Companion.seconds
+import kotlin.time.Duration.Companion.minutes
 
 /** Encola la sincronización en WorkManager como un único trabajo, que corre cuando hay señal (CU-20). */
 class ProgramadorSincronizacion(context: Context) {
@@ -41,18 +39,8 @@ class ProgramadorSincronizacion(context: Context) {
     }
 }
 
-/**
- * Programa la sincronización sola mientras la app está viva: cada vez que el dispositivo queda con sesión (al
- * abrir la app o al iniciar sesión) y cada vez que las escrituras locales se calman.
- */
-fun CoroutineScope.programarSincronizacionAutomatica(
-    sesionRepository: SesionRepository,
-    sincronizacionRepository: SincronizacionRepository,
-) {
-    launch {
-        sesionRepository.observeSesionGuardada().distinctUntilChanged().filter { it }
-            .collect { sincronizacionRepository.programar() }
-    }
+/** Programa la sincronización cada vez que las escrituras locales se calman, mientras la app está viva. */
+fun CoroutineScope.programarSincronizacionTrasEscrituras(sincronizacionRepository: SincronizacionRepository) {
     launch {
         sincronizacionRepository.observeEstado().map { it.cambiosSinSubir }
             .disparosDeSincronizacion(ESPERA_ESCRITURAS)
@@ -68,5 +56,8 @@ fun CoroutineScope.programarSincronizacionAutomatica(
 internal fun Flow<Int>.disparosDeSincronizacion(espera: Duration): Flow<Unit> =
     debounce(espera).filter { it > 0 }.map { }
 
-/** Lo que se espera después de la última escritura, para agrupar las seguidas, como los pesajes de una jornada. */
-private val ESPERA_ESCRITURAS = 30.seconds
+/**
+ * Lo que se espera después de la última escritura. Agrupa las seguidas: en una jornada en la manga, un pesaje cada
+ * uno o dos minutos da una sola sincronización, al final.
+ */
+private val ESPERA_ESCRITURAS = 2.minutes

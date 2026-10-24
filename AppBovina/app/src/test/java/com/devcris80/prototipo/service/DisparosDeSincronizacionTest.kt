@@ -6,18 +6,19 @@ import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Test
+import kotlin.time.Duration.Companion.minutes
 import kotlin.time.Duration.Companion.seconds
 
 /** Cómo las escrituras locales se vuelven sincronizaciones (CU-20): cada valor es cuántos cambios faltan por subir. */
 class DisparosDeSincronizacionTest {
-    private val espera = 30.seconds
+    private val espera = 2.minutes
 
     @Test
-    fun treintaPesajesSeguidosDanUnSoloDisparo() = runTest {
+    fun treintaPesajesSeguidosUnoPorMinutoDanUnSoloDisparo() = runTest {
         val pendientes = flow {
             repeat(30) {
                 emit(it + 1)
-                delay(10.seconds)
+                delay(1.minutes)
             }
         }
 
@@ -39,7 +40,7 @@ class DisparosDeSincronizacionTest {
     fun siYaSeSubioTodoAntesDeLaEsperaNoHayDisparo() = runTest {
         val pendientes = flow {
             emit(1)
-            delay(5.seconds)
+            delay(30.seconds)
             emit(0)
         }
 

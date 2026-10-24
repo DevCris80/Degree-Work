@@ -16,6 +16,7 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.ProvideTextStyle
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -112,22 +113,22 @@ fun IndicadoresScreen(
             }
             item { TarjetaEventosPorMes(indicadores.eventosPorMes) }
             item {
-                Column(modifier = Modifier.padding(start = 4.dp)) {
-                    Text(
-                        text = when (estado.cambiosSinSubir) {
-                            0 -> "No quedan cambios sin subir."
-                            1 -> "Queda 1 cambio sin subir."
-                            else -> "Quedan ${estado.cambiosSinSubir} cambios sin subir."
-                        },
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
-                    Text(
-                        text = "Última sincronización: " +
-                            (estado.ultimaSincronizacion?.let { formatoFecha.format(Date(it)) } ?: "nunca"),
-                        style = MaterialTheme.typography.bodySmall,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                    )
+                ProvideTextStyle(
+                    MaterialTheme.typography.bodySmall.copy(color = MaterialTheme.colorScheme.onSurfaceVariant),
+                ) {
+                    Column(modifier = Modifier.padding(start = 4.dp)) {
+                        Text(
+                            when (estado.cambiosSinSubir) {
+                                0 -> "No quedan cambios sin subir."
+                                1 -> "Queda 1 cambio sin subir."
+                                else -> "Quedan ${estado.cambiosSinSubir} cambios sin subir."
+                            },
+                        )
+                        Text(
+                            "Última sincronización: " +
+                                (estado.ultimaSincronizacion?.let { formatoFecha.format(Date(it)) } ?: "nunca"),
+                        )
+                    }
                 }
             }
         }

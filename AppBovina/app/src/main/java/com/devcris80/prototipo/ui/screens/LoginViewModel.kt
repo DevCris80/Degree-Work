@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.SesionRepository
+import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -27,7 +28,10 @@ sealed interface LoginEvento {
 }
 
 /** Estado de Iniciar sesión: credenciales, inicio de sesión contra Supabase Auth y su error. */
-class LoginViewModel(private val sesionRepository: SesionRepository) : ViewModel() {
+class LoginViewModel(
+    private val sesionRepository: SesionRepository,
+    private val sincronizacionRepository: SincronizacionRepository,
+) : ViewModel() {
     private val _estado = MutableStateFlow(LoginUiState())
     val estado: StateFlow<LoginUiState> = _estado.asStateFlow()
 
@@ -44,7 +48,11 @@ class LoginViewModel(private val sesionRepository: SesionRepository) : ViewModel
         viewModelScope.launch {
             val resultado = sesionRepository.iniciarSesion(actual.correo.trim(), actual.contrasena)
             _estado.update { it.copy(cargando = false, error = resultado.mensaje()) }
-            if (resultado == ResultadoInicioSesion.Exito) _eventos.send(LoginEvento.SesionIniciada)
+            if (resultado == ResultadoInicioSesion.Exito) {
+                // Trae lo que los demás celulares ya subieron a la finca.
+                sincronizacionRepository.programar()
+                _eventos.send(LoginEvento.SesionIniciada)
+            }
         }
     }
 }

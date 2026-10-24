@@ -2,6 +2,7 @@ package com.devcris80.prototipo.ui.screens
 
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.testing.FakeSesionRepository
+import com.devcris80.prototipo.testing.FakeSincronizacionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -18,6 +19,7 @@ import org.junit.Test
 
 class LoginViewModelTest {
     private val sesionRepository = FakeSesionRepository()
+    private val sincronizacionRepository = FakeSincronizacionRepository()
 
     @Before
     fun setUp() {
@@ -29,21 +31,21 @@ class LoginViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun llenado() = LoginViewModel(sesionRepository).apply {
+    private fun llenado() = LoginViewModel(sesionRepository, sincronizacionRepository).apply {
         onCorreoCambiado("ana@finca.co")
         onContrasenaCambiada("secreta")
     }
 
     @Test
     fun sinCorreoOContrasena_noSePuedeIniciar() {
-        val viewModel = LoginViewModel(sesionRepository)
+        val viewModel = LoginViewModel(sesionRepository, sincronizacionRepository)
         viewModel.onCorreoCambiado("ana@finca.co")
 
         assertFalse(viewModel.estado.value.puedeIniciar)
     }
 
     @Test
-    fun credencialesValidas_inicianSesionYEmitenElEvento() = runTest {
+    fun credencialesValidas_inicianSesionProgramanLaSincronizacionYEmitenElEvento() = runTest {
         val viewModel = llenado()
 
         viewModel.onIniciarSesion()
@@ -51,6 +53,7 @@ class LoginViewModelTest {
         assertEquals(LoginEvento.SesionIniciada, viewModel.eventos.first())
         assertEquals(listOf("ana@finca.co" to "secreta"), sesionRepository.intentos)
         assertNull(viewModel.estado.value.error)
+        assertEquals("trae lo que ya tiene la finca", 1, sincronizacionRepository.programaciones)
     }
 
     @Test
@@ -62,6 +65,7 @@ class LoginViewModelTest {
 
         assertEquals("Correo o contraseña incorrectos.", viewModel.estado.value.error)
         assertFalse(viewModel.estado.value.cargando)
+        assertEquals(0, sincronizacionRepository.programaciones)
     }
 
     @Test

@@ -37,7 +37,7 @@ class MotorSincronizacionDescargaTest {
         MotorSincronizacion(
             servidor,
             db,
-            encolar = {},
+            programarTrabajo = {},
             clock = { 9_000 },
             tamanoPagina = tamanoPagina,
             margenSolapamiento = margen,
