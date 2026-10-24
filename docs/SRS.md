@@ -25,7 +25,7 @@
 |---|---|---|---|---|---|
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
 | 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
-| 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), RF-39 a RF-43, indicadores (#97 y #98), y RF-27, pesaje manual (#95). | Ciclo 2 | — |
+| 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), RF-39 a RF-43, indicadores (#97 y #98), y RF-27, pesaje manual (#95). Pasa a implementado RF-33 y a parcial RF-32, la subida (#81). RN-24 distingue un rechazo que el servidor tiene de uno que no (ADR-0004, regla 7). | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -108,7 +108,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta ni se fusiona. Cuenta la fila entera, aunque los campos editados no se pisen. |
 | Conflicto | Estado de una fila que tiene uno o más siblings sin resolver. |
 | Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior. |
-| Rechazo | Fila local que el servidor no aceptó por violar una regla de unicidad o de permisos. Sale de su tabla local y queda en la bandeja de rechazos hasta que alguien la corrige. |
+| Rechazo | Cambio local que el servidor no aceptó por violar una regla de unicidad o de permisos. Queda en la bandeja de rechazos hasta que alguien lo corrige; la fila local vuelve a la versión del servidor, o sale de su tabla si el servidor no la tiene (RN-24). |
 
 **Siglas**
 
@@ -270,7 +270,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RN-21 | Un Pesaje pendiente tiene como máximo un Registro asociado, en el celular y en el servidor (índice único sobre `id_lectura`). | EQUIPO |
 | RN-22 | Una baja (`fechaBaja`, o `fechaDesasociacion` de una Chapeta) nunca queda como sibling: el servidor la aplica sobre la revisión vigente aunque su `rev_base` sea menor. Si la misma edición cambió otros campos, solo esos pueden quedar como sibling. | EQUIPO (ADR-0004) |
 | RN-23 | Reenviar una edición con un `id_version` ya procesado no crea revisión ni sibling, y recibe la misma respuesta que la primera vez. | EQUIPO (ADR-0004) |
-| RN-24 | Una fila rechazada sale de su tabla local y se conserva completa, con su motivo, en la bandeja de rechazos; no se reenvía mientras siga abierta. | EQUIPO (ADR-0004) |
+| RN-24 | Un cambio rechazado se conserva completo, con su motivo, en la bandeja de rechazos, y no se reenvía mientras siga abierto. Si el servidor tiene la fila, la fila local vuelve a la versión del servidor; si no la tiene, sale de su tabla local junto con las filas que dependen de ella (las de un Animal), que también quedan en la bandeja. | EQUIPO (ADR-0004) |
 
 ---
 
@@ -320,8 +320,8 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-30 | Permitir editar eventos y pesajes, guardando cada versión como revisión. | S | Pendiente | EQUIPO | OE3 | CU-18 |
 | RF-31 | Dar de baja eventos y pesajes (baja lógica). | C | Pendiente | NORMA (Ley 1659) | OE3 | CU-19 |
 | **C6. Sincronización** | | | | | | |
-| RF-32 | Subir los cambios locales al servicio de sincronización cuando hay señal. | M | Pendiente | EQUIPO | OE2, OE3 | CU-20 |
-| RF-33 | Detectar ediciones concurrentes con `rev_base` y guardarlas como siblings. | S | Pendiente | EQUIPO | OE2, OE3 | CU-20 |
+| RF-32 | Subir los cambios locales al servicio de sincronización cuando hay señal. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
+| RF-33 | Detectar ediciones concurrentes con `rev_base` y guardarlas como siblings. | S | Implementado | EQUIPO | OE2, OE3 | CU-20 |
 | RF-34 | Mostrar las filas en conflicto y permitir resolverlas. | S | Pendiente | EQUIPO | OE2, OE3 | CU-21 |
 | RF-35 | Mostrar las filas rechazadas por el servidor, con su motivo, y permitir corregirlas. | M | Pendiente | EQUIPO | OE2, OE3 | CU-22 |
 | RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Pendiente | EQUIPO | OE2, OE3 | CU-20 |
@@ -707,7 +707,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-32, RF-33, RF-36, RF-38 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, ADR-0005) |
 | Actor | Sistema (en nombre del usuario con sesión) |
-| Prioridad / Estado | RF-32, RF-36: M / Pendiente. RF-33, RF-38: S / Pendiente. |
+| Prioridad / Estado | RF-32: M / Parcial: la subida (pasos 1 a 5) corre con "Sincronizar ahora"; los disparadores automáticos llegan con #83. RF-36: M / Pendiente. RF-33: S / Implementado. RF-38: S / Pendiente. |
 | Precondiciones | Sesión válida y señal. |
 | Disparador | Se abre la app, el usuario elige "Sincronizar ahora" o se guarda un cambio local. Cada disparo encola un único trabajo, que corre cuando hay señal. |
 | Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular sube a Storage las fotos pendientes.<br>7. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>8. El celular descarga las fotos nuevas y registra la fecha de la última sincronización. |
@@ -1060,8 +1060,8 @@ Resumen del contrato de pesaje:
 | RF-29 | CU-17 | EQUIPO | — | OE3 | C | Pendiente | — | — |
 | RF-30 | CU-18 | EQUIPO | — | OE3 | S | Pendiente | — | #96 |
 | RF-31 | CU-19 | NORMA | — | OE3 | C | Pendiente | — | #96 |
-| RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #81, #83 |
-| RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #80, #81 |
+| RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `04_subir_cambios`, `MotorSincronizacionTest` | #81, #83 |
+| RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest` | #80, #81 |
 | RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #84 |
 | RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #85 |
 | RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #82 |

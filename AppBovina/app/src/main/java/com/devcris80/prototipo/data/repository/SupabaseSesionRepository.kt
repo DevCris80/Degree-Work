@@ -3,6 +3,7 @@ package com.devcris80.prototipo.data.repository
 import com.devcris80.prototipo.data.local.dao.PerfilFincaDao
 import com.devcris80.prototipo.data.local.dao.UsuarioDao
 import com.devcris80.prototipo.data.remote.SesionCifrada
+import com.devcris80.prototipo.data.remote.esFaltaDeConexion
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
@@ -12,15 +13,12 @@ import io.github.jan.supabase.auth.auth
 import io.github.jan.supabase.auth.exception.AuthErrorCode
 import io.github.jan.supabase.auth.exception.AuthRestException
 import io.github.jan.supabase.auth.providers.builtin.Email
-import io.github.jan.supabase.exceptions.HttpRequestException
 import io.github.jan.supabase.postgrest.from
-import io.ktor.client.plugins.HttpRequestTimeoutException
 import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
-import java.io.IOException
 
 /**
  * Inicia sesión contra Supabase Auth y deja en Room la finca y el Usuario de la cuenta, tal como
@@ -93,6 +91,3 @@ class SupabaseSesionRepository(
     private suspend fun filaUnica(tabla: String, columna: String, valor: String): JsonObject? =
         supabase.from(tabla).select { filter { eq(columna, valor) } }.decodeList<JsonObject>().singleOrNull()
 }
-
-private fun Exception.esFaltaDeConexion(): Boolean =
-    this is HttpRequestException || this is HttpRequestTimeoutException || this is IOException

@@ -22,3 +22,4 @@ Offline-first se sostiene con tres reglas de la capa de datos:
 
 - Cada entidad tiene dos clases (modelo de dominio y `*Entity` de Room) y un mapper entre ellas.
 - La inyección de dependencias es manual (`AppContainer` en `BovinaApplication`); pasar a Hilt más adelante es mecánico porque todo usa inyección por constructor.
+- Excepción a la regla 3 (#81): la SRS pide un botón "Sincronizar ahora" (CU-20), así que el dominio declara `SincronizacionRepository` y la UI lo llama. El dominio sabe que se puede sincronizar, pero no cómo: el motor sigue dentro de `data`, y ninguna lectura ni escritura de la UI pasa por él.

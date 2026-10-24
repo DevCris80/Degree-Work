@@ -11,6 +11,7 @@ import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
+import com.devcris80.prototipo.domain.repository.ResultadoSubida
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
@@ -18,6 +19,8 @@ import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
 import com.devcris80.prototipo.testing.FakeSesionRepository
+import com.devcris80.prototipo.testing.FakeSincronizacionRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -39,6 +42,7 @@ class ListaAnimalesViewModelTest {
     private val registroRepository = FakeRegistroRepository()
     private val pesajePendienteRepository = FakePesajePendienteRepository()
     private val sesionRepository = FakeSesionRepository()
+    private val sincronizacionRepository = FakeSincronizacionRepository()
 
     private fun crearViewModel() = ListaAnimalesViewModel(
         cuentaRepository,
@@ -47,6 +51,7 @@ class ListaAnimalesViewModelTest {
         registroRepository,
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository),
         sesionRepository,
+        sincronizacionRepository,
     )
 
     @Before
@@ -145,5 +150,57 @@ class ListaAnimalesViewModelTest {
         viewModel.onCerrarSesion()
 
         assertEquals(false, sesionRepository.guardada.value)
+    }
+
+    @Test
+    fun sincronizar_subeLosCambiosYAvisaLosConflictosYRechazos() = runTest {
+        sincronizacionRepository.resultado = ResultadoSubida.Completa(aceptados = 3, enConflicto = 1, rechazados = 2)
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+
+        viewModel.onSincronizar()
+        advanceUntilIdle()
+
+        assertEquals(1, sincronizacionRepository.subidas)
+        assertEquals(false, estados.last().sincronizando)
+        assertEquals("Cambios subidos. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
+        viewModel.onAvisoMostrado()
+        advanceUntilIdle()
+        assertEquals(null, estados.last().avisoSincronizacion)
+        job.cancel()
+    }
+
+    @Test
+    fun sincronizarSinSenal_avisaQueSeSubenDespues() = runTest {
+        sincronizacionRepository.resultado = ResultadoSubida.SinConexion
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+
+        viewModel.onSincronizar()
+        advanceUntilIdle()
+
+        assertEquals("Sin señal. Los cambios quedan en el celular y se suben después.", estados.last().avisoSincronizacion)
+        job.cancel()
+    }
+
+    @Test
+    fun mientrasSincroniza_otroToqueNoVuelveASubir() = runTest {
+        sincronizacionRepository.espera = CompletableDeferred()
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+
+        viewModel.onSincronizar()
+        advanceUntilIdle()
+        assertEquals(true, estados.last().sincronizando)
+        viewModel.onSincronizar()
+        sincronizacionRepository.espera!!.complete(Unit)
+        advanceUntilIdle()
+
+        assertEquals(1, sincronizacionRepository.subidas)
+        assertEquals(false, estados.last().sincronizando)
+        job.cancel()
     }
 }

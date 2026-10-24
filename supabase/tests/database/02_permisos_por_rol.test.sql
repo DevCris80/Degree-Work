@@ -4,6 +4,8 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
+-- Estas pruebas escriben directo en las tablas, como lo hace subir_cambios por dentro (04_subir_cambios).
+select set_config('miganado.subir_cambios', 'si', true);
 select plan(28);
 
 insert into auth.users (id, email) values
