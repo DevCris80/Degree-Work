@@ -17,4 +17,8 @@ interface PerfilFincaDao {
 
     @Query("SELECT * FROM perfil_finca LIMIT 1")
     suspend fun getOnce(): PerfilFincaEntity?
+
+    // Lo que usa la subida (MotorSincronizacion). Sus escrituras no llevan EDICION_LOCAL.
+    @Query("SELECT * FROM perfil_finca WHERE sincronizado = 0")
+    suspend fun findPendientes(): List<PerfilFincaEntity>
 }

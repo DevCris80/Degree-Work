@@ -27,8 +27,15 @@ import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
+import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
 import kotlin.time.ExperimentalTime
 import kotlin.time.Instant
 
@@ -270,7 +277,149 @@ fun JsonObject.aUsuarioEntity() = UsuarioEntity(
     fechaModificacion = fecha("fecha_modificacion"),
 )
 
+// Filas que sube el celular, con las columnas de su tabla en el servidor (supabase/README.md). Las tablas
+// hijas no envían `id_perfil_finca`, que llena el servidor, y la foto no viaja con el Animal.
+
+fun PerfilFincaEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_perfil_finca", idPerfilFinca)
+    put("nombre_finca", nombreFinca)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun AnimalEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_animal", idAnimal)
+    put("id_perfil_finca", idPerfilFinca)
+    put("id_padre", idPadre)
+    put("id_madre", idMadre)
+    put("nombre", nombre)
+    put("raza", raza)
+    put("sexo", sexo)
+    put("etapa", etapa)
+    putFecha("fecha_nacimiento", fechaNacimiento)
+    put("fecha_nacimiento_es_estimada", fechaNacimientoEsEstimada)
+    put("proposito", proposito)
+    putFecha("fecha_baja", fechaBaja)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun EventoEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_evento", idEvento)
+    put("id_animal", idAnimal)
+    put("id_usuario", idUsuario)
+    put("tipo_evento", tipoEvento)
+    putFecha("fecha", fecha)
+    put("detalle", detalle)
+    putFecha("fecha_baja", fechaBaja)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun RegistroEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_registro", idRegistro)
+    put("id_animal", idAnimal)
+    put("id_usuario", idUsuario)
+    put("id_lectura", idLectura)
+    put("peso", peso)
+    putFecha("fecha_medicion", timestamp)
+    putFecha("fecha_baja", fechaBaja)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun ChapetaEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_chapeta", idChapeta)
+    put("codigo", codigo)
+    put("id_animal", idAnimal)
+    putFecha("fecha_asociacion", fechaAsociacion)
+    putFecha("fecha_desasociacion", fechaDesasociacion)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun PesajePendienteEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_pesaje_pendiente", idPesajePendiente)
+    put("id_lectura", idLectura)
+    put("codigo", codigo)
+    put("peso", peso)
+    putFecha("fecha_medicion", timestamp)
+    put("id_usuario", idUsuario)
+    put("motivo", motivo)
+    put("resolucion", resolucion)
+    put("id_usuario_resolucion", idUsuarioResolucion)
+    putFecha("fecha_resolucion", fechaResolucion)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+// La fila local con la versión que tiene el servidor, ya sincronizada. Conserva lo que el servidor no guarda
+// (la foto) y el idVersion de la última escritura local, que solo cuenta mientras haya cambios por subir.
+
+fun PerfilFincaEntity.conLaDelServidor(fila: JsonObject) = copy(
+    nombreFinca = fila.texto("nombre_finca"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+)
+
+fun AnimalEntity.conLaDelServidor(fila: JsonObject) = copy(
+    idPadre = fila.textoONulo("id_padre"),
+    idMadre = fila.textoONulo("id_madre"),
+    nombre = fila.texto("nombre"),
+    raza = fila.texto("raza"),
+    sexo = fila.texto("sexo"),
+    etapa = fila.texto("etapa"),
+    fechaNacimiento = fila.fecha("fecha_nacimiento"),
+    fechaNacimientoEsEstimada = fila.getValue("fecha_nacimiento_es_estimada").jsonPrimitive.boolean,
+    proposito = fila.texto("proposito"),
+    fechaBaja = fila.fechaONula("fecha_baja"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+    rev = fila.getValue("rev").jsonPrimitive.int,
+    revBase = null,
+)
+
+fun EventoEntity.conLaDelServidor(fila: JsonObject) = copy(
+    tipoEvento = fila.texto("tipo_evento"),
+    fecha = fila.fecha("fecha"),
+    detalle = fila.texto("detalle"),
+    fechaBaja = fila.fechaONula("fecha_baja"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+    rev = fila.getValue("rev").jsonPrimitive.int,
+    revBase = null,
+)
+
+fun RegistroEntity.conLaDelServidor(fila: JsonObject) = copy(
+    peso = fila.getValue("peso").jsonPrimitive.float,
+    timestamp = fila.fecha("fecha_medicion"),
+    fechaBaja = fila.fechaONula("fecha_baja"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+    rev = fila.getValue("rev").jsonPrimitive.int,
+    revBase = null,
+)
+
+fun ChapetaEntity.conLaDelServidor(fila: JsonObject) = copy(
+    fechaDesasociacion = fila.fechaONula("fecha_desasociacion"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+)
+
+fun PesajePendienteEntity.conLaDelServidor(fila: JsonObject) = copy(
+    resolucion = fila.textoONulo("resolucion"),
+    idUsuarioResolucion = fila.textoONulo("id_usuario_resolucion"),
+    fechaResolucion = fila.fechaONula("fecha_resolucion"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+)
+
 internal fun JsonObject.texto(campo: String): String = getValue(campo).jsonPrimitive.content
+
+private fun JsonObject.textoONulo(campo: String): String? = get(campo)?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
 
 @OptIn(ExperimentalTime::class)
 private fun JsonObject.fecha(campo: String): Long = Instant.parse(texto(campo)).toEpochMilliseconds()
+
+@OptIn(ExperimentalTime::class)
+private fun JsonObject.fechaONula(campo: String): Long? =
+    textoONulo(campo)?.let { Instant.parse(it).toEpochMilliseconds() }
+
+@OptIn(ExperimentalTime::class)
+private fun JsonObjectBuilder.putFecha(campo: String, milisegundos: Long?) {
+    put(campo, milisegundos?.let { Instant.fromEpochMilliseconds(it).toString() })
+}
