@@ -15,6 +15,8 @@ import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
+import com.devcris80.prototipo.testing.FakeConflictoRepository
+import com.devcris80.prototipo.testing.conflictoDeAnimal
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
@@ -43,6 +45,7 @@ class ListaAnimalesViewModelTest {
     private val pesajePendienteRepository = FakePesajePendienteRepository()
     private val sesionRepository = FakeSesionRepository()
     private val sincronizacionRepository = FakeSincronizacionRepository()
+    private val conflictoRepository = FakeConflictoRepository()
 
     private fun crearViewModel() = ListaAnimalesViewModel(
         cuentaRepository,
@@ -52,6 +55,7 @@ class ListaAnimalesViewModelTest {
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository),
         sesionRepository,
         sincronizacionRepository,
+        conflictoRepository,
     )
 
     @Before
@@ -74,6 +78,23 @@ class ListaAnimalesViewModelTest {
         fechaNacimiento = 1L,
         proposito = proposito,
     )
+
+    @Test
+    fun marcaLosAnimalesQueTienenUnSiblingSinResolver() = runTest {
+        val manchas = animal("Manchas")
+        animalRepository.activos.value = listOf(manchas, animal("Lola"))
+        conflictoRepository.conflictos.value = listOf(conflictoDeAnimal(manchas.idAnimal, "v1" to "Jersey"))
+
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(setOf(manchas.idAnimal), estados.last().animalesEnConflicto)
+        // Una fila en Conflicto se consulta normalmente: sigue en la lista.
+        assertEquals(2, estados.last().animales.size)
+        job.cancel()
+    }
 
     @Test
     fun combinaFincaUsuarioAnimalesChapetaYUltimoRegistro() = runTest {

@@ -120,6 +120,26 @@ class MigracionesTest {
         }
     }
 
+    @Test
+    fun de14a15AgregaLaTablaResolucionVaciaYConservaLosSiblings() {
+        helper.createDatabase(BASE, 14).use { db ->
+            db.execSQL(
+                "INSERT INTO sibling VALUES ('version-b', 'animal', 'animal-1', 1, '{}', 'usuario-1', 0)",
+            )
+        }
+
+        helper.runMigrationsAndValidate(BASE, 15, true, MIGRACION_14_15).use { db ->
+            db.query("SELECT COUNT(*) FROM resolucion").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals(0, fila.getInt(0))
+            }
+            db.query("SELECT idVersion FROM sibling").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("version-b", fila.getString(0))
+            }
+        }
+    }
+
     private companion object {
         const val BASE = "migracion-test"
         val UUID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")
