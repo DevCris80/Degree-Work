@@ -31,6 +31,7 @@ import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
 import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
+import com.devcris80.prototipo.ui.screens.ProgramarEventoScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
 import com.devcris80.prototipo.ui.util.appViewModel
 
@@ -176,6 +177,7 @@ fun AppNavHost() {
                 val idAnimal = entry.arguments?.getString("idAnimal").orEmpty()
                 DetalleAnimalScreen(
                     onVolver = { navController.popBackStack() },
+                    onNuevoEventoClick = { navController.navigate(Rutas.ProgramarEvento.ruta) },
                     onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
                     onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
@@ -205,7 +207,14 @@ fun AppNavHost() {
                 )
             }
             composable(Rutas.Eventos.ruta) {
-                EventosScreen()
+                EventosScreen(
+                    onProgramarClick = { navController.navigate(Rutas.ProgramarEvento.ruta) },
+                )
+            }
+            composable(Rutas.ProgramarEvento.ruta) {
+                ProgramarEventoScreen(
+                    onVolver = { navController.popBackStack() },
+                )
             }
             composable(Rutas.EstadoServicio.ruta) {
                 PesosScreen(
