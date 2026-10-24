@@ -20,5 +20,8 @@ interface AnimalRepository {
 
     suspend fun findById(idAnimal: String): Animal?
 
+    /** Guarda los cambios de un Animal que ya existe. La baja se hace con [darDeBaja]. */
+    suspend fun update(animal: Animal)
+
     suspend fun darDeBaja(idAnimal: String, fecha: Long)
 }

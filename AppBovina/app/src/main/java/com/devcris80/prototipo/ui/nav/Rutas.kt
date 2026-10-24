@@ -19,6 +19,9 @@ sealed class Rutas(val ruta: String) {
     data object DetalleAnimal : Rutas("animales/{idAnimal}") {
         fun crear(idAnimal: String) = "animales/$idAnimal"
     }
+    data object EditarAnimal : Rutas("animales/{idAnimal}/editar") {
+        fun crear(idAnimal: String) = "animales/$idAnimal/editar"
+    }
     data object NuevoEvento : Rutas("animales/{idAnimal}/evento") {
         fun crear(idAnimal: String) = "animales/$idAnimal/evento"
     }

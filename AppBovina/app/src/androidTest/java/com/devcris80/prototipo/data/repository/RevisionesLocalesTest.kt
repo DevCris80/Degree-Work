@@ -99,4 +99,23 @@ class RevisionesLocalesTest {
         assertEquals("version-2", segunda.idVersion)
         assertEquals(3, segunda.rev)
     }
+
+    @Test
+    fun editarUnAnimalSincronizadoGuardaLosCambiosYLoDejaPendienteConSuRevBase() = runTest {
+        db.animalDao().insert(
+            animal.toEntity(fechaModificacion = 0, idVersion = "del-servidor")
+                .copy(rev = 3, sincronizado = true),
+        )
+        val repositorio = RoomAnimalRepository(db.animalDao(), clock = { 100 }, nuevoIdVersion = nuevoIdVersion)
+
+        repositorio.update(animal.copy(raza = "Jersey", nombre = "Lucero II"))
+
+        val editado = db.animalDao().findById("animal-1")!!
+        assertEquals("Jersey", editado.raza)
+        assertEquals("Lucero II", editado.nombre)
+        assertFalse(editado.sincronizado)
+        assertEquals(3, editado.revBase)
+        assertEquals("version-1", editado.idVersion)
+        assertEquals(100L, editado.fechaModificacion)
+    }
 }

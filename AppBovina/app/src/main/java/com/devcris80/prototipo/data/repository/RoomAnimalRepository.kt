@@ -27,6 +27,25 @@ class RoomAnimalRepository(
 
     override suspend fun findById(idAnimal: String): Animal? = animalDao.findById(idAnimal)?.toDomain()
 
+    override suspend fun update(animal: Animal) {
+        val fila = animal.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion())
+        animalDao.editar(
+            idAnimal = fila.idAnimal,
+            nombre = fila.nombre,
+            raza = fila.raza,
+            sexo = fila.sexo,
+            etapa = fila.etapa,
+            fechaNacimiento = fila.fechaNacimiento,
+            fechaNacimientoEsEstimada = fila.fechaNacimientoEsEstimada,
+            proposito = fila.proposito,
+            fotoUri = fila.fotoUri,
+            idPadre = fila.idPadre,
+            idMadre = fila.idMadre,
+            idVersion = fila.idVersion,
+            fechaModificacion = fila.fechaModificacion,
+        )
+    }
+
     override suspend fun darDeBaja(idAnimal: String, fecha: Long) =
         animalDao.darDeBaja(idAnimal, fecha, idVersion = nuevoIdVersion(), fechaModificacion = clock())
 }
