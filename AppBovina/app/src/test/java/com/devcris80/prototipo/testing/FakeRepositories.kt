@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
@@ -14,7 +15,12 @@ import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoSubida
+import com.devcris80.prototipo.domain.repository.SesionRepository
+import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -25,13 +31,25 @@ internal class FakeAnimalRepository : AnimalRepository {
     val activos = MutableStateFlow<List<Animal>>(emptyList())
     private val porId = mutableMapOf<String, MutableStateFlow<Animal?>>()
     val bajas = mutableListOf<Pair<String, Long>>()
+    val insertados = mutableListOf<Animal>()
 
     fun set(animal: Animal) {
         porId.getOrPut(animal.idAnimal) { MutableStateFlow(null) }.value = animal
     }
 
-    override suspend fun insert(animal: Animal) = set(animal)
+    override suspend fun insert(animal: Animal) {
+        insertados.add(animal)
+        set(animal)
+    }
     override fun observeActivos(): Flow<List<Animal>> = activos
+    // Como el repositorio real: también los dados de baja, primero los activos y cada grupo por nombre.
+    override fun observePorSexo(sexo: Sexo): Flow<List<Animal>> =
+        activos.map { animales ->
+            (animales + porId.values.mapNotNull { it.value })
+                .distinctBy { it.idAnimal }
+                .filter { it.sexo == sexo }
+                .sortedWith(compareBy({ it.fechaBaja != null }, { it.nombre }))
+        }
     override fun observeById(idAnimal: String): Flow<Animal?> =
         porId.getOrPut(idAnimal) { MutableStateFlow(null) }
     override suspend fun findById(idAnimal: String): Animal? =
@@ -115,18 +133,19 @@ internal class FakeRegistroRepository : RegistroRepository {
 }
 
 internal class FakeEventoRepository : EventoRepository {
-    private val porAnimal = mutableMapOf<String, MutableStateFlow<List<Evento>>>()
+    private val todos = MutableStateFlow<List<Evento>>(emptyList())
 
     fun set(idAnimal: String, eventos: List<Evento>) {
-        porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }.value = eventos
+        todos.value = todos.value.filterNot { it.idAnimal == idAnimal } + eventos
     }
 
     override suspend fun insert(evento: Evento) {
-        val actuales = porAnimal.getOrPut(evento.idAnimal) { MutableStateFlow(emptyList()) }
-        actuales.value = listOf(evento) + actuales.value
+        todos.value = listOf(evento) + todos.value
     }
     override fun observeByAnimal(idAnimal: String): Flow<List<Evento>> =
-        porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }
+        todos.map { lista -> lista.filter { it.idAnimal == idAnimal } }
+    override fun observeActivos(): Flow<List<Evento>> =
+        todos.map { lista -> lista.filter { it.fechaBaja == null }.sortedByDescending { it.fecha } }
 }
 
 internal class FakePesajePendienteRepository : PesajePendienteRepository {
@@ -153,4 +172,34 @@ internal class FakePesajePendienteRepository : PesajePendienteRepository {
 /** Ejecuta el bloque directo, sin control de atomicidad real: alcanza para probar el resultado. */
 internal class FakeTransaccion : Transaccion {
     override suspend fun <T> ejecutar(bloque: suspend () -> T): T = bloque()
+}
+
+internal class FakeSesionRepository : SesionRepository {
+    val guardada = MutableStateFlow(false)
+    var resultado: ResultadoInicioSesion = ResultadoInicioSesion.Exito
+    val intentos = mutableListOf<Pair<String, String>>()
+
+    override fun observeSesionGuardada(): Flow<Boolean> = guardada
+    override suspend fun iniciarSesion(correo: String, contrasena: String): ResultadoInicioSesion {
+        intentos.add(correo to contrasena)
+        if (resultado == ResultadoInicioSesion.Exito) guardada.value = true
+        return resultado
+    }
+    override suspend fun cerrarSesion() {
+        guardada.value = false
+    }
+}
+
+internal class FakeSincronizacionRepository : SincronizacionRepository {
+    var resultado: ResultadoSubida = ResultadoSubida.Completa(0, 0, 0)
+    var subidas = 0
+
+    /** Si no es nulo, la subida espera a que se complete. */
+    var espera: CompletableDeferred<Unit>? = null
+
+    override suspend fun subirCambios(): ResultadoSubida {
+        subidas++
+        espera?.await()
+        return resultado
+    }
 }

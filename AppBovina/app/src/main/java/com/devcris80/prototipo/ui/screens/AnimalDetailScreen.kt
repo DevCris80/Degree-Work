@@ -53,6 +53,7 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.formatearEdad
+import com.devcris80.prototipo.ui.util.nombreConBaja
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -62,7 +63,9 @@ import java.util.concurrent.TimeUnit
 fun DetalleAnimalScreen(
     onVolver: () -> Unit,
     onNuevoEventoClick: () -> Unit,
+    onNuevoPesajeClick: () -> Unit,
     onEditarClick: () -> Unit = {},
+    onAnimalClick: (idAnimal: String) -> Unit = {},
 ) {
     val viewModel = appViewModel { container ->
         val idAnimal = createSavedStateHandle().get<String>("idAnimal").orEmpty()
@@ -182,6 +185,28 @@ fun DetalleAnimalScreen(
                     DatoTile("Destino", animal.proposito.aEtiqueta(), Modifier.fillMaxWidth())
                 }
             }
+            if (estado.padre != null || estado.madre != null) {
+                item {
+                    Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                        estado.padre?.let { padre ->
+                            DatoTile(
+                                "Padre",
+                                "${padre.nombreConBaja()} ›",
+                                Modifier.weight(1f),
+                                onClick = { onAnimalClick(padre.idAnimal) },
+                            )
+                        }
+                        estado.madre?.let { madre ->
+                            DatoTile(
+                                "Madre",
+                                "${madre.nombreConBaja()} ›",
+                                Modifier.weight(1f),
+                                onClick = { onAnimalClick(madre.idAnimal) },
+                            )
+                        }
+                    }
+                }
+            }
             item {
                 val ultimoPeso = listaRegistros.firstOrNull()
                 val pesoAnterior = listaRegistros.getOrNull(1)
@@ -284,9 +309,19 @@ fun DetalleAnimalScreen(
                     )
                 }
             }
+            if (animal.activo) {
+                item {
+                    BovinaPrimaryButton(
+                        texto = "Registrar pesaje",
+                        onClick = onNuevoPesajeClick,
+                        modifier = Modifier.fillMaxWidth(),
+                        icon = Icons.Filled.MonitorWeight,
+                    )
+                }
+            }
             item {
-                BovinaPrimaryButton(
-                    texto = "Registrar Pesaje o Evento",
+                BovinaSecondaryButton(
+                    texto = "Registrar evento",
                     onClick = onNuevoEventoClick,
                     modifier = Modifier.fillMaxWidth(),
                     icon = Icons.Filled.Add,
@@ -362,10 +397,16 @@ fun DetalleAnimalScreen(
 }
 
 @Composable
-private fun DatoTile(etiqueta: String, valor: String, modifier: Modifier = Modifier) {
+private fun DatoTile(
+    etiqueta: String,
+    valor: String,
+    modifier: Modifier = Modifier,
+    onClick: (() -> Unit)? = null,
+) {
     Column(
         modifier = modifier
             .clip(MaterialTheme.shapes.small)
+            .then(if (onClick != null) Modifier.clickable(onClickLabel = "Ver ficha", onClick = onClick) else Modifier)
             .background(MaterialTheme.colorScheme.surfaceContainer)
             .padding(horizontal = 16.dp, vertical = 12.dp),
     ) {

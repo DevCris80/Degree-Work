@@ -8,6 +8,7 @@ import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material3.Scaffold
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
@@ -25,8 +26,10 @@ import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
 import com.devcris80.prototipo.ui.screens.EventosScreen
+import com.devcris80.prototipo.ui.screens.IndicadoresScreen
 import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
+import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
 import com.devcris80.prototipo.ui.screens.ProgramarEventoScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
@@ -44,9 +47,18 @@ fun AppNavHost() {
     val navController = rememberNavController()
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
-    val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository) }
-    val tienePerfil by inicioViewModel.tienePerfil.collectAsState()
-    if (tienePerfil == null) return
+    val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository, container.sesionRepository) }
+    // InicioViewModel decide una sola vez; después, iniciar sesión navega desde el Login, y perder la
+    // sesión (cerrarla o que el servidor rechace renovarla) vuelve al Login desde cualquier pantalla.
+    val puedeEntrar by inicioViewModel.puedeEntrar.collectAsState()
+    LaunchedEffect(inicioViewModel) {
+        inicioViewModel.sesionPerdida.collect {
+            if (navController.currentDestination?.route != Rutas.Login.ruta) {
+                navController.navigate(Rutas.Login.ruta) { popUpTo(0) { inclusive = true } }
+            }
+        }
+    }
+    if (puedeEntrar == null) return
 
     Scaffold(
         bottomBar = {
@@ -100,9 +112,10 @@ fun AppNavHost() {
     ) { innerPadding ->
         NavHost(
             navController = navController,
-            startDestination = if (tienePerfil == true) Rutas.ListaAnimales.ruta else Rutas.CrearCuenta.ruta,
+            startDestination = if (puedeEntrar == true) Rutas.ListaAnimales.ruta else Rutas.Login.ruta,
             modifier = Modifier.padding(innerPadding),
         ) {
+            // Sin entrada desde el Login hasta #87 (crear cuenta con Supabase).
             composable(Rutas.CrearCuenta.ruta) {
                 CrearCuentaScreen(
                     onCuentaCreada = {
@@ -115,18 +128,29 @@ fun AppNavHost() {
             }
             composable(Rutas.Login.ruta) {
                 LoginScreen(
-                    onIniciarSesion = {
+                    onSesionIniciada = {
                         navController.navigate(Rutas.ListaAnimales.ruta) {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
-                    onCrearCuentaNueva = { navController.navigate(Rutas.CrearCuenta.ruta) },
                 )
             }
             composable(Rutas.ListaAnimales.ruta) {
                 ListaAnimalesScreen(
                     onAnimalClick = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                     onNuevoAnimalClick = { navController.navigate(Rutas.NuevoAnimal.crear()) },
+                    onPesajesPendientesClick = {
+                        navController.navigate(Rutas.EstadoServicio.ruta) {
+                            popUpTo(Rutas.ListaAnimales.ruta)
+                        }
+                    },
+                    onIndicadoresClick = { navController.navigate(Rutas.Indicadores.ruta) },
+                )
+            }
+            composable(Rutas.Indicadores.ruta) {
+                IndicadoresScreen(
+                    onVolver = { navController.popBackStack() },
+                    onAnimalClick = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                     onPesajesPendientesClick = {
                         navController.navigate(Rutas.EstadoServicio.ruta) {
                             popUpTo(Rutas.ListaAnimales.ruta)
@@ -154,6 +178,9 @@ fun AppNavHost() {
                 DetalleAnimalScreen(
                     onVolver = { navController.popBackStack() },
                     onNuevoEventoClick = { navController.navigate(Rutas.ProgramarEvento.ruta) },
+                    onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
+                    onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
+                    onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
                 )
             }
             composable(
@@ -162,6 +189,15 @@ fun AppNavHost() {
             ) {
                 EventoFormScreen(
                     onGuardado = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Rutas.NuevoPesaje.ruta,
+                arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
+            ) {
+                PesajeFormScreen(
+                    onGuardado = { navController.popBackStack() },
+                    onVolver = { navController.popBackStack() },
                 )
             }
             composable(Rutas.Escanear.ruta) {

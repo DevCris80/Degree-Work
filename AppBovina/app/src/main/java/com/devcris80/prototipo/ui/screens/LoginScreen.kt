@@ -21,6 +21,7 @@ import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -34,22 +35,24 @@ import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
-import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.EncabezadoAuth
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
-fun LoginScreen(
-    onIniciarSesion: () -> Unit,
-    onCrearCuentaNueva: () -> Unit,
-) {
-    val viewModel = appViewModel { container -> LoginViewModel(container.cuentaRepository) }
-    val usuarioActual by viewModel.usuario.collectAsState()
-    var correo by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
+fun LoginScreen(onSesionIniciada: () -> Unit) {
+    val viewModel = appViewModel { container -> LoginViewModel(container.sesionRepository) }
+    val estado by viewModel.estado.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                LoginEvento.SesionIniciada -> onSesionIniciada()
+            }
+        }
+    }
 
     Scaffold { innerPadding ->
         Column(
@@ -75,17 +78,8 @@ fun LoginScreen(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
-                usuarioActual?.let { usuarioLogin ->
-                    Text(
-                        text = "Hola, ${usuarioLogin.nombre}",
-                        style = MaterialTheme.typography.bodyLarge,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        textAlign = TextAlign.Center,
-                    )
-                }
-
                 BannerInformativo(
-                    texto = "Modo campo activo: trabaja sin cobertura",
+                    texto = "La primera vez en este celular hace falta señal. Después la app funciona sin cobertura.",
                     icon = Icons.Filled.WifiOff,
                 )
 
@@ -93,15 +87,15 @@ fun LoginScreen(
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
                         CampoConIcono(
                             label = "Correo electrónico",
-                            value = correo,
-                            onValueChange = { correo = it },
+                            value = estado.correo,
+                            onValueChange = viewModel::onCorreoCambiado,
                             icon = Icons.Filled.Email,
                             keyboardType = KeyboardType.Email,
                         )
                         CampoConIcono(
                             label = "Contraseña",
-                            value = password,
-                            onValueChange = { password = it },
+                            value = estado.contrasena,
+                            onValueChange = viewModel::onContrasenaCambiada,
                             icon = Icons.Filled.Lock,
                             esPassword = true,
                             passwordVisible = passwordVisible,
@@ -119,16 +113,28 @@ fun LoginScreen(
                             )
                         }
 
+                        estado.error?.let { error ->
+                            Text(
+                                text = error,
+                                style = MaterialTheme.typography.bodyMedium,
+                                color = MaterialTheme.colorScheme.error,
+                            )
+                        }
+
                         BovinaPrimaryButton(
-                            texto = "Iniciar sesión",
-                            onClick = onIniciarSesion,
+                            texto = if (estado.cargando) "Iniciando sesión…" else "Iniciar sesión",
+                            onClick = viewModel::onIniciarSesion,
+                            enabled = estado.puedeIniciar,
                             modifier = Modifier.fillMaxWidth(),
                             trailingIcon = Icons.AutoMirrored.Filled.ArrowForward,
                         )
 
-                        BovinaSecondaryButton(
-                            texto = "Crear cuenta nueva",
-                            onClick = onCrearCuentaNueva,
+                        // Crear una cuenta desde la app llega con #87; mientras tanto la crea quien administra el proyecto.
+                        Text(
+                            text = "¿No tienes cuenta? Pídesela al Ganadero de tu finca.",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            textAlign = TextAlign.Center,
                             modifier = Modifier.fillMaxWidth(),
                         )
                     }

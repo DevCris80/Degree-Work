@@ -27,7 +27,7 @@ class ResolverDestinoEscaneo(
             val animal = animalRepository.findById(activa.idAnimal)
             return when {
                 animal == null -> DestinoEscaneo.RegistrarNuevo(codigo)
-                animal.fechaBaja == null -> DestinoEscaneo.AbrirAnimal(animal.idAnimal)
+                animal.activo -> DestinoEscaneo.AbrirAnimal(animal.idAnimal)
                 else -> DestinoEscaneo.AnimalDadoDeBaja(activa.idChapeta, animal.nombre, codigo)
             }
         }

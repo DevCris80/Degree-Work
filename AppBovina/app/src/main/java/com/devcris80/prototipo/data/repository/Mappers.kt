@@ -5,22 +5,39 @@ import com.devcris80.prototipo.data.local.entity.ChapetaEntity
 import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.PesajePendienteEntity
+import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Conciliacion
+import com.devcris80.prototipo.domain.model.EntidadConRevisiones
+import com.devcris80.prototipo.domain.model.EntidadSincronizada
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.Rechazo
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
+import kotlinx.serialization.json.JsonNull
+import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.float
+import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.put
+import kotlin.time.ExperimentalTime
+import kotlin.time.Instant
 
 // Los enum del dominio se guardan en Room como texto. Sexo, Etapa, Proposito y Rol usan el mismo
 // que ya escribían las pantallas.
@@ -47,8 +64,28 @@ private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
     ResolucionPesajePendiente.DESCARTADO to "DESCARTADO",
 )
 
+// Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor.
+private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
+    EntidadSincronizada.PERFIL_FINCA to "perfil_finca",
+    EntidadSincronizada.ANIMAL to "animal",
+    EntidadSincronizada.EVENTO to "evento",
+    EntidadSincronizada.REGISTRO to "registro",
+    EntidadSincronizada.CHAPETA to "chapeta",
+    EntidadSincronizada.PESAJE_PENDIENTE to "pesaje_pendiente",
+)
+private val TEXTO_ENTIDAD_CON_REVISIONES = mapOf(
+    EntidadConRevisiones.ANIMAL to "animal",
+    EntidadConRevisiones.EVENTO to "evento",
+    EntidadConRevisiones.REGISTRO to "registro",
+)
+
 // Conciliar escribe la resolución sola, sin pasar por toEntity.
 internal fun ResolucionPesajePendiente.textoGuardado(): String = TEXTO_RESOLUCION_PESAJE_PENDIENTE.aTexto(this)
+
+internal fun EntidadConRevisiones.textoGuardado(): String = TEXTO_ENTIDAD_CON_REVISIONES.aTexto(this)
+
+// Filtrar animales por sexo compara contra el texto guardado.
+internal fun Sexo.textoGuardado(): String = TEXTO_SEXO.aTexto(this)
 
 private fun <E : Enum<E>> Map<E, String>.aTexto(valor: E): String = getValue(valor)
 
@@ -68,9 +105,11 @@ fun AnimalEntity.toDomain() = Animal(
     proposito = TEXTO_PROPOSITO.desdeTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    idPadre = idPadre,
+    idMadre = idMadre,
 )
 
-fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
+fun Animal.toEntity(fechaModificacion: Long, idVersion: String) = AnimalEntity(
     idAnimal = idAnimal,
     idPerfilFinca = idPerfilFinca,
     nombre = nombre,
@@ -82,7 +121,10 @@ fun Animal.toEntity(fechaModificacion: Long) = AnimalEntity(
     proposito = TEXTO_PROPOSITO.aTexto(proposito),
     fotoUri = fotoUri,
     fechaBaja = fechaBaja,
+    idPadre = idPadre,
+    idMadre = idMadre,
     fechaModificacion = fechaModificacion,
+    idVersion = idVersion,
 )
 
 fun ChapetaEntity.toDomain() = Chapeta(
@@ -112,7 +154,7 @@ fun EventoEntity.toDomain() = Evento(
     fechaBaja = fechaBaja,
 )
 
-fun Evento.toEntity(fechaModificacion: Long) = EventoEntity(
+fun Evento.toEntity(fechaModificacion: Long, idVersion: String) = EventoEntity(
     idEvento = idEvento,
     idAnimal = idAnimal,
     idUsuario = idUsuario,
@@ -121,6 +163,7 @@ fun Evento.toEntity(fechaModificacion: Long) = EventoEntity(
     detalle = detalle,
     fechaBaja = fechaBaja,
     fechaModificacion = fechaModificacion,
+    idVersion = idVersion,
 )
 
 fun RegistroEntity.toDomain() = Registro(
@@ -133,7 +176,7 @@ fun RegistroEntity.toDomain() = Registro(
     fechaBaja = fechaBaja,
 )
 
-fun Registro.toEntity(fechaModificacion: Long) = RegistroEntity(
+fun Registro.toEntity(fechaModificacion: Long, idVersion: String) = RegistroEntity(
     idRegistro = idRegistro,
     idAnimal = idAnimal,
     idUsuario = idUsuario,
@@ -142,6 +185,7 @@ fun Registro.toEntity(fechaModificacion: Long) = RegistroEntity(
     timestamp = timestamp,
     fechaBaja = fechaBaja,
     fechaModificacion = fechaModificacion,
+    idVersion = idVersion,
 )
 
 fun PesajePendienteEntity.toDomain() = PesajePendiente(
@@ -194,3 +238,188 @@ fun Usuario.toEntity(fechaModificacion: Long) = UsuarioEntity(
     rol = TEXTO_ROL.aTexto(rol),
     fechaModificacion = fechaModificacion,
 )
+
+fun SiblingEntity.toDomain() = Sibling(
+    idVersion = idVersion,
+    entidad = TEXTO_ENTIDAD_CON_REVISIONES.desdeTexto(entidad),
+    idFila = idFila,
+    revBase = revBase,
+    contenido = contenido,
+    idUsuario = idUsuario,
+    fechaRecepcion = fechaRecepcion,
+)
+
+fun RechazoEntity.toDomain() = Rechazo(
+    idRechazo = idRechazo,
+    entidad = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad),
+    idFila = idFila,
+    contenido = contenido,
+    motivo = motivo,
+    fechaRechazo = fechaRechazo,
+)
+
+// Filas que llegan del servidor por PostgREST, con sus columnas en snake_case. Ya están sincronizadas.
+
+fun JsonObject.aPerfilFincaEntity() = PerfilFincaEntity(
+    idPerfilFinca = texto("id_perfil_finca"),
+    nombreFinca = texto("nombre_finca"),
+    sincronizado = true,
+    fechaModificacion = fecha("fecha_modificacion"),
+)
+
+// El rol pasa por TEXTO_ROL para rechazar un valor que la app no conoce.
+fun JsonObject.aUsuarioEntity() = UsuarioEntity(
+    idUsuario = texto("id_usuario"),
+    idPerfilFinca = texto("id_perfil_finca"),
+    nombre = texto("nombre"),
+    rol = TEXTO_ROL.aTexto(TEXTO_ROL.desdeTexto(texto("rol"))),
+    sincronizado = true,
+    fechaModificacion = fecha("fecha_modificacion"),
+)
+
+// Filas que sube el celular, con las columnas de su tabla en el servidor (supabase/README.md). Las tablas
+// hijas no envían `id_perfil_finca`, que llena el servidor, y la foto no viaja con el Animal.
+
+fun PerfilFincaEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_perfil_finca", idPerfilFinca)
+    put("nombre_finca", nombreFinca)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun AnimalEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_animal", idAnimal)
+    put("id_perfil_finca", idPerfilFinca)
+    put("id_padre", idPadre)
+    put("id_madre", idMadre)
+    put("nombre", nombre)
+    put("raza", raza)
+    put("sexo", sexo)
+    put("etapa", etapa)
+    putFecha("fecha_nacimiento", fechaNacimiento)
+    put("fecha_nacimiento_es_estimada", fechaNacimientoEsEstimada)
+    put("proposito", proposito)
+    putFecha("fecha_baja", fechaBaja)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun EventoEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_evento", idEvento)
+    put("id_animal", idAnimal)
+    put("id_usuario", idUsuario)
+    put("tipo_evento", tipoEvento)
+    putFecha("fecha", fecha)
+    put("detalle", detalle)
+    putFecha("fecha_baja", fechaBaja)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun RegistroEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_registro", idRegistro)
+    put("id_animal", idAnimal)
+    put("id_usuario", idUsuario)
+    put("id_lectura", idLectura)
+    put("peso", peso)
+    putFecha("fecha_medicion", timestamp)
+    putFecha("fecha_baja", fechaBaja)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun ChapetaEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_chapeta", idChapeta)
+    put("codigo", codigo)
+    put("id_animal", idAnimal)
+    putFecha("fecha_asociacion", fechaAsociacion)
+    putFecha("fecha_desasociacion", fechaDesasociacion)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+fun PesajePendienteEntity.aFilaDelServidor() = buildJsonObject {
+    put("id_pesaje_pendiente", idPesajePendiente)
+    put("id_lectura", idLectura)
+    put("codigo", codigo)
+    put("peso", peso)
+    putFecha("fecha_medicion", timestamp)
+    put("id_usuario", idUsuario)
+    put("motivo", motivo)
+    put("resolucion", resolucion)
+    put("id_usuario_resolucion", idUsuarioResolucion)
+    putFecha("fecha_resolucion", fechaResolucion)
+    putFecha("fecha_modificacion", fechaModificacion)
+}
+
+// La fila local con la versión que tiene el servidor, ya sincronizada. Conserva lo que el servidor no guarda
+// (la foto) y el idVersion de la última escritura local, que solo cuenta mientras haya cambios por subir.
+
+fun PerfilFincaEntity.conLaDelServidor(fila: JsonObject) = copy(
+    nombreFinca = fila.texto("nombre_finca"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+)
+
+fun AnimalEntity.conLaDelServidor(fila: JsonObject) = copy(
+    idPadre = fila.textoONulo("id_padre"),
+    idMadre = fila.textoONulo("id_madre"),
+    nombre = fila.texto("nombre"),
+    raza = fila.texto("raza"),
+    sexo = fila.texto("sexo"),
+    etapa = fila.texto("etapa"),
+    fechaNacimiento = fila.fecha("fecha_nacimiento"),
+    fechaNacimientoEsEstimada = fila.getValue("fecha_nacimiento_es_estimada").jsonPrimitive.boolean,
+    proposito = fila.texto("proposito"),
+    fechaBaja = fila.fechaONula("fecha_baja"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+    rev = fila.getValue("rev").jsonPrimitive.int,
+    revBase = null,
+)
+
+fun EventoEntity.conLaDelServidor(fila: JsonObject) = copy(
+    tipoEvento = fila.texto("tipo_evento"),
+    fecha = fila.fecha("fecha"),
+    detalle = fila.texto("detalle"),
+    fechaBaja = fila.fechaONula("fecha_baja"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+    rev = fila.getValue("rev").jsonPrimitive.int,
+    revBase = null,
+)
+
+fun RegistroEntity.conLaDelServidor(fila: JsonObject) = copy(
+    peso = fila.getValue("peso").jsonPrimitive.float,
+    timestamp = fila.fecha("fecha_medicion"),
+    fechaBaja = fila.fechaONula("fecha_baja"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+    rev = fila.getValue("rev").jsonPrimitive.int,
+    revBase = null,
+)
+
+fun ChapetaEntity.conLaDelServidor(fila: JsonObject) = copy(
+    fechaDesasociacion = fila.fechaONula("fecha_desasociacion"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+)
+
+fun PesajePendienteEntity.conLaDelServidor(fila: JsonObject) = copy(
+    resolucion = fila.textoONulo("resolucion"),
+    idUsuarioResolucion = fila.textoONulo("id_usuario_resolucion"),
+    fechaResolucion = fila.fechaONula("fecha_resolucion"),
+    fechaModificacion = fila.fecha("fecha_modificacion"),
+    sincronizado = true,
+)
+
+internal fun JsonObject.texto(campo: String): String = getValue(campo).jsonPrimitive.content
+
+private fun JsonObject.textoONulo(campo: String): String? = get(campo)?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
+
+@OptIn(ExperimentalTime::class)
+private fun JsonObject.fecha(campo: String): Long = Instant.parse(texto(campo)).toEpochMilliseconds()
+
+@OptIn(ExperimentalTime::class)
+private fun JsonObject.fechaONula(campo: String): Long? =
+    textoONulo(campo)?.let { Instant.parse(it).toEpochMilliseconds() }
+
+@OptIn(ExperimentalTime::class)
+private fun JsonObjectBuilder.putFecha(campo: String, milisegundos: Long?) {
+    put(campo, milisegundos?.let { Instant.fromEpochMilliseconds(it).toString() })
+}

@@ -1,30 +1,43 @@
 package com.devcris80.prototipo
 
 import android.content.Context
-import com.devcris80.prototipo.data.SeedData
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.remote.SesionCifrada
+import com.devcris80.prototipo.data.remote.SupabaseServidorSincronizacion
+import com.devcris80.prototipo.data.remote.crearClienteSupabase
+import com.devcris80.prototipo.data.repository.MotorSincronizacion
 import com.devcris80.prototipo.data.repository.RoomAnimalRepository
 import com.devcris80.prototipo.data.repository.RoomChapetaRepository
+import com.devcris80.prototipo.data.repository.RoomConflictoRepository
 import com.devcris80.prototipo.data.repository.RoomCuentaRepository
 import com.devcris80.prototipo.data.repository.RoomEventoRepository
 import com.devcris80.prototipo.data.repository.RoomPesajePendienteRepository
+import com.devcris80.prototipo.data.repository.RoomRechazoRepository
 import com.devcris80.prototipo.data.repository.RoomRegistroRepository
 import com.devcris80.prototipo.data.repository.RoomTransaccion
+import com.devcris80.prototipo.data.repository.SupabaseSesionRepository
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
+import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
+import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.SesionRepository
+import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
+import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
+import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
+import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
 
 /**
@@ -43,6 +56,20 @@ class AppContainer(context: Context) {
         RoomPesajePendienteRepository(database.pesajePendienteDao())
     val cuentaRepository: CuentaRepository =
         RoomCuentaRepository(database.perfilFincaDao(), database.usuarioDao())
+    val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database.siblingDao())
+    val rechazoRepository: RechazoRepository = RoomRechazoRepository(database.rechazoDao())
+
+    private val sesionCifrada = SesionCifrada(context)
+    private val supabase = crearClienteSupabase(sesionCifrada)
+    val sesionRepository: SesionRepository = SupabaseSesionRepository(
+        supabase,
+        sesionCifrada,
+        database.perfilFincaDao(),
+        database.usuarioDao(),
+        transaccion,
+    )
+    val sincronizacionRepository: SincronizacionRepository =
+        MotorSincronizacion(SupabaseServidorSincronizacion(supabase), database)
 
     val registrarPesaje = RegistrarPesaje(
         chapetaRepository,
@@ -52,6 +79,8 @@ class AppContainer(context: Context) {
         cuentaRepository,
         transaccion,
     )
+    val registrarPesajeManual =
+        RegistrarPesajeManual(animalRepository, registroRepository, cuentaRepository, transaccion)
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
@@ -69,6 +98,12 @@ class AppContainer(context: Context) {
     )
     val descartarPesajePendiente =
         DescartarPesajePendiente(pesajePendienteRepository, cuentaRepository, transaccion)
-
-    val seedData = SeedData(cuentaRepository, animalRepository, chapetaRepository, registrarAnimal)
+    val observarIndicadoresHato = ObservarIndicadoresHato(
+        animalRepository,
+        chapetaRepository,
+        registroRepository,
+        pesajePendienteRepository,
+        eventoRepository,
+    )
+    val observarEvolucionPeso = ObservarEvolucionPeso(registroRepository)
 }

@@ -1,0 +1,43 @@
+@startuml DS-02_descarga
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DS-02] Mecanismo de sincronización 2: descarga incremental por cursor (CU-20, RF-36, RF-38, RNF-09)
+
+Container_Boundary(app, "App MiGanado")
+  Component(motor, "DAT-05 Motor de sincronización", "WorkManager", $tags="planificado")
+  Component(repos, "DAT-01 Repositorios locales", "Room", $tags="parcial")
+  Component(fotos, "DAT-06 Gestor de fotos", "FileProvider, WebP", $tags="parcial")
+Boundary_End()
+Container(rest, "API de datos", "PostgREST", $tags="planificado")
+Container_Boundary(bd, "Base de datos central (PostgreSQL con RLS)")
+  Component(descarga, "BD-04 descargar_cambios", "PL/pgSQL, SECURITY INVOKER", $tags="planificado")
+  ComponentDb(tablas, "BD-07 Tablas", "PostgreSQL", $tags="planificado")
+Boundary_End()
+Container(storage, "Almacenamiento de fotos", "Supabase Storage", $tags="planificado")
+
+Rel(motor, repos, "Lee el último cursor aplicado (después de terminar la subida)")
+Rel(motor, rest, "Llama descargar_cambios con el cursor, menos el margen de solapamiento, y un límite de filas", "HTTPS/JSON + JWT")
+Rel(rest, descarga, "Verifica el JWT y ejecuta la función como el usuario")
+Rel(descarga, tablas, "Filas con cursor posterior; RLS deja solo las de su finca", "SQL")
+Rel(descarga, rest, "Una página de filas con su rev, los siblings sin resolver y el nuevo cursor")
+Rel(rest, motor, "Página de cambios", "HTTPS/JSON")
+Rel(motor, repos, "Aplica por id y rev sin duplicar y guarda el cursor; repite hasta la última página y registra la fecha de la última sincronización")
+Rel(motor, fotos, "Pide las fotos nuevas de los animales recibidos")
+Rel(fotos, storage, "Descarga las fotos WebP", "HTTPS + JWT")
+
+note over motor, repos
+  Regla de aplicación: una fila local con sincronizado = false no se sobrescribe con la descargada. Conserva su rev_base, y en la siguiente subida el servidor decide si es sibling. El cursor se guarda después de aplicar cada página, así que una descarga cortada se retoma donde quedó.
+end note
+
+SHOW_LEGEND()
+@enduml

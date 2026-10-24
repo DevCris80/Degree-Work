@@ -1,0 +1,53 @@
+@startuml DS-01_subida
+!include <C4/C4_Sequence>
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("person\nexternal_system\ncontainer\ncomponent")
+UpdateElementStyle("person", $legendText="Actor externo")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Contenedor implementado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Planificado")
+autonumber
+skinparam wrapWidth 320
+
+title [Dinámico DS-01] Mecanismo de sincronización 1: subida con control de revisiones (CU-20, RF-32, RF-33, RF-35)
+
+Person(usuario, "Ganadero u Operario")
+Container_Boundary(app, "App MiGanado")
+  Component(uiSync, "UI-07 Sincronización", "Compose", $tags="planificado")
+  Component(motor, "DAT-05 Motor de sincronización", "WorkManager", $tags="planificado")
+  Component(sesion, "DAT-03 Sesión y autenticación", "supabase-kt Auth", $tags="planificado")
+  Component(repos, "DAT-01 Repositorios locales", "Room", $tags="parcial")
+Boundary_End()
+Container(rest, "API de datos", "PostgREST", $tags="planificado")
+Container_Boundary(bd, "Base de datos central (PostgreSQL con RLS)")
+  Component(subida, "BD-01 subir_cambios", "PL/pgSQL, SECURITY INVOKER", $tags="planificado")
+  Component(rev, "BD-02 Control de revisiones", "PL/pgSQL", $tags="planificado")
+  Component(clasif, "BD-03 Clasificador de resultados", "PL/pgSQL", $tags="planificado")
+  ComponentDb(tablas, "BD-07 Tablas", "PostgreSQL", $tags="planificado")
+Boundary_End()
+
+Rel(usuario, uiSync, "Toca «Sincronizar ahora» (o la app se abre o guarda un cambio)")
+Rel(uiSync, motor, "Encola la sincronización")
+Rel(motor, repos, "Lee un lote de filas con sincronizado = false, de padres a hijos; las editables llevan rev_base e id_version")
+Rel(motor, sesion, "Pide el JWT vigente (lo renueva si venció)")
+Rel(motor, rest, "Llama subir_cambios con el lote", "HTTPS/JSON + JWT")
+Rel(rest, subida, "Verifica el JWT y ejecuta la función como el usuario (rol authenticated y claims)")
+Rel(subida, rev, "Procesa cada fila del lote")
+Rel(rev, tablas, "Lee la revisión vigente con FOR UPDATE y escribe; RLS filtra finca y rol", "SQL")
+Rel(rev, clasif, "Clasifica: aceptada (rev + 1), sibling o rechazada")
+Rel(subida, rest, "Devuelve un resultado por fila")
+Rel(rest, motor, "Aceptada con su rev, sibling con la revisión vigente, o rechazada con motivo", "HTTPS/JSON")
+Rel(motor, repos, "Aceptadas: sincronizado = true. Sibling: guarda la vigente y la edición local como sibling. Rechazadas: pasan a la bandeja")
+
+note over motor, repos
+  La subida va por lotes pequeños y cada lote se confirma por separado. Si se pierde la señal a mitad (CU-20 1a), las filas sin confirmar siguen con sincronizado = false y se reenvían. Reenviar no duplica: una fila nueva se reconoce por su UUID y una edición por su id_version (ADR-0004).
+end note
+
+note over rev, clasif
+  Una baja (fechaBaja, fechaDesasociacion) se aplica sobre la revisión vigente aunque rev_base sea viejo. Entidades sin revisión (Chapeta, Pesaje pendiente): se insertan por UUID; una violación de unicidad (RN-01, RN-21) o de permisos se devuelve como rechazo de esa fila, sin abortar el lote.
+end note
+
+SHOW_LEGEND()
+@enduml

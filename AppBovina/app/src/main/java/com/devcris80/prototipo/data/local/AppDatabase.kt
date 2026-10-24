@@ -7,17 +7,23 @@ import androidx.room.RoomDatabase
 import androidx.sqlite.db.SupportSQLiteDatabase
 import com.devcris80.prototipo.data.local.dao.AnimalDao
 import com.devcris80.prototipo.data.local.dao.ChapetaDao
+import com.devcris80.prototipo.data.local.dao.EstadoSyncDao
 import com.devcris80.prototipo.data.local.dao.EventoDao
 import com.devcris80.prototipo.data.local.dao.PerfilFincaDao
 import com.devcris80.prototipo.data.local.dao.PesajePendienteDao
+import com.devcris80.prototipo.data.local.dao.RechazoDao
 import com.devcris80.prototipo.data.local.dao.RegistroDao
+import com.devcris80.prototipo.data.local.dao.SiblingDao
 import com.devcris80.prototipo.data.local.dao.UsuarioDao
 import com.devcris80.prototipo.data.local.entity.AnimalEntity
 import com.devcris80.prototipo.data.local.entity.ChapetaEntity
+import com.devcris80.prototipo.data.local.entity.EstadoSyncEntity
 import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.PesajePendienteEntity
+import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
+import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 
 @Database(
@@ -29,8 +35,11 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         PerfilFincaEntity::class,
         UsuarioEntity::class,
         PesajePendienteEntity::class,
+        SiblingEntity::class,
+        RechazoEntity::class,
+        EstadoSyncEntity::class,
     ],
-    version = 11,
+    version = 13,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -41,6 +50,9 @@ abstract class AppDatabase : RoomDatabase() {
     abstract fun perfilFincaDao(): PerfilFincaDao
     abstract fun usuarioDao(): UsuarioDao
     abstract fun pesajePendienteDao(): PesajePendienteDao
+    abstract fun siblingDao(): SiblingDao
+    abstract fun rechazoDao(): RechazoDao
+    abstract fun estadoSyncDao(): EstadoSyncDao
 
     companion object {
         const val INDICE_CHAPETA_CODIGO_ACTIVA = "index_chapeta_codigo_activa"
@@ -68,7 +80,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // La versión 10 es el primer esquema exportado: desde ahí cada cambio lleva su
                     // Migration. Una instalación anterior no tiene cómo migrarse y se recrea vacía.
                     .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-                    .addMigrations(MIGRACION_10_11)
+                    .addMigrations(MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13)
                     .addCallback(CALLBACK_INDICES_CHAPETA)
                     .build()
                     .also { instance = it }

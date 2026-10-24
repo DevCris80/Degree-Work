@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.ui.util
 
+import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
@@ -28,3 +29,6 @@ fun MotivoPesajePendiente.aEtiqueta(): String = when (this) {
     MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA -> "Código sin chapeta activa"
     MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA -> "Animal dado de baja"
 }
+
+/** El nombre de un Animal, marcado si está dado de baja (por ejemplo, un padre que ya salió de la finca). */
+fun Animal.nombreConBaja(): String = if (activo) nombre else "$nombre (dado de baja)"

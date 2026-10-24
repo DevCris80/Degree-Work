@@ -40,7 +40,7 @@ class AsignarPesajesPendientes(
     suspend operator fun invoke(idsPesajePendiente: List<String>, idAnimal: String): Resultado =
         transaccion.ejecutar {
             val animal = animalRepository.findById(idAnimal)
-            if (animal == null || animal.fechaBaja != null) return@ejecutar Resultado.AnimalNoDisponible
+            if (animal?.activo != true) return@ejecutar Resultado.AnimalNoDisponible
 
             val pendientes = idsPesajePendiente.distinct().map { id ->
                 pesajePendienteRepository.findById(id)?.takeIf { it.conciliacion == null }

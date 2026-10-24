@@ -3,6 +3,7 @@ package com.devcris80.prototipo.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Update
 import com.devcris80.prototipo.data.local.entity.PesajePendienteEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -37,4 +38,16 @@ interface PesajePendienteDao {
         fecha: Long,
         fechaModificacion: Long,
     )
+
+    // Lo que usa la subida (MotorSincronizacion). Sus escrituras no llevan EDICION_LOCAL.
+    /** Los Pesajes pendientes con cambios por subir, del cambio más antiguo al más reciente. */
+    @Query("SELECT * FROM pesaje_pendiente WHERE sincronizado = 0 ORDER BY fechaModificacion")
+    suspend fun findPendientes(): List<PesajePendienteEntity>
+
+    @Update
+    suspend fun update(pesajePendiente: PesajePendienteEntity)
+
+    // Solo para un Pesaje pendiente que el servidor rechazó y no tiene (ADR-0004, regla 7).
+    @Query("DELETE FROM pesaje_pendiente WHERE idPesajePendiente = :idPesajePendiente")
+    suspend fun delete(idPesajePendiente: String)
 }

@@ -21,14 +21,13 @@ import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Nfc
 import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
+import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.PhotoLibrary
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
 import androidx.compose.material3.Checkbox
-import androidx.compose.material3.DatePicker
-import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.ExposedDropdownMenuBox
@@ -45,7 +44,6 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.rememberDatePickerState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
@@ -57,19 +55,20 @@ import androidx.compose.runtime.setValue
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import android.net.Uri
-import androidx.compose.material3.SelectableDates
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.createSavedStateHandle
+import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.BovinaFilterChip
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
+import com.devcris80.prototipo.ui.components.DialogoFechaHastaHoy
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.CampoConIcono
@@ -80,6 +79,7 @@ import com.devcris80.prototipo.ui.theme.Prototipo1Theme
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
 import com.devcris80.prototipo.ui.util.crearArchivoFotoUri
+import com.devcris80.prototipo.ui.util.nombreConBaja
 import kotlinx.coroutines.launch
 import java.text.SimpleDateFormat
 import java.util.Date
@@ -101,6 +101,7 @@ fun RegistrarAnimalScreen(
             savedState.get<String>("codigo"),
             savedState.get<String>("aviso"),
             container.cuentaRepository,
+            container.animalRepository,
             container.registrarAnimal,
             container.asignarPesajesPendientes,
         )
@@ -166,6 +167,8 @@ fun RegistrarAnimalScreen(
         onFechaNacimientoCambiada = viewModel::onFechaNacimientoCambiada,
         onFechaEstimadaCambiada = viewModel::onFechaEstimadaCambiada,
         onPropositoSeleccionado = viewModel::onPropositoSeleccionado,
+        onPadreSeleccionado = viewModel::onPadreSeleccionado,
+        onMadreSeleccionada = viewModel::onMadreSeleccionada,
         onGuardar = viewModel::onGuardar,
         onOfertaPesajesPendientesRespondida = viewModel::onOfertaPesajesPendientesRespondida,
     )
@@ -188,6 +191,8 @@ private fun RegistrarAnimalContent(
     onFechaNacimientoCambiada: (Long) -> Unit,
     onFechaEstimadaCambiada: (Boolean) -> Unit,
     onPropositoSeleccionado: (Proposito) -> Unit,
+    onPadreSeleccionado: (String?) -> Unit,
+    onMadreSeleccionada: (String?) -> Unit,
     onGuardar: () -> Unit,
     onOfertaPesajesPendientesRespondida: (Boolean) -> Unit,
 ) {
@@ -325,27 +330,11 @@ private fun RegistrarAnimalContent(
             }
 
             if (mostrarSelectorFecha) {
-                val selectorState = rememberDatePickerState(
-                    initialSelectedDateMillis = estado.fechaNacimiento ?: System.currentTimeMillis(),
-                    selectableDates = object : SelectableDates {
-                        override fun isSelectableDate(utcTimeMillis: Long): Boolean =
-                            utcTimeMillis <= System.currentTimeMillis()
-                    },
+                DialogoFechaHastaHoy(
+                    fecha = estado.fechaNacimiento ?: System.currentTimeMillis(),
+                    onAceptar = onFechaNacimientoCambiada,
+                    onCerrar = { mostrarSelectorFecha = false },
                 )
-                DatePickerDialog(
-                    onDismissRequest = { mostrarSelectorFecha = false },
-                    confirmButton = {
-                        TextButton(onClick = {
-                            selectorState.selectedDateMillis?.let(onFechaNacimientoCambiada)
-                            mostrarSelectorFecha = false
-                        }) { Text("Aceptar") }
-                    },
-                    dismissButton = {
-                        TextButton(onClick = { mostrarSelectorFecha = false }) { Text("Cancelar") }
-                    },
-                ) {
-                    DatePicker(state = selectorState)
-                }
             }
 
             Text("Propósito productivo", style = MaterialTheme.typography.labelLarge)
@@ -359,6 +348,19 @@ private fun RegistrarAnimalContent(
                     )
                 }
             }
+
+            SelectorProgenitor(
+                label = "Padre (opcional)",
+                candidatos = estado.candidatosPadre,
+                idSeleccionado = estado.idPadre,
+                onSeleccionado = onPadreSeleccionado,
+            )
+            SelectorProgenitor(
+                label = "Madre (opcional)",
+                candidatos = estado.candidatosMadre,
+                idSeleccionado = estado.idMadre,
+                onSeleccionado = onMadreSeleccionada,
+            )
 
             BovinaPrimaryButton(
                 texto = "Guardar animal",
@@ -424,9 +426,52 @@ private fun RegistrarAnimalPreview() {
             onFechaNacimientoCambiada = {},
             onFechaEstimadaCambiada = {},
             onPropositoSeleccionado = {},
+            onPadreSeleccionado = {},
+            onMadreSeleccionada = {},
             onGuardar = {},
             onOfertaPesajesPendientesRespondida = {},
         )
+    }
+}
+
+/** Elige el padre o la madre entre los candidatos, o ninguno. Los dados de baja también se pueden elegir. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+private fun SelectorProgenitor(
+    label: String,
+    candidatos: List<Animal>,
+    idSeleccionado: String?,
+    onSeleccionado: (String?) -> Unit,
+) {
+    var expandido by remember { mutableStateOf(false) }
+    val seleccionado = candidatos.firstOrNull { it.idAnimal == idSeleccionado }
+    ExposedDropdownMenuBox(expanded = expandido, onExpandedChange = { expandido = it }) {
+        CampoConIcono(
+            label = label,
+            value = seleccionado?.nombreConBaja() ?: "Sin registrar",
+            onValueChange = {},
+            icon = Icons.Filled.Pets,
+            readOnly = true,
+            modifier = Modifier.menuAnchor(MenuAnchorType.PrimaryNotEditable, enabled = true),
+        )
+        ExposedDropdownMenu(expanded = expandido, onDismissRequest = { expandido = false }) {
+            DropdownMenuItem(
+                text = { Text("Sin registrar") },
+                onClick = {
+                    onSeleccionado(null)
+                    expandido = false
+                },
+            )
+            candidatos.forEach { candidato ->
+                DropdownMenuItem(
+                    text = { Text(candidato.nombreConBaja()) },
+                    onClick = {
+                        onSeleccionado(candidato.idAnimal)
+                        expandido = false
+                    },
+                )
+            }
+        }
     }
 }
 

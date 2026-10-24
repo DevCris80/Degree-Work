@@ -1,0 +1,40 @@
+@startuml C3_componentes_bd
+!include <C4/C4_Component>
+
+title [Nivel 3] Diagrama de componentes — Base de datos central (Supabase)
+
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("container")
+UpdateElementStyle("container", $legendText="Otro contenedor de MiGanado")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Componente o contenedor planificado")
+AddRelTag("planificado", $lineStyle=DashedLine(), $legendText="Comunicación planificada (línea punteada)")
+
+Container(app, "App MiGanado", "Kotlin, Jetpack Compose")
+Container(auth, "Supabase Auth", "GoTrue", $tags="planificado")
+Container(rest, "API de datos", "PostgREST", "Verifica el JWT y ejecuta cada función con el rol authenticated y los claims del usuario.", $tags="planificado")
+
+Container_Boundary(pg, "Base de datos central (PostgreSQL con RLS)") {
+  Component(subida, "BD-01 subir_cambios", "Función PL/pgSQL, SECURITY INVOKER", "Recibe un lote de filas (las editables con rev_base e id_version) y devuelve un resultado por fila.", $tags="planificado")
+  Component(revisiones, "BD-02 Control de revisiones", "PL/pgSQL", "Lee la revisión vigente con FOR UPDATE y compara rev_base: acepta con rev + 1 o guarda un sibling. Reconoce un id_version ya procesado, aplica la baja sobre la vigente y marca resueltos los siblings que nombra una resolución.", $tags="planificado")
+  Component(resultados, "BD-03 Clasificador de resultados", "PL/pgSQL", "Traduce errores de unicidad (RN-01, RN-21) y de permisos (RLS) en rechazos con motivo, sin abortar el lote.", $tags="planificado")
+  Component(descarga, "BD-04 descargar_cambios", "Función PL/pgSQL, SECURITY INVOKER", "Devuelve una página de filas con cursor mayor que el recibido, con margen de solapamiento, los siblings sin resolver y el nuevo cursor.", $tags="planificado")
+  Component(rls, "BD-05 Políticas RLS", "PostgreSQL", "Filtran cada tabla por finca y rol. Ninguna permite DELETE.", $tags="planificado")
+  Component(finca, "BD-06 Funciones de finca", "Funciones PL/pgSQL, SECURITY DEFINER", "crear_finca, generar_invitacion, canjear_invitacion y quitar_operario. Validan rol y finca dentro de la función.", $tags="planificado")
+  ComponentDb(tablas, "BD-07 Tablas", "PostgreSQL", "Datos de las fincas con su cursor (secuencia global), revisiones, siblings, invitaciones y aceptaciones de datos.", $tags="planificado")
+}
+
+Rel(app, rest, "Llama subir_cambios y descargar_cambios", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(app, rest, "Crea la finca y gestiona invitaciones", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(rest, auth, "Verifica con la clave de firma de Supabase Auth", $tags="planificado")
+Rel(rest, subida, "Ejecuta como el usuario", $tags="planificado")
+Rel(rest, descarga, "Ejecuta como el usuario", $tags="planificado")
+Rel(rest, finca, "Ejecuta", $tags="planificado")
+Rel(subida, revisiones, "Procesa cada fila", $tags="planificado")
+Rel(revisiones, resultados, "Clasifica el resultado de cada fila", $tags="planificado")
+Rel(revisiones, tablas, "Lee la revisión vigente y escribe", "SQL", $tags="planificado")
+Rel(descarga, tablas, "Consulta por cursor", "SQL", $tags="planificado")
+Rel(rls, tablas, "Restringe las filas por finca y rol", $tags="planificado")
+Rel(finca, tablas, "Crea la finca, las invitaciones y los Usuarios", "SQL", $tags="planificado")
+
+SHOW_LEGEND()
+@enduml

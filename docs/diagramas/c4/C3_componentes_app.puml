@@ -1,0 +1,87 @@
+@startuml C3_componentes_app
+!include <C4/C4_Component>
+
+title [Nivel 3] Diagrama de componentes — App MiGanado
+
+UpdateLegendTitle("Leyenda")
+SetDefaultLegendEntries("external_system\ncontainer\ncomponent")
+UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
+UpdateElementStyle("container", $legendText="Otro contenedor de MiGanado")
+UpdateElementStyle("component", $legendText="Componente implementado")
+AddElementTag("parcial", $bgColor="#f3d27a", $fontColor="#222222", $borderColor="#9a7b1c", $legendText="Componente parcial (existe, falta parte del alcance)")
+AddElementTag("planificado", $bgColor="#d9e2ec", $fontColor="#222222", $borderColor="#5a6b7d", $borderStyle=DashedLine(), $legendText="Componente o contenedor planificado")
+AddRelTag("planificado", $lineStyle=DashedLine(), $legendText="Comunicación planificada (línea punteada)")
+
+System_Ext(chapeta, "Chapeta NFC", "NTAG215, 13,56 MHz")
+System_Ext(bascula, "Báscula IoT (ESP32)", "UID y peso simulados")
+
+Container_Boundary(app, "App MiGanado (Kotlin, Jetpack Compose)") {
+
+  Boundary(ui, "Capa de presentación (pantallas Compose + ViewModel)", "paquete ui") {
+    Component(uiCuenta, "UI-01 Cuenta y acceso", "Compose, ViewModel", "Estado: parcial. Crear cuenta, iniciar sesión, recuperar contraseña y autorización Ley 1581.", $tags="parcial")
+    Component(uiAnimales, "UI-02 Animales", "Compose, ViewModel", "Estado: parcial. Lista, detalle con historial y genealogía, registro, baja y liberación de chapeta. Faltan edición y asociar chapeta.", $tags="parcial")
+    Component(uiEscanear, "UI-03 Escanear", "Compose, NfcAdapter (modo lector NFC-A)", "Lee el UID de la chapeta y decide el destino del código.")
+    Component(uiPesajes, "UI-04 Pesajes", "Compose, ViewModel", "Estado: parcial. Inicia y detiene el servicio de pesaje, concilia pendientes y registra el pesaje manual. Falta ocultar al Operario lo que su rol no permite.", $tags="parcial")
+    Component(uiEventos, "UI-05 Eventos", "Compose, ViewModel", "Estado: parcial. Registro de eventos. Faltan fecha real, subtipos, edición y baja.", $tags="parcial")
+    Component(uiFinca, "UI-06 Finca y usuarios", "Compose, ViewModel, ubicación del sistema", "Invitación, quitar Operario y ubicación de la finca.", $tags="planificado")
+    Component(uiSync, "UI-07 Sincronización", "Compose, ViewModel", "Estado y fecha de la última sincronización, bandeja de conflictos y bandeja de rechazos.", $tags="planificado")
+    Component(uiInd, "UI-08 Indicadores", "Compose, ViewModel", "Inventario, evolución de peso, pendientes, eventos por mes y completitud del historial, calculados sobre Room.")
+  }
+
+  Boundary(dom, "Capa de dominio (módulo :domain, Kotlin puro)", "módulo Gradle") {
+    Component(domCuenta, "DOM-01 Cuenta y permisos", "Kotlin", "Estado: parcial. Caso de uso CrearCuenta. Falta la política de permisos por rol (verificación sin señal).", $tags="parcial")
+    Component(domAnimales, "DOM-02 Animales y chapetas", "Kotlin", "Estado: parcial. RegistrarAnimal (con padre y madre), DarDeBajaAnimal, LiberarChapeta, ResolverDestinoEscaneo y normalización del código. Faltan edición y asociar chapeta.", $tags="parcial")
+    Component(domPesajes, "DOM-03 Pesajes", "Kotlin", "RegistrarPesaje (idempotente, hora = recepción − antiguedad_ms), RegistrarPesajeManual, asignar y descartar pendientes.")
+    Component(domEventos, "DOM-04 Eventos y revisiones", "Kotlin", "Subtipos de evento, edición con rev_base y baja lógica de eventos y pesajes.", $tags="planificado")
+    Component(domInd, "DOM-05 Indicadores", "Kotlin", "ObservarIndicadoresHato y ObservarEvolucionPeso: inventario, ganancia diaria de peso, pendientes, eventos por mes y completitud del historial.")
+  }
+
+  Boundary(data, "Capa de datos (paquete data y service)", "paquete") {
+    Component(repos, "DAT-01 Repositorios locales", "Room DAO, transacciones", "Estado: parcial. Única puerta a Room: escribe con sincronizado = false y fechaModificacion. Faltan campos de revisión y estado de sincronización.", $tags="parcial")
+    Component(srvPesaje, "DAT-02 Servidor de pesajes", "NanoHTTPD en servicio en primer plano", "POST /pesaje en el puerto 8080: valida el cuerpo y responde 201, 202, 400, 503 o 500.")
+    Component(sesion, "DAT-03 Sesión y autenticación", "supabase-kt Auth, almacenamiento cifrado con Android Keystore", "Guarda y renueva el JWT fuera de Room.", $tags="planificado")
+    Component(funciones, "DAT-04 Funciones de finca", "supabase-kt PostgREST (rpc)", "Llama crear_finca, generar_invitacion, canjear_invitacion y quitar_operario.", $tags="planificado")
+    Component(motorSync, "DAT-05 Motor de sincronización", "WorkManager, supabase-kt PostgREST (rpc)", "Sube por lotes las filas con sincronizado = false, aplica la respuesta por fila (aceptada, sibling o rechazada) y descarga por cursor.", $tags="planificado")
+    Component(fotos, "DAT-06 Gestor de fotos", "FileProvider, conversión a WebP", "Estado: parcial. Captura y guarda la foto local. Faltan la conversión a WebP y la subida y descarga.", $tags="parcial")
+  }
+}
+
+ContainerDb(room, "Base de datos local", "Room 2.8 sobre SQLite")
+Container(auth, "Supabase Auth", "GoTrue", $tags="planificado")
+Container(rest, "API de datos", "PostgREST", $tags="planificado")
+Container(storage, "Almacenamiento de fotos", "Supabase Storage", $tags="planificado")
+
+Rel(uiEscanear, chapeta, "Lee el UID", "NFC-A")
+Rel(bascula, srvPesaje, "Envía UID de la chapeta y peso", "HTTP/JSON, puerto 8080")
+
+Rel(uiCuenta, domCuenta, "Crea la cuenta")
+Rel(uiAnimales, domAnimales, "Registra, da de baja y libera")
+Rel(uiEscanear, domAnimales, "Resuelve el destino del código")
+Rel(uiPesajes, domPesajes, "Asigna y descarta pendientes")
+Rel(uiEventos, repos, "Registra eventos")
+Rel(uiEventos, domEventos, "Edita y da de baja", $tags="planificado")
+Rel(uiFinca, funciones, "Invita, quita y crea la finca", $tags="planificado")
+Rel(uiSync, motorSync, "Sincronizar ahora; consulta estado", $tags="planificado")
+Rel(uiInd, domInd, "Pide los indicadores")
+Rel(uiAnimales, repos, "Observa animales e historial", "Flow")
+
+Rel(srvPesaje, domPesajes, "Registra el pesaje recibido")
+Rel(domCuenta, repos, "Guarda finca y usuario")
+Rel(domAnimales, repos, "Lee y escribe")
+Rel(domPesajes, repos, "Lee y escribe")
+Rel(domEventos, repos, "Lee y escribe", $tags="planificado")
+Rel(domInd, repos, "Lee")
+Rel(domCuenta, sesion, "Inicia sesión y crea la identidad", $tags="planificado")
+Rel(domCuenta, funciones, "Crea la finca o canjea el código", $tags="planificado")
+
+Rel(repos, room, "Lee y escribe", "SQL")
+Rel(motorSync, repos, "Lee pendientes y aplica cambios", $tags="planificado")
+Rel(motorSync, sesion, "Obtiene el JWT vigente", $tags="planificado")
+Rel(motorSync, rest, "Llama subir_cambios y descargar_cambios", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(motorSync, fotos, "Sube y descarga fotos pendientes", $tags="planificado")
+Rel(fotos, storage, "Sube y descarga WebP", "HTTPS + JWT", $tags="planificado")
+Rel(sesion, auth, "Crea cuenta, inicia y renueva sesión", "HTTPS", $tags="planificado")
+Rel(funciones, rest, "Llama las funciones", "HTTPS/JSON + JWT", $tags="planificado")
+
+SHOW_LEGEND()
+@enduml

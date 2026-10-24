@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.ui.screens
 
+import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
@@ -45,6 +46,7 @@ class RegistrarAnimalViewModelTest {
             codigoPrecargado,
             avisoAnterior,
             cuentaRepository,
+            animalRepository,
             RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, FakeTransaccion()),
             AsignarPesajesPendientes(
                 pesajePendienteRepository,
@@ -90,6 +92,69 @@ class RegistrarAnimalViewModelTest {
         idUsuario = UUID.randomUUID().toString(),
         motivo = MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA,
     )
+
+    private fun progenitor(nombre: String, sexo: Sexo, etapa: Etapa) = Animal(
+        idAnimal = UUID.randomUUID().toString(),
+        idPerfilFinca = "perfil_local",
+        nombre = nombre,
+        raza = "Cebú",
+        sexo = sexo,
+        etapa = etapa,
+        fechaNacimiento = 0L,
+        proposito = Proposito.CARNE,
+    )
+
+    @Test
+    fun losCandidatosAPadreSonLosMachosYAMadreLasHembras() {
+        val toro = progenitor("Zeus", Sexo.MACHO, Etapa.TORO)
+        val vaca = progenitor("Lola", Sexo.HEMBRA, Etapa.VACA)
+        animalRepository.activos.value = listOf(toro, vaca)
+
+        val estado = crearViewModel().estado.value
+
+        assertEquals(listOf(toro), estado.candidatosPadre)
+        assertEquals(listOf(vaca), estado.candidatosMadre)
+    }
+
+    @Test
+    fun unToroDadoDeBajaSigueSiendoCandidato_despuesDeLosActivos() {
+        val vendido = progenitor("Atlas", Sexo.MACHO, Etapa.TORO).copy(fechaBaja = 5L)
+        val activo = progenitor("Zeus", Sexo.MACHO, Etapa.TORO)
+        animalRepository.set(vendido)
+        animalRepository.activos.value = listOf(activo)
+
+        assertEquals(listOf(activo, vendido), crearViewModel().estado.value.candidatosPadre)
+    }
+
+    @Test
+    fun guardarConPadreYMadre_losGuardaEnElAnimal() = runTest {
+        val toro = progenitor("Zeus", Sexo.MACHO, Etapa.TORO)
+        val vaca = progenitor("Lola", Sexo.HEMBRA, Etapa.VACA)
+        animalRepository.activos.value = listOf(toro, vaca)
+        val viewModel = crearViewModel()
+        llenarFormularioValido(viewModel)
+        viewModel.onPadreSeleccionado(toro.idAnimal)
+        viewModel.onMadreSeleccionada(vaca.idAnimal)
+
+        viewModel.onGuardar()
+
+        assertEquals(RegistrarAnimalEvento.Guardado, viewModel.eventos.first())
+        val guardado = animalRepository.insertados.single()
+        assertEquals(toro.idAnimal, guardado.idPadre)
+        assertEquals(vaca.idAnimal, guardado.idMadre)
+    }
+
+    @Test
+    fun quitarElPadreElegido_loDejaSinPadre() {
+        val toro = progenitor("Zeus", Sexo.MACHO, Etapa.TORO)
+        animalRepository.activos.value = listOf(toro)
+        val viewModel = crearViewModel()
+        viewModel.onPadreSeleccionado(toro.idAnimal)
+
+        viewModel.onPadreSeleccionado(null)
+
+        assertEquals(null, viewModel.estado.value.idPadre)
+    }
 
     @Test
     fun codigoPrecargado_quedaDeSoloLecturaConElAviso() {
