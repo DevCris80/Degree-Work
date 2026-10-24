@@ -13,6 +13,10 @@ interface SiblingDao {
     @Insert(onConflict = OnConflictStrategy.IGNORE)
     suspend fun insert(sibling: SiblingEntity)
 
+    // Un sibling resuelto, en este celular o en otro, sale de la tabla; el servidor lo conserva.
+    @Query("DELETE FROM sibling WHERE idVersion = :idVersion")
+    suspend fun delete(idVersion: String)
+
     @Query("SELECT EXISTS(SELECT 1 FROM sibling WHERE entidad = :entidad AND idFila = :idFila)")
     fun observeEnConflicto(entidad: String, idFila: String): Flow<Boolean>
 

@@ -9,7 +9,7 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
-import com.devcris80.prototipo.domain.repository.ResultadoSubida
+import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
@@ -108,7 +108,7 @@ class ListaAnimalesViewModel(
         if (sincronizacion.value.sincronizando) return
         sincronizacion.value = EstadoSincronizacion(sincronizando = true)
         viewModelScope.launch {
-            val resultado = sincronizacionRepository.subirCambios()
+            val resultado = sincronizacionRepository.sincronizar()
             sincronizacion.value = EstadoSincronizacion(aviso = resultado.aviso())
         }
     }
@@ -123,12 +123,12 @@ class ListaAnimalesViewModel(
     }
 }
 
-private fun ResultadoSubida.aviso(): String = when (this) {
-    is ResultadoSubida.Completa -> buildString {
-        append("Cambios subidos.")
+private fun ResultadoSincronizacion.aviso(): String = when (this) {
+    is ResultadoSincronizacion.Completa -> buildString {
+        append("Sincronizado.")
         if (enConflicto > 0) append(" $enConflicto en conflicto.")
         if (rechazados > 0) append(" $rechazados rechazados.")
     }
-    ResultadoSubida.SinConexion -> "Sin señal. Los cambios quedan en el celular y se suben después."
-    ResultadoSubida.NoSePudo -> "No se pudo sincronizar. Intenta de nuevo."
+    ResultadoSincronizacion.SinConexion -> "Sin señal. Lo que falta se sincroniza después."
+    ResultadoSincronizacion.NoSePudo -> "No se pudo sincronizar. Intenta de nuevo."
 }

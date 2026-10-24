@@ -410,6 +410,76 @@ fun PesajePendienteEntity.conLaDelServidor(fila: JsonObject) = copy(
     sincronizado = true,
 )
 
+// Filas que llegan en la descarga y el celular no tiene. Nunca se editaron en este celular, así que su idVersion
+// queda vacío: solo sube una fila con sincronizado = false, y toda edición local le da uno (EDICION_LOCAL).
+
+fun JsonObject.aAnimalEntity() = AnimalEntity(
+    idAnimal = texto("id_animal"),
+    idPerfilFinca = texto("id_perfil_finca"),
+    nombre = texto("nombre"),
+    raza = texto("raza"),
+    sexo = texto("sexo"),
+    etapa = texto("etapa"),
+    fechaNacimiento = fecha("fecha_nacimiento"),
+    proposito = texto("proposito"),
+    fechaModificacion = fecha("fecha_modificacion"),
+    idVersion = "",
+).conLaDelServidor(this)
+
+fun JsonObject.aEventoEntity() = EventoEntity(
+    idEvento = texto("id_evento"),
+    idAnimal = texto("id_animal"),
+    idUsuario = texto("id_usuario"),
+    tipoEvento = texto("tipo_evento"),
+    fecha = fecha("fecha"),
+    detalle = texto("detalle"),
+    fechaModificacion = fecha("fecha_modificacion"),
+    idVersion = "",
+).conLaDelServidor(this)
+
+fun JsonObject.aRegistroEntity() = RegistroEntity(
+    idRegistro = texto("id_registro"),
+    idAnimal = texto("id_animal"),
+    idUsuario = texto("id_usuario"),
+    idLectura = textoONulo("id_lectura"),
+    peso = getValue("peso").jsonPrimitive.float,
+    timestamp = fecha("fecha_medicion"),
+    fechaModificacion = fecha("fecha_modificacion"),
+    idVersion = "",
+).conLaDelServidor(this)
+
+fun JsonObject.aChapetaEntity() = ChapetaEntity(
+    idChapeta = texto("id_chapeta"),
+    codigo = texto("codigo"),
+    idAnimal = texto("id_animal"),
+    fechaAsociacion = fecha("fecha_asociacion"),
+    fechaModificacion = fecha("fecha_modificacion"),
+).conLaDelServidor(this)
+
+fun JsonObject.aPesajePendienteEntity() = PesajePendienteEntity(
+    idPesajePendiente = texto("id_pesaje_pendiente"),
+    idLectura = texto("id_lectura"),
+    codigo = texto("codigo"),
+    peso = getValue("peso").jsonPrimitive.float,
+    timestamp = fecha("fecha_medicion"),
+    idUsuario = texto("id_usuario"),
+    motivo = texto("motivo"),
+    fechaModificacion = fecha("fecha_modificacion"),
+).conLaDelServidor(this)
+
+fun JsonObject.aSiblingEntity() = SiblingEntity(
+    idVersion = texto("id_version"),
+    entidad = texto("entidad"),
+    idFila = texto("id_fila"),
+    revBase = getValue("rev_base").jsonPrimitive.int,
+    contenido = getValue("contenido").toString(),
+    idUsuario = texto("id_usuario"),
+    fechaRecepcion = fecha("fecha_recepcion"),
+)
+
+/** Si un sibling que llega en la descarga ya se resolvió, en este celular o en otro. */
+fun JsonObject.siblingResuelto(): Boolean = textoONulo("resuelto_por") != null
+
 internal fun JsonObject.texto(campo: String): String = getValue(campo).jsonPrimitive.content
 
 private fun JsonObject.textoONulo(campo: String): String? = get(campo)?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
