@@ -115,3 +115,17 @@ val MIGRACION_13_14: Migration = object : MigracionBovina(13, 14) {
         db.execSQL("UPDATE `usuario` SET delDispositivo = 1")
     }
 }
+
+/**
+ * 14 → 15: resolver un Conflicto (#84). La tabla `resolucion` guarda los Siblings que una persona resolvió en este
+ * celular hasta que la subida de la edición que los resuelve los nombra al servidor. Solo agrega una tabla.
+ */
+val MIGRACION_14_15: Migration = object : MigracionBovina(14, 15) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL(
+            "CREATE TABLE IF NOT EXISTS `resolucion` (`idVersionSibling` TEXT NOT NULL, `entidad` TEXT NOT NULL, " +
+                "`idFila` TEXT NOT NULL, PRIMARY KEY(`idVersionSibling`))",
+        )
+        db.execSQL("CREATE INDEX IF NOT EXISTS `index_resolucion_entidad_idFila` ON `resolucion` (`entidad`, `idFila`)")
+    }
+}

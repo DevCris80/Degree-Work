@@ -52,6 +52,7 @@ import com.devcris80.prototipo.ui.components.BovinaFilterChip
 import com.devcris80.prototipo.ui.components.BovinaTextField
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.FotoAnimal
+import com.devcris80.prototipo.ui.components.MarcaEnConflicto
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
@@ -78,6 +79,7 @@ fun ListaAnimalesScreen(
             container.observarPesajesPendientes,
             container.sesionRepository,
             container.sincronizacionRepository,
+            container.conflictoRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -214,6 +216,7 @@ fun ListaAnimalesScreen(
             items(listaFiltrada, key = { it.animal.idAnimal }) { item ->
                 TarjetaAnimal(
                     item = item,
+                    enConflicto = item.animal.idAnimal in estado.animalesEnConflicto,
                     onClick = { onAnimalClick(item.animal.idAnimal) },
                 )
             }
@@ -297,6 +300,7 @@ private fun ResumenFinca(
 @Composable
 private fun TarjetaAnimal(
     item: AnimalConResumen,
+    enConflicto: Boolean,
     onClick: () -> Unit,
 ) {
     val animal = item.animal
@@ -322,6 +326,7 @@ private fun TarjetaAnimal(
                     )
                     item.codigoChapeta?.let { PillBadge(texto = "#$it") }
                 }
+                if (enConflicto) MarcaEnConflicto()
                 Text(
                     text = "${animal.raza} · ${animal.etapa.aEtiqueta()}",
                     style = MaterialTheme.typography.bodyMedium,

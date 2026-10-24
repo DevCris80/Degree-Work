@@ -3,10 +3,12 @@ package com.devcris80.prototipo.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
+import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
+import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
@@ -38,6 +40,8 @@ data class ListaAnimalesUiState(
     val animales: List<AnimalConResumen> = emptyList(),
     val filtro: Proposito? = null,
     val pesajesPendientes: Int = 0,
+    /** Los Animales con algún Sibling sin resolver (RN-17). */
+    val animalesEnConflicto: Set<String> = emptySet(),
     val sincronizando: Boolean = false,
     /** Lo que pasó con la última sincronización, hasta que la pantalla lo muestra. */
     val avisoSincronizacion: String? = null,
@@ -58,6 +62,7 @@ class ListaAnimalesViewModel(
     observarPesajesPendientes: ObservarPesajesPendientes,
     private val sesionRepository: SesionRepository,
     private val sincronizacionRepository: SincronizacionRepository,
+    conflictoRepository: ConflictoRepository,
 ) : ViewModel() {
 
     private val filtro = MutableStateFlow<Proposito?>(null)
@@ -96,6 +101,8 @@ class ListaAnimalesViewModel(
             filtro = filtroActual,
             pesajesPendientes = pendientes.size,
         )
+    }.combine(conflictoRepository.observeFilasEnConflicto(EntidadConRevisiones.ANIMAL)) { estado, enConflicto ->
+        estado.copy(animalesEnConflicto = enConflicto)
     }.combine(sincronizacion) { estado, sync ->
         estado.copy(sincronizando = sync.sincronizando, avisoSincronizacion = sync.aviso)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListaAnimalesUiState())

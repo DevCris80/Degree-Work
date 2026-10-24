@@ -11,6 +11,9 @@ import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
+import com.devcris80.prototipo.testing.FakeConflictoRepository
+import com.devcris80.prototipo.testing.conflictoDeAnimal
+import com.devcris80.prototipo.testing.conflictoDeEvento
 import com.devcris80.prototipo.testing.FakeEventoRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
 import kotlinx.coroutines.Dispatchers
@@ -31,6 +34,7 @@ class DetalleAnimalViewModelTest {
     private val eventoRepository = FakeEventoRepository()
     private val registroRepository = FakeRegistroRepository()
     private val chapetaRepository = FakeChapetaRepository()
+    private val conflictoRepository = FakeConflictoRepository()
     private val idAnimal = UUID.randomUUID().toString()
 
     private fun crearViewModel() = DetalleAnimalViewModel(
@@ -41,6 +45,7 @@ class DetalleAnimalViewModelTest {
         chapetaRepository,
         DarDeBajaAnimal(animalRepository, clock = { 5L }),
         LiberarChapeta(chapetaRepository, clock = { 9L }),
+        conflictoRepository,
     )
 
     private fun animal() = Animal(
@@ -84,6 +89,29 @@ class DetalleAnimalViewModelTest {
         assertEquals(listOf(evento), ultimo.eventos)
         assertEquals(listOf(registro), ultimo.registros)
         assertEquals(chapeta, ultimo.chapetaActiva)
+        job.cancel()
+    }
+
+    @Test
+    fun marcaElAnimalYLosEventosEnConflictoSinEsconderlos() = runTest {
+        animalRepository.set(animal())
+        val evento = Evento("evento-1", idAnimal, idUsuario = "usuario", tipoEvento = "vacuna", fecha = 1L, detalle = "aftosa")
+        eventoRepository.set(idAnimal, listOf(evento))
+        conflictoRepository.conflictos.value = listOf(
+            conflictoDeAnimal(idAnimal, "v1" to "Jersey"),
+            conflictoDeEvento("evento-1", "v2"),
+        )
+
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<DetalleAnimalUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        val ultimo = estados.last()
+        assertEquals(true, ultimo.animalEnConflicto)
+        assertEquals(setOf("evento-1"), ultimo.eventosEnConflicto)
+        assertEquals(emptySet<String>(), ultimo.registrosEnConflicto)
+        assertEquals(listOf(evento), ultimo.eventos)
         job.cancel()
     }
 

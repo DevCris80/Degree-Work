@@ -38,6 +38,7 @@ import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
+import com.devcris80.prototipo.domain.usecase.ResolverConflicto
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
 import com.devcris80.prototipo.service.ProgramadorSincronizacion
 
@@ -57,7 +58,7 @@ class AppContainer(context: Context) {
         RoomPesajePendienteRepository(database.pesajePendienteDao())
     val cuentaRepository: CuentaRepository =
         RoomCuentaRepository(database.perfilFincaDao(), database.usuarioDao())
-    val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database.siblingDao())
+    val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database)
     val rechazoRepository: RechazoRepository = RoomRechazoRepository(database.rechazoDao())
 
     private val sesionCifrada = SesionCifrada(context)
@@ -88,6 +89,7 @@ class AppContainer(context: Context) {
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
+    val resolverConflicto = ResolverConflicto(conflictoRepository)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository)
     val crearCuenta = CrearCuenta(cuentaRepository, transaccion)

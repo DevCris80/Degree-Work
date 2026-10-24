@@ -20,6 +20,16 @@ interface SiblingDao {
     @Query("SELECT EXISTS(SELECT 1 FROM sibling WHERE entidad = :entidad AND idFila = :idFila)")
     fun observeEnConflicto(entidad: String, idFila: String): Flow<Boolean>
 
+    @Query("SELECT DISTINCT idFila FROM sibling WHERE entidad = :entidad")
+    fun observeFilasEnConflicto(entidad: String): Flow<List<String>>
+
+    // Resolverlos los saca de esta tabla; la resolución queda en `resolucion` hasta que sube.
+    @Query("DELETE FROM sibling WHERE idVersion IN (:idsVersion)")
+    suspend fun deleteAll(idsVersion: List<String>)
+
+    @Query("SELECT * FROM sibling WHERE entidad = :entidad AND idFila = :idFila ORDER BY fechaRecepcion ASC")
+    suspend fun findByFila(entidad: String, idFila: String): List<SiblingEntity>
+
     @Query("SELECT * FROM sibling WHERE entidad = :entidad AND idFila = :idFila ORDER BY fechaRecepcion ASC")
     fun observeByFila(entidad: String, idFila: String): Flow<List<SiblingEntity>>
 }

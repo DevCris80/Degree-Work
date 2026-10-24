@@ -3,14 +3,18 @@ package com.devcris80.prototipo.testing
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Conciliacion
+import com.devcris80.prototipo.domain.model.Conflicto
+import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
+import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.EventoRepository
@@ -211,4 +215,46 @@ internal class FakeSincronizacionRepository : SincronizacionRepository {
     }
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = estado
+}
+
+/** Conflictos en memoria. `resoluciones` guarda lo que pidió resolver, y la fila sale del conflicto como en Room. */
+internal class FakeConflictoRepository : ConflictoRepository {
+    data class Resolucion(
+        val entidad: EntidadConRevisiones,
+        val idFila: String,
+        val idVersionElegida: String?,
+        val idsResueltos: List<String>,
+    )
+
+    val conflictos = MutableStateFlow<List<Conflicto>>(emptyList())
+    val resoluciones = mutableListOf<Resolucion>()
+
+    private fun Conflicto.es(entidad: EntidadConRevisiones, idFila: String) =
+        this.entidad == entidad && this.idFila == idFila
+
+    override fun observeEnConflicto(entidad: EntidadConRevisiones, idFila: String): Flow<Boolean> =
+        conflictos.map { lista -> lista.any { it.es(entidad, idFila) } }
+
+    override fun observeFilasEnConflicto(entidad: EntidadConRevisiones): Flow<Set<String>> =
+        conflictos.map { lista -> lista.filter { it.entidad == entidad }.map { it.idFila }.toSet() }
+
+    override fun observeSiblings(entidad: EntidadConRevisiones, idFila: String): Flow<List<Sibling>> =
+        conflictos.map { lista -> lista.firstOrNull { it.es(entidad, idFila) }?.siblings?.map { it.sibling }.orEmpty() }
+
+    override fun observeConflicto(entidad: EntidadConRevisiones, idFila: String): Flow<Conflicto?> =
+        conflictos.map { lista -> lista.firstOrNull { it.es(entidad, idFila) } }
+
+    override suspend fun resolver(
+        entidad: EntidadConRevisiones,
+        idFila: String,
+        idVersionElegida: String?,
+        idsResueltos: List<String>,
+    ) {
+        resoluciones.add(Resolucion(entidad, idFila, idVersionElegida, idsResueltos))
+        conflictos.value = conflictos.value.mapNotNull { conflicto ->
+            if (!conflicto.es(entidad, idFila)) return@mapNotNull conflicto
+            val quedan = conflicto.siblings.filterNot { it.sibling.idVersion in idsResueltos }
+            conflicto.takeIf { quedan.isNotEmpty() }?.copy(siblings = quedan)
+        }
+    }
 }

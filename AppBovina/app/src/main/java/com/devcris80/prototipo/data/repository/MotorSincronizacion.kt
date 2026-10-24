@@ -79,11 +79,14 @@ class MotorSincronizacion(
             // Se releen: un lote anterior pudo sacar filas de su tabla junto con un Animal rechazado.
             val lote = ids.mapNotNull { tabla.buscar(it) }.filterNot(tabla::sincronizada)
             if (lote.isEmpty()) continue
-            val cambios = lote.map(tabla::aCambio)
+            val cambios = lote.map { tabla.aCambio(it) }
             val resultados = servidor.subirCambios(JsonArray(cambios))
             check(resultados.size == cambios.size) { "El servidor respondió ${resultados.size} de ${cambios.size} cambios" }
             database.withTransaction {
                 lote.indices.forEach { i -> conteo += aplicar(tabla, lote[i], cambios[i], resultados[i].jsonObject) }
+                // Con cualquier respuesta, los Siblings que la edición nombró dejan de estar por nombrar: si el servidor
+                // no los cerró (la edición quedó como sibling o la rechazó), la descarga los trae de vuelta.
+                database.resolucionDao().delete(cambios.flatMap { it.idsQueResuelve() })
             }
         }
         return conteo
@@ -211,7 +214,8 @@ class MotorSincronizacion(
         porTabla["sibling"].orEmpty().forEach { sibling ->
             if (sibling.siblingResuelto()) {
                 database.siblingDao().delete(sibling.texto("id_version"))
-            } else {
+            } else if (!database.resolucionDao().estaResuelto(sibling.texto("id_version"))) {
+                // Uno que esta persona ya resolvió y todavía no sube sigue abierto en el servidor; no se vuelve a abrir.
                 database.siblingDao().insert(sibling.aSiblingEntity())
             }
         }
@@ -300,3 +304,7 @@ private fun padresPrimero(animales: List<JsonObject>): List<JsonObject> {
     animales.forEach(::agregar)
     return orden.toList()
 }
+
+/** Los `id_version` de los Siblings que este cambio nombra en `resuelve`. */
+private fun JsonObject.idsQueResuelve(): List<String> =
+    (get("resuelve") as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty()
