@@ -9,8 +9,10 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import kotlinx.coroutines.ExperimentalCoroutinesApi
+import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -19,6 +21,7 @@ import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 
 data class AnimalConResumen(
     val animal: Animal,
@@ -42,7 +45,9 @@ class ListaAnimalesViewModel(
     chapetaRepository: ChapetaRepository,
     registroRepository: RegistroRepository,
     observarPesajesPendientes: ObservarPesajesPendientes,
+    private val sesionRepository: SesionRepository,
 ) : ViewModel() {
+
     private val filtro = MutableStateFlow<Proposito?>(null)
 
     private val animalesConResumen = combine(
@@ -82,5 +87,10 @@ class ListaAnimalesViewModel(
 
     fun onFiltroSeleccionado(proposito: Proposito?) {
         filtro.value = proposito
+    }
+
+    // AppNavHost vuelve al Login al perderse la sesión.
+    fun onCerrarSesion() {
+        viewModelScope.launch { sesionRepository.cerrarSesion() }
     }
 }

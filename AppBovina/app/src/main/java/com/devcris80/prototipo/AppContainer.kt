@@ -1,8 +1,9 @@
 package com.devcris80.prototipo
 
 import android.content.Context
-import com.devcris80.prototipo.data.SeedData
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.remote.SesionCifrada
+import com.devcris80.prototipo.data.remote.crearClienteSupabase
 import com.devcris80.prototipo.data.repository.RoomAnimalRepository
 import com.devcris80.prototipo.data.repository.RoomChapetaRepository
 import com.devcris80.prototipo.data.repository.RoomConflictoRepository
@@ -12,6 +13,7 @@ import com.devcris80.prototipo.data.repository.RoomPesajePendienteRepository
 import com.devcris80.prototipo.data.repository.RoomRechazoRepository
 import com.devcris80.prototipo.data.repository.RoomRegistroRepository
 import com.devcris80.prototipo.data.repository.RoomTransaccion
+import com.devcris80.prototipo.data.repository.SupabaseSesionRepository
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
@@ -20,6 +22,7 @@ import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
@@ -52,6 +55,15 @@ class AppContainer(context: Context) {
         RoomCuentaRepository(database.perfilFincaDao(), database.usuarioDao())
     val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database.siblingDao())
     val rechazoRepository: RechazoRepository = RoomRechazoRepository(database.rechazoDao())
+
+    private val sesionCifrada = SesionCifrada(context)
+    val sesionRepository: SesionRepository = SupabaseSesionRepository(
+        crearClienteSupabase(sesionCifrada),
+        sesionCifrada,
+        database.perfilFincaDao(),
+        database.usuarioDao(),
+        transaccion,
+    )
 
     val registrarPesaje = RegistrarPesaje(
         chapetaRepository,
@@ -88,6 +100,4 @@ class AppContainer(context: Context) {
         eventoRepository,
     )
     val observarEvolucionPeso = ObservarEvolucionPeso(registroRepository)
-
-    val seedData = SeedData(cuentaRepository, animalRepository, chapetaRepository, registrarAnimal)
 }

@@ -15,6 +15,8 @@ import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -167,4 +169,20 @@ internal class FakePesajePendienteRepository : PesajePendienteRepository {
 /** Ejecuta el bloque directo, sin control de atomicidad real: alcanza para probar el resultado. */
 internal class FakeTransaccion : Transaccion {
     override suspend fun <T> ejecutar(bloque: suspend () -> T): T = bloque()
+}
+
+internal class FakeSesionRepository : SesionRepository {
+    val guardada = MutableStateFlow(false)
+    var resultado: ResultadoInicioSesion = ResultadoInicioSesion.Exito
+    val intentos = mutableListOf<Pair<String, String>>()
+
+    override fun observeSesionGuardada(): Flow<Boolean> = guardada
+    override suspend fun iniciarSesion(correo: String, contrasena: String): ResultadoInicioSesion {
+        intentos.add(correo to contrasena)
+        if (resultado == ResultadoInicioSesion.Exito) guardada.value = true
+        return resultado
+    }
+    override suspend fun cerrarSesion() {
+        guardada.value = false
+    }
 }

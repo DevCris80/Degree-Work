@@ -3,6 +3,7 @@ package com.devcris80.prototipo.data.local.dao
 import androidx.room.Dao
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Upsert
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import kotlinx.coroutines.flow.Flow
 
@@ -10,6 +11,10 @@ import kotlinx.coroutines.flow.Flow
 interface UsuarioDao {
     @Insert
     suspend fun insert(usuario: UsuarioEntity)
+
+    /** Para el Usuario que llega del servidor al iniciar sesión, que puede estar ya en el dispositivo. */
+    @Upsert
+    suspend fun guardar(usuario: UsuarioEntity)
 
     @Query("SELECT * FROM usuario LIMIT 1")
     fun observe(): Flow<UsuarioEntity?>
