@@ -51,8 +51,8 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-29 | Subtipos vacunación y parto | Pendiente | UI-05, DOM-04, DAT-01 | App |
 | RF-30 | Editar eventos y pesajes como revisiones | Pendiente | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
 | RF-31 | Baja lógica de eventos y pesajes | Pendiente | UI-02, DOM-04, DAT-01 | App |
-| RF-32 | Subir cambios locales | Pendiente | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
-| RF-33 | Detectar concurrencia con rev_base (siblings) | Pendiente | DAT-05, BD-02, BD-07 | App, Supabase |
+| RF-32 | Subir cambios locales | Parcial | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
+| RF-33 | Detectar concurrencia con rev_base (siblings) | Implementado | DAT-05, BD-02, BD-07 | App, Supabase |
 | RF-34 | Mostrar y resolver conflictos | Pendiente | UI-07, DAT-05, BD-02 | App, Supabase |
 | RF-35 | Bandeja de rechazos | Pendiente | UI-07, DAT-05, BD-03 | App, Supabase |
 | RF-36 | Descargar cambios por cursor | Pendiente | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |

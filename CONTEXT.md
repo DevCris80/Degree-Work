@@ -39,7 +39,7 @@ Conciliar un `Pesaje pendiente` sin asignarlo, porque no corresponde a ningún `
 _Avoid_: borrar, eliminar; "descartar" para un pesaje que el sistema rechaza o pierde
 
 **sincronizado**:
-Campo booleano presente en toda entidad: `false` significa que la fila tiene cambios locales que todavía no se han subido a Supabase. Toda creación o modificación lo devuelve a `false` y actualiza `fechaModificacion`, la fecha del último cambio de la fila. `fechaModificacion` informa cuándo cambió la fila, pero nunca decide un `Conflicto`. La sincronización en sí todavía no está implementada.
+Campo booleano presente en toda entidad: `false` significa que la fila tiene cambios locales que todavía no se han subido a Supabase. Toda creación o modificación lo devuelve a `false` y actualiza `fechaModificacion`, la fecha del último cambio de la fila. `fechaModificacion` informa cuándo cambió la fila, pero nunca decide un `Conflicto`. Vuelve a `true` cuando la subida aplica la respuesta del servidor para esa fila, si la fila no cambió mientras subía.
 
 **Revisión**:
 Cada versión de un `Animal`, `Evento` o `Registro` que el servidor aceptó, numerada en orden. Toda edición parte de una Revisión (la última que conocía el celular que la hizo); si esa sigue siendo la vigente al sincronizar, la edición se acepta como la Revisión siguiente. Las Revisiones se conservan siempre.
