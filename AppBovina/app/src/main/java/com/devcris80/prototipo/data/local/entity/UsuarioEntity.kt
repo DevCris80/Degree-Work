@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.data.local.entity
 
+import androidx.room.ColumnInfo
 import androidx.room.Entity
 import androidx.room.ForeignKey
 import androidx.room.Index
@@ -24,4 +25,6 @@ data class UsuarioEntity(
     val rol: String = "Ganadero",
     val sincronizado: Boolean = false,
     val fechaModificacion: Long,
+    /** El Usuario que inició sesión en este dispositivo. Los demás Usuarios de la finca llegan con la descarga. */
+    @ColumnInfo(defaultValue = "0") val delDispositivo: Boolean,
 )

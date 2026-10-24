@@ -237,6 +237,7 @@ fun Usuario.toEntity(fechaModificacion: Long) = UsuarioEntity(
     nombre = nombre,
     rol = TEXTO_ROL.aTexto(rol),
     fechaModificacion = fechaModificacion,
+    delDispositivo = true,
 )
 
 fun SiblingEntity.toDomain() = Sibling(
@@ -268,13 +269,14 @@ fun JsonObject.aPerfilFincaEntity() = PerfilFincaEntity(
 )
 
 // El rol pasa por TEXTO_ROL para rechazar un valor que la app no conoce.
-fun JsonObject.aUsuarioEntity() = UsuarioEntity(
+fun JsonObject.aUsuarioEntity(delDispositivo: Boolean) = UsuarioEntity(
     idUsuario = texto("id_usuario"),
     idPerfilFinca = texto("id_perfil_finca"),
     nombre = texto("nombre"),
     rol = TEXTO_ROL.aTexto(TEXTO_ROL.desdeTexto(texto("rol"))),
     sincronizado = true,
     fechaModificacion = fecha("fecha_modificacion"),
+    delDispositivo = delDispositivo,
 )
 
 // Filas que sube el celular, con las columnas de su tabla en el servidor (supabase/README.md). Las tablas

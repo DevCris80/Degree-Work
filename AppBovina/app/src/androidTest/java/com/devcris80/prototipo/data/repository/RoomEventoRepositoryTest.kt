@@ -29,7 +29,7 @@ class RoomEventoRepositoryTest {
         db = Room.inMemoryDatabaseBuilder(ApplicationProvider.getApplicationContext(), AppDatabase::class.java)
             .build()
         db.perfilFincaDao().guardar(PerfilFincaEntity("finca-1", "Finca de prueba", fechaModificacion = 0))
-        db.usuarioDao().insert(UsuarioEntity("usuario-1", "finca-1", "Ganadero", fechaModificacion = 0))
+        db.usuarioDao().insert(UsuarioEntity("usuario-1", "finca-1", "Ganadero", fechaModificacion = 0, delDispositivo = true))
         val animales = RoomAnimalRepository(db.animalDao())
         animales.insert(animal("activo", Sexo.HEMBRA, Etapa.VACA))
         animales.insert(animal("de-baja", Sexo.MACHO, Etapa.TORO).copy(fechaBaja = 9L))

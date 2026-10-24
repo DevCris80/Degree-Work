@@ -51,7 +51,9 @@ class MotorSincronizacionTest {
             .build()
         // La finca y el Usuario llegan del servidor al iniciar sesión: ya están sincronizados.
         db.perfilFincaDao().guardar(PerfilFincaEntity("finca-1", "Finca", sincronizado = true, fechaModificacion = 0))
-        db.usuarioDao().insert(UsuarioEntity("usuario-1", "finca-1", "Ganadero", sincronizado = true, fechaModificacion = 0))
+        db.usuarioDao().insert(
+            UsuarioEntity("usuario-1", "finca-1", "Ganadero", sincronizado = true, fechaModificacion = 0, delDispositivo = true),
+        )
     }
 
     @After
