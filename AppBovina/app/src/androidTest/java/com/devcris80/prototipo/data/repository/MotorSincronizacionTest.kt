@@ -210,6 +210,39 @@ class MotorSincronizacionTest {
     }
 
     @Test
+    fun unaChapetaQueVuelveAQuedarActivaPorUnRechazoSacaALaBandejaALaNuevaConSuCodigo() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(sincronizado = true, rev = 1))
+        db.animalDao().insert(animal("animal-2").copy(sincronizado = true, rev = 1))
+        db.chapetaDao().insert(chapeta("chapeta-1", idAnimal = "animal-1", codigo = "FP001").copy(sincronizado = true))
+        // Un Operario libera la Chapeta y le pone el mismo código a otro Animal.
+        db.chapetaDao().desasociar("chapeta-1", fecha = 10, fechaModificacion = 10)
+        db.chapetaDao().insert(chapeta("chapeta-2", idAnimal = "animal-2", codigo = "FP001").copy(fechaModificacion = 20))
+        servidor.responder = { lote ->
+            JsonArray(
+                lote.map {
+                    val cambio = it.jsonObject
+                    val fila = cambio.getValue("fila").jsonObject
+                    val delServidor = JsonObject(fila + ("fecha_desasociacion" to JsonNull))
+                    if (fila.texto("id_chapeta") == "chapeta-1") {
+                        resultado(cambio, "rechazada", codigo = "42501", motivo = "Un Operario no puede liberar una Chapeta", fila = delServidor)
+                    } else {
+                        resultado(cambio, "rechazada", codigo = "23505", motivo = "Chapeta duplicada")
+                    }
+                },
+            )
+        }
+
+        motor().sincronizar()
+
+        assertEquals("chapeta-1", db.chapetaDao().findActivaByCodigo("FP001")!!.idChapeta)
+        assertNull(db.chapetaDao().findById("chapeta-2"))
+        assertEquals(
+            setOf("chapeta-1", "chapeta-2"),
+            db.rechazoDao().observeAbiertos().first().map { it.idFila }.toSet(),
+        )
+    }
+
+    @Test
     fun unAnimalRechazadoQueElServidorNoTieneSacaASusDependientesALaBandeja() = runTest {
         db.animalDao().insert(animal("madre"))
         db.animalDao().insert(animal("cria", idMadre = "madre"))

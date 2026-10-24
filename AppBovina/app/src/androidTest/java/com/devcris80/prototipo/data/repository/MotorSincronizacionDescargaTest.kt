@@ -183,6 +183,24 @@ class MotorSincronizacionDescargaTest {
     }
 
     @Test
+    fun unaChapetaSincronizadaLeCedeSuCodigoALaActivaDelServidor() = runTest {
+        servidor.filas += CambioDelServidor("animal", 11, filaAnimal("animal-1"))
+        servidor.filas += CambioDelServidor("animal", 12, filaAnimal("animal-2"))
+        servidor.filas += CambioDelServidor("chapeta", 13, filaChapeta("chapeta-1", "animal-1", "FP001"))
+        motor().sincronizar()
+        // La liberación de chapeta-1 se escribió antes, pero confirmó después que el celular pasara de su cursor.
+        servidor.filas += CambioDelServidor("chapeta", 20, filaChapeta("chapeta-2", "animal-2", "FP001"))
+
+        motor().sincronizar()
+
+        assertEquals("chapeta-2", db.chapetaDao().findActivaByCodigo("FP001")!!.idChapeta)
+        val cedida = db.chapetaDao().findById("chapeta-1")!!
+        assertNotNull(cedida.fechaDesasociacion)
+        assertTrue(cedida.sincronizado)
+        assertEquals(emptyList<Any>(), db.rechazoDao().observeAbiertos().first())
+    }
+
+    @Test
     fun unaChapetaNuevaQueChocaConLaDelServidorPasaALaBandeja() = runTest {
         servidor.filas += CambioDelServidor("animal", 11, filaAnimal("animal-1"))
         servidor.filas += CambioDelServidor("animal", 12, filaAnimal("animal-2"))

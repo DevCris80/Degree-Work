@@ -137,7 +137,10 @@ class MotorSincronizacion(
     ) {
         guardarRechazo(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
         if (delServidor != null) {
-            tabla.guardar(tabla.conLaDelServidor(local, delServidor))
+            // Por ejemplo, una Chapeta cuya liberación se rechazó vuelve a quedar activa.
+            val vigente = tabla.conLaDelServidor(local, delServidor)
+            abrirPaso(tabla, vigente)
+            tabla.guardar(vigente)
             return
         }
         for (dependiente in tabla.sacar(local)) {
@@ -199,13 +202,26 @@ class MotorSincronizacion(
         val local = tabla.buscar(fila.texto("id_${tabla.entidad}"))
         if (local == null) {
             val nueva = tabla.desdeElServidor(fila)
-            // Una fila nueva que choca con la del servidor no puede subir: pasa a la bandeja, como la rechazaría él.
-            for (choque in tabla.choques(nueva).filterNot(tabla::sincronizada)) {
-                rechazar(tabla, choque, CODIGO_UNICIDAD, tabla.motivoDelChoque, delServidor = null)
-            }
+            abrirPaso(tabla, nueva)
             tabla.insertar(nueva)
         } else if (tabla.sincronizada(local) && tabla.alDia(fila, local)) {
-            tabla.guardar(tabla.conLaDelServidor(local, fila))
+            val vigente = tabla.conLaDelServidor(local, fila)
+            abrirPaso(tabla, vigente)
+            tabla.guardar(vigente)
+        }
+    }
+
+    /**
+     * Despeja los índices únicos locales para guardar [fila], la versión del servidor. Una fila nueva que choca con
+     * ella no puede subir: pasa a la bandeja, como la rechazaría el servidor. Una ya sincronizada le cede el lugar.
+     */
+    private suspend fun <E : Any> abrirPaso(tabla: TablaSincronizada<E>, fila: E) {
+        for (choque in tabla.choques(fila)) {
+            if (tabla.sincronizada(choque)) {
+                tabla.ceder(choque, fila)
+            } else {
+                rechazar(tabla, choque, CODIGO_UNICIDAD, tabla.motivoDelChoque, delServidor = null)
+            }
         }
     }
 

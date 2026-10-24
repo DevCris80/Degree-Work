@@ -38,11 +38,16 @@ internal abstract class TablaSincronizada<E : Any>(val entidad: String) {
     open fun alDia(delServidor: JsonObject, local: E): Boolean = true
 
     /**
-     * Las filas locales que no dejan guardar [fila] por un índice único (el código de una Chapeta activa, un
-     * `idLectura`), con el motivo. Solo puede ser una fila nueva que el servidor rechazaría al subirla.
+     * Las otras filas locales que no dejan guardar [fila], la versión del servidor, por un índice único (el código
+     * de una Chapeta activa, un `idLectura`). Una pendiente es una fila nueva que el servidor rechazaría al subirla,
+     * por [motivoDelChoque]; una sincronizada está vieja, y la descarga trae su versión.
      */
     open suspend fun choques(fila: E): List<E> = emptyList()
     open val motivoDelChoque: String = ""
+
+    /** Deja que [fila] tome el lugar de [choque], ya sincronizada, mientras llega la versión del servidor. */
+    open suspend fun ceder(choque: E, fila: E): Unit =
+        error("En $entidad, una fila sincronizada no choca con la del servidor: el servidor no tiene dos así")
 
     /** Saca de su tabla una fila que el servidor rechazó y no tiene, con sus dependientes (ADR-0004, regla 7). */
     abstract suspend fun sacar(fila: E): List<Dependiente>
@@ -217,7 +222,7 @@ private class TablaRegistros(db: AppDatabase) : TablaConRevisiones<RegistroEntit
     override suspend fun insertar(fila: RegistroEntity) = dao.insert(fila)
     override suspend fun choques(fila: RegistroEntity) =
         listOfNotNull(fila.idLectura?.let { dao.findByIdLectura(it) }).filter { it.idRegistro != fila.idRegistro }
-    override val motivoDelChoque = "Otro celular ya guardó un pesaje con esta lectura"
+    override val motivoDelChoque = "Ya hay un pesaje con esta lectura en la finca"
     override suspend fun rebasar(id: String, rev: Int) = dao.rebasar(id, rev)
 
     override suspend fun sacar(fila: RegistroEntity): List<Dependiente> {
@@ -250,7 +255,11 @@ private class TablaChapetas(db: AppDatabase) : TablaSincronizada<ChapetaEntity>(
         } else {
             listOfNotNull(dao.findActivaByCodigo(fila.codigo)).filter { it.idChapeta != fila.idChapeta }
         }
-    override val motivoDelChoque = "Otro celular ya asoció una Chapeta activa con este código"
+    override val motivoDelChoque = "Ya hay una Chapeta activa con este código en la finca"
+
+    // El servidor no deja dos Chapetas activas con el mismo código: la local ya se liberó allá antes de la otra.
+    override suspend fun ceder(choque: ChapetaEntity, fila: ChapetaEntity) =
+        dao.update(choque.copy(fechaDesasociacion = fila.fechaAsociacion))
 
     override suspend fun sacar(fila: ChapetaEntity): List<Dependiente> {
         dao.delete(fila.idChapeta)
@@ -279,7 +288,7 @@ private class TablaPesajesPendientes(db: AppDatabase) : TablaSincronizada<Pesaje
     override suspend fun insertar(fila: PesajePendienteEntity) = dao.insert(fila)
     override suspend fun choques(fila: PesajePendienteEntity) =
         listOfNotNull(dao.findByIdLectura(fila.idLectura)).filter { it.idPesajePendiente != fila.idPesajePendiente }
-    override val motivoDelChoque = "Otro celular ya guardó un pesaje pendiente con esta lectura"
+    override val motivoDelChoque = "Ya hay un pesaje pendiente con esta lectura en la finca"
 
     override suspend fun sacar(fila: PesajePendienteEntity): List<Dependiente> {
         dao.delete(fila.idPesajePendiente)
