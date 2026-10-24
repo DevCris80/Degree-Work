@@ -108,7 +108,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta ni se fusiona. Cuenta la fila entera, aunque los campos editados no se pisen. |
 | Conflicto | Estado de una fila que tiene uno o más siblings sin resolver. |
 | Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior. |
-| Rechazo | Fila local que el servidor no aceptó por violar una regla de unicidad o de permisos. Sale de su tabla local y queda en la bandeja de rechazos hasta que alguien la corrige. |
+| Rechazo | Cambio local que el servidor no aceptó por violar una regla de unicidad o de permisos. Queda en la bandeja de rechazos hasta que alguien lo corrige; la fila local vuelve a la versión del servidor, o sale de su tabla si el servidor no la tiene (RN-24). |
 
 **Siglas**
 
