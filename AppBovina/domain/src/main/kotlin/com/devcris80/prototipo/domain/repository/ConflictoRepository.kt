@@ -22,11 +22,13 @@ interface ConflictoRepository {
      * Resuelve [idsResueltos] con una edición nueva sobre la Revisión vigente: la fila de [idVersionElegida], o la
      * vigente si es nulo. La edición queda pendiente de subir y nombra a esos Siblings. Los Siblings que no estén en
      * [idsResueltos] siguen sin resolver.
+     *
+     * Devuelve falso, sin escribir nada, si la fila ya no existe o el Sibling elegido ya no está o no se puede leer.
      */
     suspend fun resolver(
         entidad: EntidadConRevisiones,
         idFila: String,
         idVersionElegida: String?,
         idsResueltos: List<String>,
-    )
+    ): Boolean
 }

@@ -94,7 +94,7 @@ private fun ResolverConflictoContent(
                 .padding(BovinaScreenGutter),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
-            if (conflicto == null) {
+            if (conflicto == null || estado.yaNoExiste) {
                 Text(
                     text = "Este conflicto ya no existe.",
                     style = MaterialTheme.typography.bodyLarge,

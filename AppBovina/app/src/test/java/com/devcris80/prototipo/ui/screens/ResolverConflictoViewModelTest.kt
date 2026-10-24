@@ -89,6 +89,20 @@ class ResolverConflictoViewModelTest {
     }
 
     @Test
+    fun siLaFilaDesapareceAntesDeResolverSeAvisaYNoSeCierraLaApp() = runTest {
+        conflictoRepository.conflictos.value = listOf(conflictoDeAnimal("animal-1", "v1" to "Jersey"))
+        val viewModel = crearViewModel()
+        conflictoRepository.puedeResolver = false
+
+        viewModel.onEleccionCambiada(Eleccion.DeSibling("v1"))
+        viewModel.onResolver()
+
+        assertTrue(viewModel.estado.value.yaNoExiste)
+        assertFalse(viewModel.estado.value.puedeResolver)
+        assertTrue(conflictoRepository.resoluciones.isEmpty())
+    }
+
+    @Test
     fun unSiblingQueLlegaDespuesDeAbrirNoSeResuelveYSeAvisa() = runTest {
         conflictoRepository.conflictos.value = listOf(conflictoDeAnimal("animal-1", "v1" to "Jersey"))
         val viewModel = crearViewModel()

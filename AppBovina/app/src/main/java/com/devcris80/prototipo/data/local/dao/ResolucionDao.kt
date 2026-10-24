@@ -15,9 +15,6 @@ interface ResolucionDao {
     @Query("SELECT idVersionSibling FROM resolucion WHERE entidad = :entidad AND idFila = :idFila ORDER BY idVersionSibling")
     suspend fun idsDeLaFila(entidad: String, idFila: String): List<String>
 
-    @Query("SELECT EXISTS(SELECT 1 FROM resolucion WHERE idVersionSibling = :idVersion)")
-    suspend fun estaResuelto(idVersion: String): Boolean
-
     @Query("DELETE FROM resolucion WHERE idVersionSibling IN (:idsVersion)")
     suspend fun delete(idsVersion: List<String>)
 }

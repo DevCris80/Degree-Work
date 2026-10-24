@@ -10,6 +10,7 @@ import com.devcris80.prototipo.data.local.entity.EventoEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.RegistroEntity
 import com.devcris80.prototipo.data.local.entity.ResolucionEntity
+import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
@@ -179,6 +180,55 @@ class MotorSincronizacionTest {
         assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
         assertEquals(listOf("version-otra-fila"), db.resolucionDao().idsDeLaFila("animal", "animal-2"))
     }
+
+    @Test
+    fun siElServidorAceptaLaResolucionLosSiblingsSalenDeLaTabla() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(rev = 2, revBase = 2))
+        db.siblingDao().insert(siblingDe("version-b"))
+        db.resolucionDao().insert(listOf(ResolucionEntity("version-b", "animal", "animal-1")))
+
+        motor().sincronizar()
+
+        val conflictos = RoomConflictoRepository(db)
+        assertFalse(conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
+        assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+        // Ya no está ni oculto: el servidor lo cerró.
+        assertEquals(0, filasEnSibling())
+    }
+
+    @Test
+    fun siElServidorContestaSiblingALaResolucionElConflictoSigueAbierto() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(rev = 2, revBase = 2))
+        db.siblingDao().insert(siblingDe("version-b"))
+        db.resolucionDao().insert(listOf(ResolucionEntity("version-b", "animal", "animal-1")))
+        servidor.responder = { lote ->
+            val cambio = lote.single().jsonObject
+            // Otro celular avanzó la fila: la resolución llega con una revisión base vieja.
+            val vigente = JsonObject(cambio.getValue("fila").jsonObject + mapOf("rev" to JsonPrimitive(3)))
+            JsonArray(listOf(resultado(cambio, "sibling", rev = 3, fila = vigente)))
+        }
+
+        motor().sincronizar()
+
+        val conflictos = RoomConflictoRepository(db)
+        assertTrue("el Conflicto sigue abierto en el servidor", conflictos.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
+        val abiertos = conflictos.observeSiblings(EntidadConRevisiones.ANIMAL, "animal-1").first().map { it.idVersion }
+        assertTrue("version-b" in abiertos)
+        assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+    }
+
+    private fun siblingDe(idVersion: String) = SiblingEntity(
+        idVersion = idVersion,
+        entidad = "animal",
+        idFila = "animal-1",
+        revBase = 1,
+        contenido = """{"raza":"Gyr"}""",
+        idUsuario = "usuario-1",
+        fechaRecepcion = 0,
+    )
+
+    private fun filasEnSibling(): Int =
+        db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM sibling").use { it.moveToFirst(); it.getInt(0) }
 
     @Test
     fun unaEdicionSinSiblingsPorResolverNoLlevaResuelve() = runTest {

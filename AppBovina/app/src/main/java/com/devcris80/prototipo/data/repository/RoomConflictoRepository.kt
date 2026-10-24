@@ -35,17 +35,19 @@ class RoomConflictoRepository(
 
     override fun observeConflicto(entidad: EntidadConRevisiones, idFila: String): Flow<Conflicto?> =
         siblingDao.observeByFila(entidad.textoGuardado(), idFila).map { siblings ->
-            if (siblings.isEmpty()) return@map null
             val tabla = tablaDe(entidad)
             val vigente = tabla.buscar(idFila) ?: return@map null
-            Conflicto(
-                entidad = entidad,
-                idFila = idFila,
-                vigente = tabla.enConflicto(vigente),
-                siblings = siblings.map { sibling ->
-                    SiblingEnConflicto(sibling.toDomain(), tabla.enConflicto(tabla.desdeElSibling(sibling.contenido)))
-                },
-            )
+            // Un Sibling que no se puede leer no se muestra: la pantalla no puede compararlo ni elegirlo.
+            val legibles = siblings.mapNotNull { sibling ->
+                tabla.desdeElSibling(sibling.contenido)?.let { fila ->
+                    SiblingEnConflicto(sibling.toDomain(), tabla.enConflicto(fila))
+                }
+            }
+            if (legibles.isEmpty()) {
+                null
+            } else {
+                Conflicto(entidad, idFila, vigente = tabla.enConflicto(vigente), siblings = legibles)
+            }
         }
 
     override suspend fun resolver(
@@ -53,19 +55,22 @@ class RoomConflictoRepository(
         idFila: String,
         idVersionElegida: String?,
         idsResueltos: List<String>,
-    ) {
+    ): Boolean {
         val tabla = tablaDe(entidad)
-        database.withTransaction {
-            val local = checkNotNull(tabla.buscar(idFila)) { "La fila $idFila ya no existe" }
+        return database.withTransaction {
+            val local = tabla.buscar(idFila) ?: return@withTransaction false
             val elegida = if (idVersionElegida == null) {
                 local
             } else {
-                val sibling = siblingDao.findByFila(entidad.textoGuardado(), idFila).firstOrNull { it.idVersion == idVersionElegida }
-                tabla.desdeElSibling(checkNotNull(sibling) { "El Sibling $idVersionElegida ya no está sin resolver" }.contenido)
+                siblingDao.findByFila(entidad.textoGuardado(), idFila)
+                    .firstOrNull { it.idVersion == idVersionElegida }
+                    ?.let { tabla.desdeElSibling(it.contenido) }
+                    ?: return@withTransaction false
             }
             tabla.guardar(tabla.resolviendo(local, elegida, nuevoIdVersion(), clock()))
+            // Los Siblings quedan en su tabla, ocultos por `resolucion`, hasta que el servidor acepte la edición.
             database.resolucionDao().insert(idsResueltos.map { ResolucionEntity(it, entidad.textoGuardado(), idFila) })
-            siblingDao.deleteAll(idsResueltos)
+            true
         }
     }
 
@@ -75,9 +80,14 @@ class RoomConflictoRepository(
         tablas.first { it.entidad == entidad.textoGuardado() } as TablaConRevisiones<Any>
 
     // El contenido del Sibling es la fila que subió su autor: no trae `rev`, que `desdeElServidor` exige y
-    // `resolviendo` reemplaza por el de la fila local.
-    private fun TablaConRevisiones<Any>.desdeElSibling(contenido: String): Any {
+    // `resolviendo` reemplaza por el de la fila local. Nulo si le falta una columna o está mal escrito.
+    private fun TablaConRevisiones<Any>.desdeElSibling(contenido: String): Any? = try {
         val fila: JsonObject = Json.parseToJsonElement(contenido).jsonObject
-        return desdeElServidor(JsonObject(fila + ("rev" to JsonPrimitive(0))))
+        desdeElServidor(JsonObject(fila + ("rev" to JsonPrimitive(0))))
+    } catch (e: IllegalArgumentException) {
+        // También cubre SerializationException, una fecha o un número mal escritos y un valor de otro tipo.
+        null
+    } catch (e: NoSuchElementException) {
+        null
     }
 }

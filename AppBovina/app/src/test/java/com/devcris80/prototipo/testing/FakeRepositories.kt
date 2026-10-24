@@ -229,6 +229,9 @@ internal class FakeConflictoRepository : ConflictoRepository {
     val conflictos = MutableStateFlow<List<Conflicto>>(emptyList())
     val resoluciones = mutableListOf<Resolucion>()
 
+    /** Si es falso, `resolver` no escribe nada y avisa que la fila ya no existe. */
+    var puedeResolver = true
+
     private fun Conflicto.es(entidad: EntidadConRevisiones, idFila: String) =
         this.entidad == entidad && this.idFila == idFila
 
@@ -249,12 +252,14 @@ internal class FakeConflictoRepository : ConflictoRepository {
         idFila: String,
         idVersionElegida: String?,
         idsResueltos: List<String>,
-    ) {
+    ): Boolean {
+        if (!puedeResolver) return false
         resoluciones.add(Resolucion(entidad, idFila, idVersionElegida, idsResueltos))
         conflictos.value = conflictos.value.mapNotNull { conflicto ->
             if (!conflicto.es(entidad, idFila)) return@mapNotNull conflicto
             val quedan = conflicto.siblings.filterNot { it.sibling.idVersion in idsResueltos }
             conflicto.takeIf { quedan.isNotEmpty() }?.copy(siblings = quedan)
         }
+        return true
     }
 }

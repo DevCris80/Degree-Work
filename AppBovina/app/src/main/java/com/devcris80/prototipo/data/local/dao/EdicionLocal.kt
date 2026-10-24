@@ -8,6 +8,10 @@ package com.devcris80.prototipo.data.local.dao
  * valores anteriores de la fila, así que `sincronizado` todavía dice si estaba al día.
  *
  * La consulta que lo usa recibe los parámetros `:idVersion` y `:fechaModificacion`.
+ *
+ * Una excepción: resolver un Conflicto (`TablaConRevisiones.resolviendo`) fija `revBase` en la revisión vigente
+ * aunque la fila ya estuviera pendiente, porque la resolución es una edición nueva sobre la vigente (ADR-0004,
+ * regla 5), no una continuación de la edición anterior.
  */
 const val EDICION_LOCAL =
     "sincronizado = 0, revBase = CASE WHEN sincronizado = 1 THEN rev ELSE revBase END, " +

@@ -9,7 +9,14 @@ import com.devcris80.prototipo.domain.repository.ConflictoRepository
  * [Conflicto] que la persona vio: uno que llegue después de abrirlo queda sin resolver.
  */
 class ResolverConflicto(private val conflictoRepository: ConflictoRepository) {
-    suspend operator fun invoke(conflicto: Conflicto, eleccion: Eleccion) {
+    sealed interface Resultado {
+        data object Resuelto : Resultado
+
+        /** La fila o el Sibling elegido ya no están, o no se pueden leer: no se escribió nada. */
+        data object YaNoExiste : Resultado
+    }
+
+    suspend operator fun invoke(conflicto: Conflicto, eleccion: Eleccion): Resultado {
         val idsResueltos = conflicto.siblings.map { it.sibling.idVersion }
         require(idsResueltos.isNotEmpty()) { "El Conflicto no tiene Siblings por resolver" }
         val idVersionElegida = when (eleccion) {
@@ -19,6 +26,7 @@ class ResolverConflicto(private val conflictoRepository: ConflictoRepository) {
                 eleccion.idVersion
             }
         }
-        conflictoRepository.resolver(conflicto.entidad, conflicto.idFila, idVersionElegida, idsResueltos)
+        val resuelto = conflictoRepository.resolver(conflicto.entidad, conflicto.idFila, idVersionElegida, idsResueltos)
+        return if (resuelto) Resultado.Resuelto else Resultado.YaNoExiste
     }
 }

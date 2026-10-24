@@ -121,6 +121,35 @@ class RoomConflictoRepositoryTest {
         assertEquals(100L, guardado.fechaModificacion)
         assertFalse(repositorio.observeEnConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
         assertEquals(listOf("version-b"), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+        // El sibling sigue en su tabla, oculto, hasta que el servidor acepte la edición.
+        db.openHelper.readableDatabase.query("SELECT COUNT(*) FROM sibling").use {
+            it.moveToFirst()
+            assertEquals(1, it.getInt(0))
+        }
+    }
+
+    @Test
+    fun resolverUnaFilaQueYaNoExisteDevuelveFalsoYNoEscribeNada() = runTest {
+        db.siblingDao().insert(siblingConRaza("version-b", raza = "Gyr"))
+
+        val resuelto = repositorio.resolver(EntidadConRevisiones.ANIMAL, "animal-1", "version-b", listOf("version-b"))
+
+        assertFalse(resuelto)
+        assertEquals(emptyList<String>(), db.resolucionDao().idsDeLaFila("animal", "animal-1"))
+    }
+
+    @Test
+    fun unSiblingQueNoSePuedeLeerNoSeMuestraNiSePuedeElegir() = runTest {
+        animalConVigente()
+        // Le faltan casi todas las columnas de la fila.
+        db.siblingDao().insert(sibling(idVersion = "version-roto", idFila = "animal-1"))
+
+        assertNull(repositorio.observeConflicto(EntidadConRevisiones.ANIMAL, "animal-1").first())
+        val resuelto = repositorio.resolver(EntidadConRevisiones.ANIMAL, "animal-1", "version-roto", listOf("version-roto"))
+
+        assertFalse(resuelto)
+        assertEquals("Brahman", db.animalDao().findById("animal-1")!!.raza)
+        assertTrue(db.animalDao().findById("animal-1")!!.sincronizado)
     }
 
     @Test

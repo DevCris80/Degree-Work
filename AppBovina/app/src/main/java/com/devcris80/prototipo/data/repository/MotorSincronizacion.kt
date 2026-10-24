@@ -83,13 +83,26 @@ class MotorSincronizacion(
             val resultados = servidor.subirCambios(JsonArray(cambios))
             check(resultados.size == cambios.size) { "El servidor respondió ${resultados.size} de ${cambios.size} cambios" }
             database.withTransaction {
-                lote.indices.forEach { i -> conteo += aplicar(tabla, lote[i], cambios[i], resultados[i].jsonObject) }
-                // Con cualquier respuesta, los Siblings que la edición nombró dejan de estar por nombrar: si el servidor
-                // no los cerró (la edición quedó como sibling o la rechazó), la descarga los trae de vuelta.
-                database.resolucionDao().delete(cambios.flatMap { it.idsQueResuelve() })
+                lote.indices.forEach { i ->
+                    val resultado = resultados[i].jsonObject
+                    conteo += aplicar(tabla, lote[i], cambios[i], resultado)
+                    cerrarResueltos(cambios[i], resultado)
+                }
             }
         }
         return conteo
+    }
+
+    /**
+     * Los Siblings que la edición nombró en `resuelve` dejan de estar por nombrar. Solo si el servidor la aceptó los
+     * cerró: entonces salen también de la tabla `sibling`. Si la contestó como sibling o la rechazó (otro celular
+     * avanzó la fila), siguen abiertos en el servidor y aquí vuelven a verse como Conflicto.
+     */
+    private suspend fun cerrarResueltos(cambio: JsonObject, resultado: JsonObject) {
+        val resueltos = cambio.idsQueResuelve()
+        if (resueltos.isEmpty()) return
+        if (resultado.texto("resultado") == "aceptada") database.siblingDao().deleteAll(resueltos)
+        database.resolucionDao().delete(resueltos)
     }
 
     private suspend fun <E : Any> aplicar(
@@ -214,8 +227,7 @@ class MotorSincronizacion(
         porTabla["sibling"].orEmpty().forEach { sibling ->
             if (sibling.siblingResuelto()) {
                 database.siblingDao().delete(sibling.texto("id_version"))
-            } else if (!database.resolucionDao().estaResuelto(sibling.texto("id_version"))) {
-                // Uno que esta persona ya resolvió y todavía no sube sigue abierto en el servidor; no se vuelve a abrir.
+            } else {
                 database.siblingDao().insert(sibling.aSiblingEntity())
             }
         }

@@ -22,8 +22,10 @@ data class ResolverConflictoUiState(
     val eleccion: Eleccion? = null,
     /** Llegaron Siblings después de abrir: no se resuelven con esta elección. */
     val hayNuevos: Boolean = false,
+    /** La fila o la edición elegida desaparecieron antes de resolver: no se escribió nada. */
+    val yaNoExiste: Boolean = false,
 ) {
-    val puedeResolver: Boolean get() = conflicto != null && eleccion != null
+    val puedeResolver: Boolean get() = conflicto != null && eleccion != null && !yaNoExiste
 }
 
 sealed interface ResolverConflictoEvento {
@@ -67,8 +69,10 @@ class ResolverConflictoViewModel(
         val conflicto = _estado.value.conflicto ?: return
         val eleccion = _estado.value.eleccion ?: return
         viewModelScope.launch {
-            resolverConflicto(conflicto, eleccion)
-            _eventos.send(ResolverConflictoEvento.Resuelto)
+            when (resolverConflicto(conflicto, eleccion)) {
+                ResolverConflicto.Resultado.Resuelto -> _eventos.send(ResolverConflictoEvento.Resuelto)
+                ResolverConflicto.Resultado.YaNoExiste -> _estado.update { it.copy(yaNoExiste = true) }
+            }
         }
     }
 }
