@@ -4,7 +4,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(27);
+select plan(32);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
@@ -87,6 +87,15 @@ select ok(
     '{fila,id_animal}', '"a0000000-0000-0000-0000-000000000002"'))
   @> '{"resultado": "sibling", "rev": 3, "fila": {"raza": "Cebú rojo", "fecha_baja": "2026-10-23T11:00:00+00:00"}}',
   'una baja que además cambia otros campos se aplica, y lo demás queda como sibling');
+select ok(
+  pg_temp.subir(jsonb_set(
+    pg_temp.lucero('1b000000-0000-0000-0000-000000000004', 1, 'Cebú', fecha_baja => '2026-10-23T12:00:00Z'),
+    '{fila,id_animal}', '"a0000000-0000-0000-0000-000000000002"'))
+  @> '{"resultado": "aceptada", "rev": 3, "fila": {"fecha_baja": "2026-10-23T11:00:00+00:00"}}',
+  'una baja de una fila que otro celular ya dio de baja se acepta sin cambiar la baja');
+select is(
+  (select count(*)::int from public.sibling where id_version = '1b000000-0000-0000-0000-000000000004'), 0,
+  'la segunda baja no queda como sibling');
 
 -- Un Animal subido cuya respuesta no llegó: el celular lo edita sin conocer su revisión.
 select pg_temp.subir(jsonb_set(pg_temp.lucero('1c000000-0000-0000-0000-000000000001', null, 'Gyr'),
@@ -176,6 +185,10 @@ select ok(
   @> '{"resultado": "rechazada", "codigo": "23503", "fila": null}',
   'un Pesaje pendiente asignado sin su Registro se rechaza en su propio cambio');
 
+select ok(
+  pg_temp.subir('{"entidad": "usuario", "fila": {}}') @> '{"resultado": "rechazada", "codigo": "22023"}',
+  'una entidad que no se sube se rechaza');
+
 -- PerfilFinca
 create function pg_temp.finca(nombre text) returns jsonb
 language sql as $$
@@ -192,6 +205,13 @@ select ok(
 select throws_ok(
   $$update public.animal set rev = 99 where id_animal = 'a0000000-0000-0000-0000-000000000001'$$,
   '42501', null, 'un Animal no se modifica sin pasar por subir_cambios');
+select throws_ok(
+  $$update public.evento set detalle = 'otro' where id_evento = 'e0000000-0000-0000-0000-000000000001'$$,
+  '42501', null, 'un Evento no se modifica sin pasar por subir_cambios');
+select throws_ok(
+  $$insert into public.registro (id_registro, id_animal, id_usuario, peso, fecha_medicion, fecha_modificacion)
+    values (gen_random_uuid(), 'a0000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-0000000000a1', 300, now(), now())$$,
+  '42501', null, 'un Registro no se escribe sin pasar por subir_cambios');
 select throws_ok(
   $$insert into public.revision (id_version, entidad, id_fila, id_perfil_finca, rev, contenido)
     values (gen_random_uuid(), 'animal', gen_random_uuid(), '0000000a-0000-0000-0000-000000000000', 1, '{}')$$,

@@ -118,6 +118,26 @@ language sql set search_path = '' as $$
   select jsonb_build_object('resultado', 'aceptada', 'rev', (nueva ->> 'rev')::integer, 'fila', nueva);
 $$;
 
+-- RN-23: la respuesta que ya recibió un id_version, con la fila como está ahora, o nula si es nuevo. El sibling
+-- va primero, porque una baja que además cambió otros campos dejó las dos cosas con el mismo id_version.
+create function privado.respuesta_anterior(tabla text, id uuid, version uuid) returns jsonb
+language plpgsql set search_path = '' as $$
+declare
+  vigente jsonb;
+begin
+  if exists (select 1 from public.sibling s where s.id_version = version) then
+    vigente := privado.leer_fila(tabla, id);
+    return jsonb_build_object('resultado', 'sibling', 'rev', (vigente ->> 'rev')::integer, 'fila', vigente);
+  end if;
+  if exists (select 1 from public.revision r where r.id_version = version) then
+    return jsonb_build_object('resultado', 'aceptada',
+      'rev', (select r.rev from public.revision r where r.id_version = version),
+      'fila', privado.leer_fila(tabla, id));
+  end if;
+  return null;
+end;
+$$;
+
 -- Animal, Evento y Registro (ADR-0004).
 create function privado.subir_con_revisiones(cambio jsonb) returns jsonb
 language plpgsql set search_path = '' as $$
@@ -129,25 +149,32 @@ declare
   -- Sin `rev_base`, el celular nunca recibió la respuesta de su inserción. Si la fila ya está en el servidor,
   -- solo pudo llegar por esa inserción, porque el UUID lo generó ese celular: la edición parte de la revisión 1.
   rev_base constant integer := coalesce((cambio ->> 'rev_base')::integer, 1);
+  -- Las columnas que no cuentan para saber si una baja cambió algo más.
+  de_la_baja constant text[] := array['fecha_baja', 'fecha_modificacion', 'id_perfil_finca'];
   vigente jsonb;
+  anterior jsonb;
   rev_vigente integer;
   nueva jsonb;
 begin
-  -- RN-23: un id_version ya procesado recibe la misma respuesta, con la fila como está ahora. El sibling va
-  -- primero, porque una baja que además cambió otros campos dejó las dos cosas con el mismo id_version.
-  if exists (select 1 from public.sibling s where s.id_version = version) then
-    vigente := privado.leer_fila(tabla, id);
-    return jsonb_build_object('resultado', 'sibling', 'rev', (vigente ->> 'rev')::integer, 'fila', vigente);
-  end if;
-  if exists (select 1 from public.revision r where r.id_version = version) then
-    return jsonb_build_object('resultado', 'aceptada',
-      'rev', (select r.rev from public.revision r where r.id_version = version),
-      'fila', privado.leer_fila(tabla, id));
+  -- Se bloquea la fila antes de buscar el id_version: un reenvío que llega mientras la primera llamada sigue
+  -- abierta espera aquí y después encuentra su respuesta.
+  vigente := privado.leer_fila(tabla, id, bloquear => true);
+  anterior := privado.respuesta_anterior(tabla, id, version);
+  if anterior is not null then
+    return anterior;
   end if;
 
-  vigente := privado.leer_fila(tabla, id, bloquear => true);
   if vigente is null then
-    return privado.guardar_revision(version, tabla, privado.insertar_fila(tabla, fila || '{"rev": 1}'));
+    begin
+      return privado.guardar_revision(version, tabla, privado.insertar_fila(tabla, fila || '{"rev": 1}'));
+    exception when unique_violation then
+      -- Otra llamada con la misma inserción la confirmó mientras esta esperaba la llave.
+      anterior := privado.respuesta_anterior(tabla, id, version);
+      if anterior is null then
+        raise;
+      end if;
+      return anterior;
+    end;
   end if;
   rev_vigente := (vigente ->> 'rev')::integer;
   if rev_base = rev_vigente then
@@ -163,15 +190,18 @@ begin
 
   -- RN-22: la baja nunca es sibling; se aplica sobre la vigente. Lo demás que cambió esa edición, si cambió
   -- algo respecto de la revisión de la que partió, queda como sibling.
-  if vigente ->> 'fecha_baja' is null and fila ->> 'fecha_baja' is not null then
-    nueva := privado.guardar_revision(version, tabla, privado.actualizar_fila(tabla, id, jsonb_build_object(
-      'fecha_baja', fila -> 'fecha_baja', 'fecha_modificacion', fila -> 'fecha_modificacion', 'rev', rev_vigente + 1)));
+  if fila ->> 'fecha_baja' is not null then
+    if vigente ->> 'fecha_baja' is null then
+      vigente := privado.guardar_revision(version, tabla, privado.actualizar_fila(tabla, id, jsonb_build_object(
+        'fecha_baja', fila -> 'fecha_baja', 'fecha_modificacion', fila -> 'fecha_modificacion', 'rev', rev_vigente + 1)
+      )) -> 'fila';
+    end if;
+    -- Si otro celular ya la dio de baja, esa baja queda: es definitiva.
     if not privado.cambia(tabla,
       (select r.contenido from public.revision r where r.entidad = tabla and r.id_fila = id and r.rev = rev_base),
-      fila, array['fecha_baja', 'fecha_modificacion', 'id_perfil_finca']) then
-      return nueva;
+      fila, de_la_baja) then
+      return jsonb_build_object('resultado', 'aceptada', 'rev', (vigente ->> 'rev')::integer, 'fila', vigente);
     end if;
-    vigente := nueva -> 'fila';
   end if;
   insert into public.sibling (id_version, entidad, id_fila, id_perfil_finca, rev_base, contenido)
     values (version, tabla, id, (vigente ->> 'id_perfil_finca')::uuid, rev_base, fila);
