@@ -31,6 +31,8 @@ select set_config('request.jwt.claims', '{"sub":"<id del usuario>","role":"authe
 set local role authenticated;
 ```
 
+Una prueba que escribe directo en `animal`, `evento`, `registro`, `revision` o `sibling` como `authenticated` fija además la marca de `subir_cambios` (ver abajo): `select set_config('miganado.subir_cambios', 'si', true);`.
+
 ## El proyecto en la nube
 
 Lo crea una sola vez el dueño del proyecto:
@@ -78,6 +80,8 @@ Evento, Registro, Chapeta y Pesaje pendiente llevan además `id_perfil_finca`, q
 
 Nadie borra (RNF-04). Una tabla nueva no concede DELETE porque la migración de políticas lo quita de los permisos por defecto; los demás permisos (SELECT, INSERT, UPDATE) sí los da Supabase por defecto, así que cada migración que cree una tabla revoca lo que esa tabla no necesita y activa RLS.
 
+Un usuario no escribe `animal`, `evento`, `registro`, `revision` ni `sibling` por fuera de `subir_cambios`: la función marca su transacción con `miganado.subir_cambios` y un trigger rechaza con `42501` la escritura de `authenticated` o `anon` que no la lleve. Así nadie salta la comparación de `rev_base` con un `PATCH` directo.
+
 Errores que devuelve, para clasificar un rechazo:
 
 | Código | Cuándo |
@@ -87,3 +91,24 @@ Errores que devuelve, para clasificar un rechazo:
 | `23503` | Una referencia a un Animal o un Usuario de otra finca, o un Pesaje pendiente asignado sin su Registro (se comprueba al terminar la transacción). |
 | `23514` | Datos inválidos: etapa que no corresponde al sexo, código sin normalizar, peso fuera de 0–1500 kg. |
 | `55000` | Un estado definitivo: deshacer una baja, una Chapeta liberada, una conciliación o un sibling resuelto; o cambiar lo que no se edita (el código de una Chapeta, el peso de un Pesaje pendiente, la finca de un Animal). |
+
+## Subir cambios
+
+El celular llama `POST /rest/v1/rpc/subir_cambios` con `{"lote": [...]}` y el JWT del usuario (ADR-0005). Cada cambio del lote:
+
+```json
+{"entidad": "animal", "id_version": "<uuid>", "rev_base": 3, "resuelve": ["<id_version de un sibling>"],
+ "fila": {"id_animal": "<uuid>", "nombre": "Lucero", "...": "las columnas de la tabla, en snake_case"}}
+```
+
+`id_version`, `rev_base` y `resuelve` van solo en Animal, Evento y Registro; `rev_base` es nulo en una fila que nunca subió. Las tablas hijas pueden enviar `id_perfil_finca` nulo: lo llena el trigger. De PerfilFinca solo cambian las columnas que trae la fila.
+
+La respuesta trae un resultado por cambio, en el mismo orden:
+
+| `resultado` | Cuándo | Trae |
+|---|---|---|
+| `aceptada` | `rev_base` es la vigente, o la fila es nueva, o es una baja (RN-22), o una Chapeta o un Pesaje pendiente que cambian de estado. | `rev` (si tiene revisiones) y `fila`, como quedó en el servidor. |
+| `sibling` | `rev_base` ya no es la vigente (RN-15). Una baja que además cambió otros campos se aplica y el resto queda como sibling. | `rev` y `fila`: la revisión vigente. |
+| `rechazada` | Uno de los errores de la tabla de arriba. El resto del lote sigue. | `codigo`, `motivo` y `fila`: la fila del servidor, o nula si el servidor no la tiene. |
+
+Reenviar un `id_version` ya procesado devuelve el mismo resultado, sin crear revisión ni sibling (RN-23). El celular sube los Registros antes que los Pesajes pendientes: uno asignado sin su Registro se rechaza con `23503`.
