@@ -22,16 +22,21 @@ import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExtendedFloatingActionButton
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -72,10 +77,18 @@ fun ListaAnimalesScreen(
             container.registroRepository,
             container.observarPesajesPendientes,
             container.sesionRepository,
+            container.sincronizacionRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
     var confirmarCierre by remember { mutableStateOf(false) }
+    val snackbar = remember { SnackbarHostState() }
+    LaunchedEffect(estado.avisoSincronizacion) {
+        estado.avisoSincronizacion?.let {
+            viewModel.onAvisoMostrado()
+            snackbar.showSnackbar(it)
+        }
+    }
 
     var busqueda by remember { mutableStateOf("") }
 
@@ -88,6 +101,13 @@ fun ListaAnimalesScreen(
     Scaffold(
         topBar = {
             BovinaTopBar(titulo = "Animales", mostrarLogo = true) {
+                IconButton(onClick = viewModel::onSincronizar, enabled = !estado.sincronizando) {
+                    if (estado.sincronizando) {
+                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                    } else {
+                        Icon(Icons.Filled.Sync, contentDescription = "Sincronizar ahora")
+                    }
+                }
                 IconButton(onClick = onIndicadoresClick) {
                     Icon(Icons.Filled.Insights, contentDescription = "Indicadores")
                 }
@@ -96,6 +116,7 @@ fun ListaAnimalesScreen(
                 }
             }
         },
+        snackbarHost = { SnackbarHost(snackbar) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
                 onClick = onNuevoAnimalClick,

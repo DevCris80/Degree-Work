@@ -16,8 +16,11 @@ import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoSubida
 import com.devcris80.prototipo.domain.repository.SesionRepository
+import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
@@ -184,5 +187,19 @@ internal class FakeSesionRepository : SesionRepository {
     }
     override suspend fun cerrarSesion() {
         guardada.value = false
+    }
+}
+
+internal class FakeSincronizacionRepository : SincronizacionRepository {
+    var resultado: ResultadoSubida = ResultadoSubida.Completa(0, 0, 0)
+    var subidas = 0
+
+    /** Si no es nulo, la subida espera a que se complete. */
+    var espera: CompletableDeferred<Unit>? = null
+
+    override suspend fun subirCambios(): ResultadoSubida {
+        subidas++
+        espera?.await()
+        return resultado
     }
 }
