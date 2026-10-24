@@ -177,7 +177,6 @@ fun AppNavHost() {
                 val idAnimal = entry.arguments?.getString("idAnimal").orEmpty()
                 DetalleAnimalScreen(
                     onVolver = { navController.popBackStack() },
-                    onNuevoEventoClick = { navController.navigate(Rutas.ProgramarEvento.ruta) },
                     onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
                     onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },

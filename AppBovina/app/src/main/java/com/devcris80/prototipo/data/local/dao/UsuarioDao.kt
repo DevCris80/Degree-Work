@@ -16,9 +16,14 @@ interface UsuarioDao {
     @Upsert
     suspend fun guardar(usuario: UsuarioEntity)
 
-    @Query("SELECT * FROM usuario LIMIT 1")
+    /** El Usuario del dispositivo. */
+    @Query("SELECT * FROM usuario WHERE delDispositivo = 1 LIMIT 1")
     fun observe(): Flow<UsuarioEntity?>
 
-    @Query("SELECT * FROM usuario LIMIT 1")
+    /** El Usuario del dispositivo. */
+    @Query("SELECT * FROM usuario WHERE delDispositivo = 1 LIMIT 1")
     suspend fun getOnce(): UsuarioEntity?
+
+    @Query("SELECT * FROM usuario WHERE idUsuario = :idUsuario")
+    suspend fun findById(idUsuario: String): UsuarioEntity?
 }

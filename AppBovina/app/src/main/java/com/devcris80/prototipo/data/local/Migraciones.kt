@@ -104,3 +104,14 @@ val MIGRACION_12_13: Migration = object : MigracionBovina(12, 13) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_animal_idMadre` ON `animal` (`idMadre`)")
     }
 }
+
+/**
+ * 13 → 14: la descarga trae a los demás Usuarios de la finca (#82), así que `usuario` marca cuál es el
+ * del dispositivo. Hasta la versión 13 el dispositivo solo guarda el suyo.
+ */
+val MIGRACION_13_14: Migration = object : MigracionBovina(13, 14) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `usuario` ADD COLUMN `delDispositivo` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("UPDATE `usuario` SET delDispositivo = 1")
+    }
+}

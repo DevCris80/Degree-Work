@@ -11,7 +11,7 @@ import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
-import com.devcris80.prototipo.domain.repository.ResultadoSubida
+import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
@@ -153,8 +153,8 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun sincronizar_subeLosCambiosYAvisaLosConflictosYRechazos() = runTest {
-        sincronizacionRepository.resultado = ResultadoSubida.Completa(aceptados = 3, enConflicto = 1, rechazados = 2)
+    fun sincronizar_subeYDescargaYAvisaLosConflictosYRechazos() = runTest {
+        sincronizacionRepository.resultado = ResultadoSincronizacion.Completa(aceptados = 3, enConflicto = 1, rechazados = 2)
         val viewModel = crearViewModel()
         val estados = mutableListOf<ListaAnimalesUiState>()
         val job = launch { viewModel.estado.collect { estados.add(it) } }
@@ -162,9 +162,9 @@ class ListaAnimalesViewModelTest {
         viewModel.onSincronizar()
         advanceUntilIdle()
 
-        assertEquals(1, sincronizacionRepository.subidas)
+        assertEquals(1, sincronizacionRepository.sincronizaciones)
         assertEquals(false, estados.last().sincronizando)
-        assertEquals("Cambios subidos. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
+        assertEquals("Sincronizado. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
         viewModel.onAvisoMostrado()
         advanceUntilIdle()
         assertEquals(null, estados.last().avisoSincronizacion)
@@ -172,8 +172,8 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun sincronizarSinSenal_avisaQueSeSubenDespues() = runTest {
-        sincronizacionRepository.resultado = ResultadoSubida.SinConexion
+    fun sincronizarSinSenal_avisaQueSeSincronizaDespues() = runTest {
+        sincronizacionRepository.resultado = ResultadoSincronizacion.SinConexion
         val viewModel = crearViewModel()
         val estados = mutableListOf<ListaAnimalesUiState>()
         val job = launch { viewModel.estado.collect { estados.add(it) } }
@@ -181,7 +181,7 @@ class ListaAnimalesViewModelTest {
         viewModel.onSincronizar()
         advanceUntilIdle()
 
-        assertEquals("Sin señal. Los cambios quedan en el celular y se suben después.", estados.last().avisoSincronizacion)
+        assertEquals("Sin señal. Lo que falta se sincroniza después.", estados.last().avisoSincronizacion)
         job.cancel()
     }
 
@@ -199,7 +199,7 @@ class ListaAnimalesViewModelTest {
         sincronizacionRepository.espera!!.complete(Unit)
         advanceUntilIdle()
 
-        assertEquals(1, sincronizacionRepository.subidas)
+        assertEquals(1, sincronizacionRepository.sincronizaciones)
         assertEquals(false, estados.last().sincronizando)
         job.cancel()
     }

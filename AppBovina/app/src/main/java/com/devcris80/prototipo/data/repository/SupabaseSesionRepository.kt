@@ -83,7 +83,7 @@ class SupabaseSesionRepository(
         // La finca antes que el Usuario, que la referencia.
         transaccion.ejecutar {
             perfilFincaDao.guardar(finca.aPerfilFincaEntity())
-            usuarioDao.guardar(usuario.aUsuarioEntity())
+            usuarioDao.guardar(usuario.aUsuarioEntity(delDispositivo = true))
         }
         return ResultadoInicioSesion.Exito
     }

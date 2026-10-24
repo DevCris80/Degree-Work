@@ -113,3 +113,20 @@ La respuesta trae un resultado por cambio, en el mismo orden:
 | `rechazada` | Uno de los errores de la tabla de arriba. El resto del lote sigue. | `codigo`, `motivo` y `fila`: la fila del servidor, o nula si el servidor no la tiene. |
 
 Reenviar un `id_version` ya procesado devuelve el mismo resultado, sin crear revisión ni sibling (RN-23). El celular sube los Registros antes que los Pesajes pendientes: uno asignado sin su Registro se rechaza con `23503`.
+
+## Descargar cambios
+
+El celular llama `POST /rest/v1/rpc/descargar_cambios` con `{"desde": <cursor>, "limite": <tamaño de página>}`. La respuesta trae las filas de su finca con cursor mayor que `desde`, en el orden en que se escribieron:
+
+```json
+{"cambios": [{"entidad": "animal", "cursor": 812, "fila": {"id_animal": "<uuid>", "rev": 3, "...": "..."}}],
+ "referencias": [{"entidad": "usuario", "fila": {"id_usuario": "<uuid>", "...": "..."}}],
+ "cursor": 812, "hay_mas": true}
+```
+
+- `entidad` es `perfil_finca`, `usuario`, `animal`, `chapeta`, `evento`, `registro`, `pesaje_pendiente` o `sibling`. Los siblings llegan resueltos (`resuelto_por` no nulo) y sin resolver.
+- `referencias` son los Animales (con sus padres y madres) y los Usuarios a los que apuntan los cambios de la página y que la página no trae. Una fila llega con su versión actual, así que un Evento nuevo puede llegar antes que su Animal editado después.
+- `cursor` es el del último cambio, o `desde` si la página está vacía. La siguiente página se pide desde ahí.
+- El margen de solapamiento lo resta el celular a su cursor guardado al empezar cada descarga, no en cada página: dos transacciones pueden confirmar en orden distinto al de sus cursores.
+
+Un `limite` menor que 1 da `22023`.

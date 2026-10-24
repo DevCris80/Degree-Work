@@ -16,7 +16,7 @@ import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
-import com.devcris80.prototipo.domain.repository.ResultadoSubida
+import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
@@ -191,14 +191,14 @@ internal class FakeSesionRepository : SesionRepository {
 }
 
 internal class FakeSincronizacionRepository : SincronizacionRepository {
-    var resultado: ResultadoSubida = ResultadoSubida.Completa(0, 0, 0)
-    var subidas = 0
+    var resultado: ResultadoSincronizacion = ResultadoSincronizacion.Completa(0, 0, 0)
+    var sincronizaciones = 0
 
     /** Si no es nulo, la subida espera a que se complete. */
     var espera: CompletableDeferred<Unit>? = null
 
-    override suspend fun subirCambios(): ResultadoSubida {
-        subidas++
+    override suspend fun sincronizar(): ResultadoSincronizacion {
+        sincronizaciones++
         espera?.await()
         return resultado
     }

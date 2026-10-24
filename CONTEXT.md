@@ -61,7 +61,7 @@ Marcar un `Animal`, `Evento` o `Registro` como retirado: deja de aparecer en las
 _Avoid_: borrar, eliminar
 
 **Usuario**:
-Una persona que opera la app, identificada por `idUsuario` y asociada a un `PerfilFinca` mediante `idPerfilFinca`; tiene un `rol` que distingue su función. Un mismo `PerfilFinca` puede tener varios Usuarios, cada uno con la app en su propio dispositivo; un Usuario pertenece a una sola finca. Su `rol` es **Ganadero** u **Operario**.
+Una persona que opera la app, identificada por `idUsuario` y asociada a un `PerfilFinca` mediante `idPerfilFinca`; tiene un `rol` que distingue su función. Un mismo `PerfilFinca` puede tener varios Usuarios, cada uno con la app en su propio dispositivo; un Usuario pertenece a una sola finca. La sincronización trae al celular a todos los Usuarios de su finca, para saber quién registró cada cosa; el **Usuario del dispositivo** es el que inició sesión en ese celular. Su `rol` es **Ganadero** u **Operario**.
 _Avoid_: Ganadero como nombre de la entidad de datos (es un `rol`, no la entidad)
 
 **Ganadero**:

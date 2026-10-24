@@ -104,6 +104,22 @@ class MigracionesTest {
         }
     }
 
+    @Test
+    fun de13a14MarcaComoDelDispositivoAlUnicoUsuario() {
+        helper.createDatabase(BASE, 13).use { db ->
+            db.execSQL("INSERT INTO perfil_finca VALUES ('finca-1', 'Finca', 1, 0)")
+            db.execSQL("INSERT INTO usuario VALUES ('usuario-1', 'finca-1', 'Ganadero', 'Ganadero', 1, 0)")
+        }
+
+        helper.runMigrationsAndValidate(BASE, 14, true, MIGRACION_13_14).use { db ->
+            db.query("SELECT idUsuario, delDispositivo FROM usuario").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("usuario-1", fila.getString(0))
+                assertEquals(1, fila.getInt(1))
+            }
+        }
+    }
+
     private companion object {
         const val BASE = "migracion-test"
         val UUID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")

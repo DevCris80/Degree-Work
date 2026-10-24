@@ -2,27 +2,36 @@ package com.devcris80.prototipo.data.repository
 
 import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.entity.EstadoSyncEntity
 import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
-import com.devcris80.prototipo.domain.repository.ResultadoSubida
+import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import kotlinx.coroutines.CancellationException
 import kotlinx.serialization.json.JsonArray
+import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.boolean
+import kotlinx.serialization.json.contentOrNull
 import kotlinx.serialization.json.intOrNull
+import kotlinx.serialization.json.jsonArray
 import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
+import kotlinx.serialization.json.long
 import java.util.UUID
 
 /**
  * El motor de sincronización (DAT-05, CU-20): sube los cambios locales por lotes pequeños, de padres a hijos, y
- * aplica la respuesta de `subir_cambios` fila por fila (ADR-0004). Cada lote se confirma por separado: si se
- * pierde la señal, lo ya aplicado queda y el resto sigue pendiente.
+ * aplica la respuesta de `subir_cambios` fila por fila (ADR-0004). Después descarga por páginas, con
+ * `descargar_cambios`, lo que subieron los demás celulares de la finca. Cada lote y cada página se confirman por
+ * separado: si se pierde la señal, lo ya aplicado queda, el resto sigue pendiente y la descarga sigue desde el
+ * cursor de la última página.
  *
  * Sus escrituras no llevan EDICION_LOCAL. Una aceptada o un sibling solo tocan la fila si no cambió mientras el
- * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización.
+ * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización. La descarga
+ * nunca pisa una fila con cambios pendientes.
  */
 class MotorSincronizacion(
     private val servidor: ServidorSincronizacion,
@@ -30,19 +39,23 @@ class MotorSincronizacion(
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val nuevoIdRechazo: () -> String = { UUID.randomUUID().toString() },
     private val tamanoLote: Int = TAMANO_LOTE,
+    private val tamanoPagina: Int = TAMANO_PAGINA,
+    private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
 ) : SincronizacionRepository {
-    private val tablas = tablasQueSuben(database)
+    private val tablas = tablasSincronizadas(database)
 
-    override suspend fun subirCambios(): ResultadoSubida = try {
-        tablas.fold(ResultadoSubida.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
+    override suspend fun sincronizar(): ResultadoSincronizacion = try {
+        val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
+        descargar()
+        subida
     } catch (e: CancellationException) {
         throw e
     } catch (e: Exception) {
-        if (e.esFaltaDeConexion()) ResultadoSubida.SinConexion else ResultadoSubida.NoSePudo
+        if (e.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo
     }
 
-    private suspend fun <E : Any> subir(tabla: TablaQueSube<E>): ResultadoSubida.Completa {
-        var conteo = ResultadoSubida.Completa(0, 0, 0)
+    private suspend fun <E : Any> subir(tabla: TablaSincronizada<E>): ResultadoSincronizacion.Completa {
+        var conteo = ResultadoSincronizacion.Completa(0, 0, 0)
         for (ids in tabla.pendientes().map(tabla::id).chunked(tamanoLote)) {
             // Se releen: un lote anterior pudo sacar filas de su tabla junto con un Animal rechazado.
             val lote = ids.mapNotNull { tabla.buscar(it) }.filterNot(tabla::sincronizada)
@@ -58,11 +71,11 @@ class MotorSincronizacion(
     }
 
     private suspend fun <E : Any> aplicar(
-        tabla: TablaQueSube<E>,
+        tabla: TablaSincronizada<E>,
         enviada: E,
         cambio: JsonObject,
         resultado: JsonObject,
-    ): ResultadoSubida.Completa {
+    ): ResultadoSincronizacion.Completa {
         val local = tabla.buscar(tabla.id(enviada))
         val intacta = local?.let { tabla.version(it) == tabla.version(enviada) } == true
         val delServidor = resultado["fila"] as? JsonObject
@@ -73,20 +86,23 @@ class MotorSincronizacion(
                 } else if (local != null && tabla is TablaConRevisiones) {
                     resultado["rev"]?.jsonPrimitive?.intOrNull?.let { tabla.rebasar(tabla.id(local), it) }
                 }
-                ResultadoSubida.Completa(1, 0, 0)
+                ResultadoSincronizacion.Completa(1, 0, 0)
             }
             // La fila toma la revisión vigente y la edición local queda como sibling (ADR-0004, regla 3).
             "sibling" -> {
                 guardarSibling(tabla.entidad, tabla.id(enviada), cambio)
                 if (intacta) tabla.guardar(tabla.conLaDelServidor(local!!, checkNotNull(delServidor)))
-                ResultadoSubida.Completa(0, 1, 0)
+                ResultadoSincronizacion.Completa(0, 1, 0)
             }
             // Aunque la fila haya cambiado mientras subía: si no, sus dependientes subirían y se rechazarían una
             // por una mientras ella sigue pendiente. La bandeja guarda su última versión. Una fila que ya quedó
             // sincronizada en este lote salió como dependiente de otra, y no queda nada que rechazar.
             "rechazada" -> {
-                if (local != null && !tabla.sincronizada(local)) rechazar(tabla, local, resultado, delServidor)
-                ResultadoSubida.Completa(0, 0, 1)
+                if (local != null && !tabla.sincronizada(local)) {
+                    val motivo = resultado["motivo"]?.jsonPrimitive?.content.orEmpty()
+                    rechazar(tabla, local, resultado.texto("codigo"), motivo, delServidor)
+                }
+                ResultadoSincronizacion.Completa(0, 0, 1)
             }
             else -> error("Resultado desconocido: $tipo")
         }
@@ -113,16 +129,18 @@ class MotorSincronizacion(
      * tiene, sale de su tabla con sus dependientes, que también quedan en la bandeja.
      */
     private suspend fun <E : Any> rechazar(
-        tabla: TablaQueSube<E>,
+        tabla: TablaSincronizada<E>,
         local: E,
-        resultado: JsonObject,
+        codigo: String,
+        motivo: String,
         delServidor: JsonObject?,
     ) {
-        val codigo = resultado.texto("codigo")
-        val motivo = resultado["motivo"]?.jsonPrimitive?.content.orEmpty()
         guardarRechazo(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
         if (delServidor != null) {
-            tabla.guardar(tabla.conLaDelServidor(local, delServidor))
+            // Por ejemplo, una Chapeta cuya liberación se rechazó vuelve a quedar activa.
+            val vigente = tabla.conLaDelServidor(local, delServidor)
+            abrirPaso(tabla, vigente)
+            tabla.guardar(vigente)
             return
         }
         for (dependiente in tabla.sacar(local)) {
@@ -133,6 +151,84 @@ class MotorSincronizacion(
                 "$codigo: Se rechazó el ${tabla.entidad} ${tabla.id(local)}. $motivo",
             )
         }
+    }
+
+    /**
+     * Descarga desde el cursor guardado, menos el margen de solapamiento: dos transacciones del servidor pueden
+     * confirmar en orden distinto al de sus cursores. Guarda el cursor con cada página, en la misma transacción
+     * que la aplica, y al terminar registra la fecha de la última sincronización completa.
+     */
+    private suspend fun descargar() {
+        val estadoSync = database.estadoSyncDao()
+        val anterior = estadoSync.getOnce()
+        var cursor = anterior?.cursorDescarga ?: 0
+        var desde = maxOf(0, cursor - margenSolapamiento)
+        do {
+            val pagina = servidor.descargarCambios(desde, tamanoPagina)
+            val hasta = pagina.getValue("cursor").jsonPrimitive.long
+            val hayMas = pagina.getValue("hay_mas").jsonPrimitive.boolean
+            check(!hayMas || hasta > desde) { "La página no avanzó desde el cursor $desde" }
+            database.withTransaction {
+                aplicarPagina(pagina.getValue("referencias").jsonArray + pagina.getValue("cambios").jsonArray)
+                cursor = maxOf(cursor, hasta)
+                estadoSync.guardar(
+                    EstadoSyncEntity(cursorDescarga = cursor, fechaUltimaSincronizacion = anterior?.fechaUltimaSincronizacion),
+                )
+            }
+            desde = hasta
+        } while (hayMas)
+        estadoSync.guardar(EstadoSyncEntity(cursorDescarga = cursor, fechaUltimaSincronizacion = clock()))
+    }
+
+    /** Las filas de una página, de padres a hijos para que cada una encuentre las filas a las que apunta. */
+    private suspend fun aplicarPagina(filas: List<JsonElement>) {
+        val porTabla = filas.map { it.jsonObject }.groupBy({ it.texto("entidad") }, { it.getValue("fila").jsonObject })
+        porTabla["usuario"].orEmpty().forEach { guardarUsuario(it) }
+        for (tabla in tablas) {
+            val deLaTabla = porTabla[tabla.entidad].orEmpty()
+            val enOrden = if (tabla.entidad == "animal") padresPrimero(deLaTabla) else deLaTabla
+            enOrden.forEach { bajar(tabla, it) }
+        }
+        porTabla["sibling"].orEmpty().forEach { sibling ->
+            if (sibling.siblingResuelto()) {
+                database.siblingDao().delete(sibling.texto("id_version"))
+            } else {
+                database.siblingDao().insert(sibling.aSiblingEntity())
+            }
+        }
+    }
+
+    private suspend fun <E : Any> bajar(tabla: TablaSincronizada<E>, fila: JsonObject) {
+        val local = tabla.buscar(fila.texto("id_${tabla.entidad}"))
+        if (local == null) {
+            val nueva = tabla.desdeElServidor(fila)
+            abrirPaso(tabla, nueva)
+            tabla.insertar(nueva)
+        } else if (tabla.sincronizada(local) && tabla.alDia(fila, local)) {
+            val vigente = tabla.conLaDelServidor(local, fila)
+            abrirPaso(tabla, vigente)
+            tabla.guardar(vigente)
+        }
+    }
+
+    /**
+     * Despeja los índices únicos locales para guardar [fila], la versión del servidor. Una fila nueva que choca con
+     * ella no puede subir: pasa a la bandeja, como la rechazaría el servidor. Una ya sincronizada le cede el lugar.
+     */
+    private suspend fun <E : Any> abrirPaso(tabla: TablaSincronizada<E>, fila: E) {
+        for (choque in tabla.choques(fila)) {
+            if (tabla.sincronizada(choque)) {
+                tabla.ceder(choque, fila)
+            } else {
+                rechazar(tabla, choque, CODIGO_UNICIDAD, tabla.motivoDelChoque, delServidor = null)
+            }
+        }
+    }
+
+    // Conserva cuál es el Usuario del dispositivo.
+    private suspend fun guardarUsuario(fila: JsonObject) {
+        val local = database.usuarioDao().findById(fila.texto("id_usuario"))
+        database.usuarioDao().guardar(fila.aUsuarioEntity(delDispositivo = local?.delDispositivo ?: false))
     }
 
     private suspend fun guardarRechazo(entidad: String, idFila: String, fila: JsonObject, motivo: String) {
@@ -151,11 +247,37 @@ class MotorSincronizacion(
     private companion object {
         /** Pequeño para que, con señal débil, cada lote llegue rápido y lo confirmado no se pierda. */
         const val TAMANO_LOTE = 25
+
+        /** Por la misma razón; una fila descargada pesa menos que un cambio subido, que espera su respuesta. */
+        const val TAMANO_PAGINA = 200
+
+        /**
+         * Cursores que se vuelven a pedir en cada descarga. Cubre las escrituras que confirmaron después de otras
+         * con un cursor mayor. La secuencia es de todas las fincas, pero cada lote toma pocos cursores.
+         */
+        const val MARGEN_SOLAPAMIENTO = 200L
+
+        const val CODIGO_UNICIDAD = "23505"
     }
 }
 
-private operator fun ResultadoSubida.Completa.plus(otro: ResultadoSubida.Completa) = ResultadoSubida.Completa(
-    aceptados = aceptados + otro.aceptados,
-    enConflicto = enConflicto + otro.enConflicto,
-    rechazados = rechazados + otro.rechazados,
-)
+private operator fun ResultadoSincronizacion.Completa.plus(otro: ResultadoSincronizacion.Completa) =
+    ResultadoSincronizacion.Completa(
+        aceptados = aceptados + otro.aceptados,
+        enConflicto = enConflicto + otro.enConflicto,
+        rechazados = rechazados + otro.rechazados,
+    )
+
+/** Los Animales de una página con cada padre y cada madre antes que su cría. */
+private fun padresPrimero(animales: List<JsonObject>): List<JsonObject> {
+    val porId = animales.associateBy { it.texto("id_animal") }
+    val orden = LinkedHashSet<JsonObject>()
+    fun agregar(animal: JsonObject) {
+        if (animal in orden) return
+        listOf("id_padre", "id_madre").mapNotNull { animal[it]?.jsonPrimitive?.contentOrNull }.mapNotNull(porId::get)
+            .forEach(::agregar)
+        orden += animal
+    }
+    animales.forEach(::agregar)
+    return orden.toList()
+}

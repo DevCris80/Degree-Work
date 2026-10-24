@@ -13,7 +13,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.EntidadSincronizada
-import com.devcris80.prototipo.domain.repository.ResultadoSubida
+import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
@@ -51,7 +51,9 @@ class MotorSincronizacionTest {
             .build()
         // La finca y el Usuario llegan del servidor al iniciar sesión: ya están sincronizados.
         db.perfilFincaDao().guardar(PerfilFincaEntity("finca-1", "Finca", sincronizado = true, fechaModificacion = 0))
-        db.usuarioDao().insert(UsuarioEntity("usuario-1", "finca-1", "Ganadero", sincronizado = true, fechaModificacion = 0))
+        db.usuarioDao().insert(
+            UsuarioEntity("usuario-1", "finca-1", "Ganadero", sincronizado = true, fechaModificacion = 0, delDispositivo = true),
+        )
     }
 
     @After
@@ -66,9 +68,9 @@ class MotorSincronizacionTest {
         repeat(50) { db.registroDao().insert(registro("registro-$it", idAnimal = "animal-${it % 18}")) }
         db.chapetaDao().insert(chapeta("chapeta-1", idAnimal = "madre"))
 
-        val resultado = motor(tamanoLote = 7).subirCambios()
+        val resultado = motor(tamanoLote = 7).sincronizar()
 
-        assertEquals(ResultadoSubida.Completa(aceptados = 71, enConflicto = 0, rechazados = 0), resultado)
+        assertEquals(ResultadoSincronizacion.Completa(aceptados = 71, enConflicto = 0, rechazados = 0), resultado)
         assertTrue(servidor.lotes.all { it.size <= 7 })
         val enviados = servidor.lotes.flatten().map { it.jsonObject }
         assertEquals(
@@ -87,7 +89,7 @@ class MotorSincronizacionTest {
     fun elLoteLlevaLaFilaConLasColumnasDelServidor() = runTest {
         db.animalDao().insert(animal("animal-1", idMadre = null, fechaModificacion = 20).copy(fotoUri = "content://foto"))
 
-        motor().subirCambios()
+        motor().sincronizar()
 
         val cambio = servidor.lotes.single().single().jsonObject
         assertEquals("animal", cambio.texto("entidad"))
@@ -112,7 +114,7 @@ class MotorSincronizacionTest {
             aceptarTodo(lote)
         }
 
-        motor().subirCambios()
+        motor().sincronizar()
 
         val guardado = db.animalDao().findById("animal-1")!!
         assertFalse(guardado.sincronizado)
@@ -133,9 +135,9 @@ class MotorSincronizacionTest {
             JsonArray(listOf(resultado(cambio, "sibling", rev = 2, fila = vigente)))
         }
 
-        val resultado = motor().subirCambios()
+        val resultado = motor().sincronizar()
 
-        assertEquals(ResultadoSubida.Completa(aceptados = 0, enConflicto = 1, rechazados = 0), resultado)
+        assertEquals(ResultadoSincronizacion.Completa(aceptados = 0, enConflicto = 1, rechazados = 0), resultado)
         val guardado = db.animalDao().findById("animal-1")!!
         assertEquals("Brahman rojo", guardado.raza)
         assertEquals(2, guardado.rev)
@@ -168,9 +170,9 @@ class MotorSincronizacionTest {
             )
         }
 
-        val resultado = motor().subirCambios()
+        val resultado = motor().sincronizar()
 
-        assertEquals(ResultadoSubida.Completa(aceptados = 1, enConflicto = 0, rechazados = 1), resultado)
+        assertEquals(ResultadoSincronizacion.Completa(aceptados = 1, enConflicto = 0, rechazados = 1), resultado)
         assertNull(db.chapetaDao().findById("chapeta-1"))
         assertTrue(db.chapetaDao().findById("chapeta-2")!!.sincronizado)
         val rechazo = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first().single()
@@ -180,7 +182,7 @@ class MotorSincronizacionTest {
         assertTrue(rechazo.contenido.contains("\"codigo\":\"04A31B2C\""))
 
         servidor.lotes.clear()
-        motor().subirCambios()
+        motor().sincronizar()
         assertEquals("el rechazo no se reenvía", emptyList<JsonArray>(), servidor.lotes)
     }
 
@@ -196,7 +198,7 @@ class MotorSincronizacionTest {
             JsonArray(listOf(resultado(cambio, "rechazada", codigo = "42501", motivo = "Un Operario no puede dar de baja un Animal", fila = delServidor)))
         }
 
-        motor().subirCambios()
+        motor().sincronizar()
 
         val guardado = db.animalDao().findById("animal-1")!!
         assertNull(guardado.fechaBaja)
@@ -205,6 +207,39 @@ class MotorSincronizacionTest {
         val rechazo = db.rechazoDao().observeAbiertos().first().single()
         assertEquals("animal-1", rechazo.idFila)
         assertTrue(rechazo.motivo.startsWith("42501: "))
+    }
+
+    @Test
+    fun unaChapetaQueVuelveAQuedarActivaPorUnRechazoSacaALaBandejaALaNuevaConSuCodigo() = runTest {
+        db.animalDao().insert(animal("animal-1").copy(sincronizado = true, rev = 1))
+        db.animalDao().insert(animal("animal-2").copy(sincronizado = true, rev = 1))
+        db.chapetaDao().insert(chapeta("chapeta-1", idAnimal = "animal-1", codigo = "FP001").copy(sincronizado = true))
+        // Un Operario libera la Chapeta y le pone el mismo código a otro Animal.
+        db.chapetaDao().desasociar("chapeta-1", fecha = 10, fechaModificacion = 10)
+        db.chapetaDao().insert(chapeta("chapeta-2", idAnimal = "animal-2", codigo = "FP001").copy(fechaModificacion = 20))
+        servidor.responder = { lote ->
+            JsonArray(
+                lote.map {
+                    val cambio = it.jsonObject
+                    val fila = cambio.getValue("fila").jsonObject
+                    val delServidor = JsonObject(fila + ("fecha_desasociacion" to JsonNull))
+                    if (fila.texto("id_chapeta") == "chapeta-1") {
+                        resultado(cambio, "rechazada", codigo = "42501", motivo = "Un Operario no puede liberar una Chapeta", fila = delServidor)
+                    } else {
+                        resultado(cambio, "rechazada", codigo = "23505", motivo = "Chapeta duplicada")
+                    }
+                },
+            )
+        }
+
+        motor().sincronizar()
+
+        assertEquals("chapeta-1", db.chapetaDao().findActivaByCodigo("FP001")!!.idChapeta)
+        assertNull(db.chapetaDao().findById("chapeta-2"))
+        assertEquals(
+            setOf("chapeta-1", "chapeta-2"),
+            db.rechazoDao().observeAbiertos().first().map { it.idFila }.toSet(),
+        )
     }
 
     @Test
@@ -218,7 +253,7 @@ class MotorSincronizacionTest {
             JsonArray(lote.map { resultado(it.jsonObject, "rechazada", codigo = "23514", motivo = "Datos inválidos") })
         }
 
-        motor().subirCambios()
+        motor().sincronizar()
 
         assertNull(db.animalDao().findById("madre"))
         assertNull(db.animalDao().findById("cria"))
@@ -243,7 +278,7 @@ class MotorSincronizacionTest {
             JsonArray(lote.map { resultado(it.jsonObject, "rechazada", codigo = "23514", motivo = "Datos inválidos") })
         }
 
-        motor().subirCambios()
+        motor().sincronizar()
 
         val cria = db.animalDao().findById("cria")!!
         assertTrue("su cambio queda en la bandeja y no se reenvía", cria.sincronizado)
@@ -259,7 +294,7 @@ class MotorSincronizacionTest {
             JsonArray(lote.map { resultado(it.jsonObject, "rechazada", codigo = "23514", motivo = "Datos inválidos") })
         }
 
-        motor().subirCambios()
+        motor().sincronizar()
 
         assertNull(db.animalDao().findById("animal-1"))
         assertNull(db.registroDao().findById("registro-1"))
@@ -276,12 +311,12 @@ class MotorSincronizacionTest {
             aceptarTodo(lote)
         }
 
-        assertEquals(ResultadoSubida.SinConexion, motor(tamanoLote = 2).subirCambios())
+        assertEquals(ResultadoSincronizacion.SinConexion, motor(tamanoLote = 2).sincronizar())
         assertEquals(listOf("animal-2"), db.animalDao().findPendientes().map { it.idAnimal })
 
         servidor.lotes.clear()
         servidor.responder = ::aceptarTodo
-        motor(tamanoLote = 2).subirCambios()
+        motor(tamanoLote = 2).sincronizar()
         assertEquals(1, servidor.lotes.single().size)
         assertEquals(emptyList<AnimalEntity>(), db.animalDao().findPendientes())
     }
@@ -328,41 +363,4 @@ class MotorSincronizacionTest {
         fechaModificacion = 0,
         idVersion = "version-$idRegistro",
     )
-}
-
-/** Guarda cada lote que recibe y responde con [responder]; por defecto, acepta todo. */
-private class ServidorFalso : ServidorSincronizacion {
-    val lotes = mutableListOf<JsonArray>()
-    var responder: suspend (JsonArray) -> JsonArray = ::aceptarTodo
-
-    override suspend fun subirCambios(lote: JsonArray): JsonArray {
-        lotes += lote
-        return responder(lote)
-    }
-}
-
-private fun aceptarTodo(lote: JsonArray) = JsonArray(lote.map { aceptada(it.jsonObject) })
-
-/** Lo que responde el servidor a un cambio aceptado: la fila tal como quedó, con su revisión si la lleva. */
-private fun aceptada(cambio: JsonObject): JsonObject {
-    val fila = cambio.getValue("fila").jsonObject
-    if ("id_version" !in cambio) return resultado(cambio, "aceptada", fila = fila)
-    val rev = (cambio["rev_base"]?.jsonPrimitive?.intOrNull ?: 0) + 1
-    return resultado(cambio, "aceptada", rev = rev, fila = JsonObject(fila + ("rev" to JsonPrimitive(rev))))
-}
-
-private fun resultado(
-    cambio: JsonObject,
-    resultado: String,
-    rev: Int? = null,
-    fila: JsonObject? = null,
-    codigo: String? = null,
-    motivo: String? = null,
-) = buildJsonObject {
-    put("entidad", cambio.getValue("entidad"))
-    put("resultado", resultado)
-    rev?.let { put("rev", it) }
-    put("fila", fila ?: JsonNull)
-    codigo?.let { put("codigo", it) }
-    motivo?.let { put("motivo", it) }
 }

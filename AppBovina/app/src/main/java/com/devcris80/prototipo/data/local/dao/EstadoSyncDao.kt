@@ -14,4 +14,7 @@ interface EstadoSyncDao {
     /** Nulo hasta la primera descarga. */
     @Query("SELECT * FROM estado_sync WHERE id = 0")
     fun observe(): Flow<EstadoSyncEntity?>
+
+    @Query("SELECT * FROM estado_sync WHERE id = 0")
+    suspend fun getOnce(): EstadoSyncEntity?
 }
