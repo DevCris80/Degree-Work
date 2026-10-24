@@ -42,6 +42,8 @@ data class RegistrarAnimalUiState(
     val codigoYaActivo: Boolean = false,
     val ofertaPesajesPendientes: OfertaPesajesPendientes? = null,
     val errorAsignacionPendientes: Boolean = false,
+    /** Solo al editar: el Animal no existe o está dado de baja. */
+    val noEditable: Boolean = false,
 ) {
     val etapasDisponibles: List<Etapa> get() = sexo?.let(Etapa::de).orEmpty()
     val puedeGuardar: Boolean

@@ -23,6 +23,7 @@ import com.devcris80.prototipo.ui.components.BovinaBottomBar
 import com.devcris80.prototipo.ui.components.DestinoBarra
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
+import com.devcris80.prototipo.ui.screens.EditarAnimalScreen
 import com.devcris80.prototipo.ui.screens.EscanearScreen
 import com.devcris80.prototipo.ui.screens.EventoFormScreen
 import com.devcris80.prototipo.ui.screens.EventosScreen
@@ -179,7 +180,17 @@ fun AppNavHost() {
                     onVolver = { navController.popBackStack() },
                     onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
                     onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
+                    onEditarClick = { navController.navigate(Rutas.EditarAnimal.crear(idAnimal)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
+                )
+            }
+            composable(
+                route = Rutas.EditarAnimal.ruta,
+                arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
+            ) {
+                EditarAnimalScreen(
+                    onGuardado = { navController.popBackStack() },
+                    onCancelar = { navController.popBackStack() },
                 )
             }
             composable(

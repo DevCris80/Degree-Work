@@ -174,10 +174,75 @@ fun RegistrarAnimalScreen(
     )
 }
 
+/** Editar Animal: el mismo formulario que Registrar, con los datos guardados y sin el campo de chapeta. */
+@Composable
+fun EditarAnimalScreen(
+    onGuardado: () -> Unit,
+    onCancelar: () -> Unit,
+) {
+    val viewModel = appViewModel { container ->
+        val savedState = createSavedStateHandle()
+        EditarAnimalViewModel(
+            checkNotNull(savedState.get<String>("idAnimal")),
+            container.animalRepository,
+            container.actualizarAnimal,
+        )
+    }
+    val estado by viewModel.estado.collectAsState()
+
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+
+    LaunchedEffect(viewModel) {
+        viewModel.eventos.collect { evento ->
+            when (evento) {
+                EditarAnimalEvento.Guardado -> onGuardado()
+            }
+        }
+    }
+
+    var fotoTempUri by remember { mutableStateOf<Uri?>(null) }
+    val tomarFotoLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.TakePicture(),
+    ) { exito ->
+        if (exito) viewModel.onFotoCapturada(fotoTempUri?.toString())
+    }
+    val elegirDeGaleriaLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.GetContent(),
+    ) { uri -> if (uri != null) viewModel.onFotoCapturada(uri.toString()) }
+
+    RegistrarAnimalContent(
+        estado = estado,
+        esEdicion = true,
+        snackbarHostState = snackbarHostState,
+        onCancelar = onCancelar,
+        onTomarFoto = {
+            val uri = crearArchivoFotoUri(context)
+            fotoTempUri = uri
+            tomarFotoLauncher.launch(uri)
+        },
+        onElegirDeGaleria = { elegirDeGaleriaLauncher.launch("image/*") },
+        onNfcClick = {},
+        onNombreCambiado = viewModel::onNombreCambiado,
+        onCodigoCambiado = {},
+        onRazaCambiada = viewModel::onRazaCambiada,
+        onSexoSeleccionado = viewModel::onSexoSeleccionado,
+        onEtapaSeleccionada = viewModel::onEtapaSeleccionada,
+        onFechaNacimientoCambiada = viewModel::onFechaNacimientoCambiada,
+        onFechaEstimadaCambiada = viewModel::onFechaEstimadaCambiada,
+        onPropositoSeleccionado = viewModel::onPropositoSeleccionado,
+        onPadreSeleccionado = viewModel::onPadreSeleccionado,
+        onMadreSeleccionada = viewModel::onMadreSeleccionada,
+        onGuardar = viewModel::onGuardar,
+        onOfertaPesajesPendientesRespondida = {},
+    )
+}
+
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 private fun RegistrarAnimalContent(
     estado: RegistrarAnimalUiState,
+    esEdicion: Boolean = false,
     snackbarHostState: SnackbarHostState,
     onCancelar: () -> Unit,
     onTomarFoto: () -> Unit,
@@ -207,7 +272,9 @@ private fun RegistrarAnimalContent(
     }
 
     Scaffold(
-        topBar = { BovinaTopBar(titulo = "Registrar Animal", onVolver = onCancelar) },
+        topBar = {
+            BovinaTopBar(titulo = if (esEdicion) "Editar Animal" else "Registrar Animal", onVolver = onCancelar)
+        },
         snackbarHost = { SnackbarHost(snackbarHostState) { Snackbar(it) } },
     ) { innerPadding ->
         Column(
@@ -219,7 +286,11 @@ private fun RegistrarAnimalContent(
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             BannerInformativo(
-                texto = "Complete los datos del animal. Podrá editarlos más adelante desde su ficha.",
+                texto = when {
+                    estado.noEditable -> "Este animal está dado de baja y no se puede editar."
+                    esEdicion -> "Cambie los datos que necesite. La chapeta no se modifica desde aquí."
+                    else -> "Complete los datos del animal. Podrá editarlos más adelante desde su ficha."
+                },
                 icon = Icons.Filled.Info,
             )
             estado.aviso?.let { aviso ->
@@ -254,14 +325,16 @@ private fun RegistrarAnimalContent(
                 icon = Icons.Filled.Person,
             )
 
-            CampoConIcono(
-                label = "Número de chapeta / arete (opcional)",
-                value = estado.codigo,
-                onValueChange = onCodigoCambiado,
-                icon = Icons.Filled.Numbers,
-                readOnly = estado.codigoSoloLectura,
-                trailingAction = if (estado.codigoSoloLectura) null else nfcAction,
-            )
+            if (!esEdicion) {
+                CampoConIcono(
+                    label = "Número de chapeta / arete (opcional)",
+                    value = estado.codigo,
+                    onValueChange = onCodigoCambiado,
+                    icon = Icons.Filled.Numbers,
+                    readOnly = estado.codigoSoloLectura,
+                    trailingAction = if (estado.codigoSoloLectura) null else nfcAction,
+                )
+            }
 
             ExposedDropdownMenuBox(
                 expanded = razaExpandida,
@@ -363,9 +436,9 @@ private fun RegistrarAnimalContent(
             )
 
             BovinaPrimaryButton(
-                texto = "Guardar animal",
+                texto = if (esEdicion) "Guardar cambios" else "Guardar animal",
                 onClick = onGuardar,
-                enabled = estado.puedeGuardar,
+                enabled = estado.puedeGuardar && !estado.noEditable,
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Filled.CheckCircle,
             )

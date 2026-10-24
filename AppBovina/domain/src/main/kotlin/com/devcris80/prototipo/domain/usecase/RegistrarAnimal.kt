@@ -38,8 +38,8 @@ class RegistrarAnimal(
         if (codigo != null && chapetaRepository.findActivaByCodigo(codigo) != null) {
             return@ejecutar Resultado.CodigoYaActivo(codigo)
         }
-        verificarProgenitor(animal.idPadre, Sexo.MACHO)
-        verificarProgenitor(animal.idMadre, Sexo.HEMBRA)
+        animalRepository.verificarProgenitor(animal.idPadre, Sexo.MACHO)
+        animalRepository.verificarProgenitor(animal.idMadre, Sexo.HEMBRA)
         animalRepository.insert(animal)
         if (codigo != null) {
             chapetaRepository.insert(
@@ -56,10 +56,11 @@ class RegistrarAnimal(
             pesajesPendientes = codigo?.let { pesajePendienteRepository.findSinResolverByCodigo(it) }.orEmpty(),
         )
     }
+}
 
-    private suspend fun verificarProgenitor(idProgenitor: String?, sexo: Sexo) {
-        if (idProgenitor == null) return
-        val progenitor = animalRepository.findById(idProgenitor)
-        require(progenitor?.sexo == sexo) { "El progenitor $idProgenitor no existe o no es $sexo" }
-    }
+/** Exige que el padre o la madre, si hay, exista y sea del sexo que le corresponde. */
+internal suspend fun AnimalRepository.verificarProgenitor(idProgenitor: String?, sexo: Sexo) {
+    if (idProgenitor == null) return
+    val progenitor = findById(idProgenitor)
+    require(progenitor?.sexo == sexo) { "El progenitor $idProgenitor no existe o no es $sexo" }
 }

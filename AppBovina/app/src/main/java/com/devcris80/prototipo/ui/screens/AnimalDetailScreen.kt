@@ -133,15 +133,17 @@ fun DetalleAnimalScreen(
                                 .padding(16.dp),
                         )
                     }
-                    IconButton(
-                        onClick = onEditarClick,
-                        modifier = Modifier
-                            .align(Alignment.TopEnd)
-                            .padding(12.dp)
-                            .clip(CircleShape)
-                            .background(MaterialTheme.colorScheme.surfaceContainerLowest),
-                    ) {
-                        Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                    if (animal.activo) {
+                        IconButton(
+                            onClick = onEditarClick,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .padding(12.dp)
+                                .clip(CircleShape)
+                                .background(MaterialTheme.colorScheme.surfaceContainerLowest),
+                        ) {
+                            Icon(Icons.Filled.Edit, contentDescription = "Editar")
+                        }
                     }
                     Row(
                         modifier = Modifier

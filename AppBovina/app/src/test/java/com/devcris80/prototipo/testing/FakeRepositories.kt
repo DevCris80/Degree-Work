@@ -32,6 +32,7 @@ internal class FakeAnimalRepository : AnimalRepository {
     private val porId = mutableMapOf<String, MutableStateFlow<Animal?>>()
     val bajas = mutableListOf<Pair<String, Long>>()
     val insertados = mutableListOf<Animal>()
+    val actualizados = mutableListOf<Animal>()
 
     fun set(animal: Animal) {
         porId.getOrPut(animal.idAnimal) { MutableStateFlow(null) }.value = animal
@@ -54,6 +55,10 @@ internal class FakeAnimalRepository : AnimalRepository {
         porId.getOrPut(idAnimal) { MutableStateFlow(null) }
     override suspend fun findById(idAnimal: String): Animal? =
         porId[idAnimal]?.value ?: activos.value.firstOrNull { it.idAnimal == idAnimal }
+    override suspend fun update(animal: Animal) {
+        actualizados.add(animal)
+        set(animal)
+    }
     override suspend fun darDeBaja(idAnimal: String, fecha: Long) {
         bajas.add(idAnimal to fecha)
         porId[idAnimal]?.let { it.value = it.value?.copy(fechaBaja = fecha) }
