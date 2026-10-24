@@ -10,6 +10,7 @@ import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.AnioMes
 import com.devcris80.prototipo.domain.usecase.EventosDelMes
 import com.devcris80.prototipo.domain.usecase.GrupoInventario
@@ -20,6 +21,7 @@ import com.devcris80.prototipo.testing.FakeChapetaRepository
 import com.devcris80.prototipo.testing.FakeEventoRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
+import com.devcris80.prototipo.testing.FakeSincronizacionRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.test.TestScope
@@ -42,6 +44,7 @@ class IndicadoresViewModelTest {
     private val registroRepository = FakeRegistroRepository()
     private val pesajePendienteRepository = FakePesajePendienteRepository()
     private val eventoRepository = FakeEventoRepository()
+    private val sincronizacionRepository = FakeSincronizacionRepository()
 
     private fun crearViewModel() = IndicadoresViewModel(
         ObservarIndicadoresHato(
@@ -55,6 +58,7 @@ class IndicadoresViewModelTest {
         ObservarEvolucionPeso(registroRepository),
         animalRepository,
         chapetaRepository,
+        sincronizacionRepository,
     )
 
     @Before
@@ -268,6 +272,16 @@ class IndicadoresViewModelTest {
             listOf(AnimalConCodigo(conChapeta, activa.codigo), AnimalConCodigo(sinChapeta, null)),
             elegibles,
         )
+    }
+
+    @Test
+    fun muestraLosCambiosSinSubirYLaFechaDeLaUltimaSincronizacion() = runTest {
+        sincronizacionRepository.estado.value = EstadoSincronizacion(cambiosSinSubir = 4, ultimaSincronizacion = 7 * DIA)
+
+        val estado = ultimoEstado()
+
+        assertEquals(4, estado.cambiosSinSubir)
+        assertEquals(7 * DIA, estado.ultimaSincronizacion)
     }
 
     private fun evento(animal: Animal, tipo: String, fecha: Long, fechaBaja: Long? = null) = Evento(

@@ -7,9 +7,12 @@ import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import kotlinx.coroutines.CancellationException
+import kotlinx.coroutines.flow.Flow
+import kotlinx.coroutines.flow.combine
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonElement
 import kotlinx.serialization.json.JsonObject
@@ -53,6 +56,11 @@ class MotorSincronizacion(
     } catch (e: Exception) {
         if (e.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo
     }
+
+    override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
+        database.estadoSyncDao().observeCambiosSinSubir(),
+        database.estadoSyncDao().observe(),
+    ) { cambiosSinSubir, estado -> EstadoSincronizacion(cambiosSinSubir, estado?.fechaUltimaSincronizacion) }
 
     private suspend fun <E : Any> subir(tabla: TablaSincronizada<E>): ResultadoSincronizacion.Completa {
         var conteo = ResultadoSincronizacion.Completa(0, 0, 0)

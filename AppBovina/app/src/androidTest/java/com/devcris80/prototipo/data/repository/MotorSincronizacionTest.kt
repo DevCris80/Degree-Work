@@ -13,6 +13,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.EntidadSincronizada
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
@@ -319,6 +320,18 @@ class MotorSincronizacionTest {
         motor(tamanoLote = 2).sincronizar()
         assertEquals(1, servidor.lotes.single().size)
         assertEquals(emptyList<AnimalEntity>(), db.animalDao().findPendientes())
+    }
+
+    @Test
+    fun losCambiosSinSubirSonLasFilasPendientesYLaFechaQuedaAlTerminar() = runTest {
+        db.animalDao().insert(animal("animal-1"))
+        db.registroDao().insert(registro("registro-1", idAnimal = "animal-1"))
+        val motor = motor()
+        assertEquals(EstadoSincronizacion(cambiosSinSubir = 2, ultimaSincronizacion = null), motor.observeEstado().first())
+
+        motor.sincronizar()
+
+        assertEquals(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = 1_000), motor.observeEstado().first())
     }
 
     private fun animal(idAnimal: String, idMadre: String? = null, fechaModificacion: Long = 0) = AnimalEntity(
