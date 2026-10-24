@@ -130,7 +130,13 @@ private class TablaAnimales(
         val dependientes = mutableListOf<Dependiente>()
         for (cria in dao.findCrias(fila.idAnimal)) {
             dependientes += Dependiente(entidad, cria.idAnimal, cria.aFilaDelServidor())
-            dependientes += sacar(cria)
+            if (cria.rev == null) {
+                dependientes += sacar(cria)
+            } else {
+                // Una cría que el servidor ya tiene se queda. Su cambio, que apunta a este Animal, va a la bandeja
+                // y no se reenvía; al borrar este Animal, la fila local pierde la referencia (SET NULL).
+                dao.update(cria.copy(sincronizado = true))
+            }
         }
         dependientes += chapetas.sacarDelAnimal(fila.idAnimal)
         dependientes += eventos.sacarDelAnimal(fila.idAnimal)

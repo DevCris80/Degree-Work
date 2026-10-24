@@ -235,6 +235,40 @@ class MotorSincronizacionTest {
     }
 
     @Test
+    fun unaCriaQueElServidorYaTieneNoSaleConSuMadreRechazada() = runTest {
+        db.animalDao().insert(animal("madre"))
+        // Una cría ya subida, editada para apuntar a una madre nueva.
+        db.animalDao().insert(animal("cria", idMadre = "madre").copy(rev = 2, revBase = 2))
+        servidor.responder = { lote ->
+            JsonArray(lote.map { resultado(it.jsonObject, "rechazada", codigo = "23514", motivo = "Datos inválidos") })
+        }
+
+        motor().subirCambios()
+
+        val cria = db.animalDao().findById("cria")!!
+        assertTrue("su cambio queda en la bandeja y no se reenvía", cria.sincronizado)
+        assertEquals(setOf("madre", "cria"), db.rechazoDao().observeAbiertos().first().map { it.idFila }.toSet())
+    }
+
+    @Test
+    fun unRechazoDeUnaFilaEditadaMientrasSubiaGuardaSuUltimaVersionYSacaASusDependientes() = runTest {
+        db.animalDao().insert(animal("animal-1"))
+        db.registroDao().insert(registro("registro-1", idAnimal = "animal-1"))
+        servidor.responder = { lote ->
+            RoomAnimalRepository(db.animalDao(), nuevoIdVersion = { "version-local-2" }).darDeBaja("animal-1", 60)
+            JsonArray(lote.map { resultado(it.jsonObject, "rechazada", codigo = "23514", motivo = "Datos inválidos") })
+        }
+
+        motor().subirCambios()
+
+        assertNull(db.animalDao().findById("animal-1"))
+        assertNull(db.registroDao().findById("registro-1"))
+        val rechazos = db.rechazoDao().observeAbiertos().first()
+        assertTrue(rechazos.single { it.idFila == "animal-1" }.contenido.contains("\"fecha_baja\":\"1970-01-01T00:00:00.060Z\""))
+        assertEquals("las dependientes no llegan a subir", 1, servidor.lotes.size)
+    }
+
+    @Test
     fun sinSenalAMitadLosLotesConfirmadosQuedanYElRestoSeReenvia() = runTest {
         repeat(3) { db.animalDao().insert(animal("animal-$it", fechaModificacion = it.toLong())) }
         servidor.responder = { lote ->

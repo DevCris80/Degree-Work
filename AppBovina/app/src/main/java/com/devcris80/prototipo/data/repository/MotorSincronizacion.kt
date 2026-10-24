@@ -21,8 +21,8 @@ import java.util.UUID
  * aplica la respuesta de `subir_cambios` fila por fila (ADR-0004). Cada lote se confirma por separado: si se
  * pierde la señal, lo ya aplicado queda y el resto sigue pendiente.
  *
- * Sus escrituras no llevan EDICION_LOCAL, y solo tocan una fila si no cambió mientras el lote viajaba. Si
- * cambió, la escritura nueva queda pendiente y sube en la próxima sincronización.
+ * Sus escrituras no llevan EDICION_LOCAL. Una aceptada o un sibling solo tocan la fila si no cambió mientras el
+ * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización.
  */
 class MotorSincronizacion(
     private val servidor: ServidorSincronizacion,
@@ -81,8 +81,11 @@ class MotorSincronizacion(
                 if (intacta) tabla.guardar(tabla.conLaDelServidor(local!!, checkNotNull(delServidor)))
                 ResultadoSubida.Completa(0, 1, 0)
             }
+            // Aunque la fila haya cambiado mientras subía: si no, sus dependientes subirían y se rechazarían una
+            // por una mientras ella sigue pendiente. La bandeja guarda su última versión. Una fila que ya quedó
+            // sincronizada en este lote salió como dependiente de otra, y no queda nada que rechazar.
             "rechazada" -> {
-                if (intacta) rechazar(tabla, local!!, cambio, resultado, delServidor)
+                if (local != null && !tabla.sincronizada(local)) rechazar(tabla, local, resultado, delServidor)
                 ResultadoSubida.Completa(0, 0, 1)
             }
             else -> error("Resultado desconocido: $tipo")
@@ -112,13 +115,12 @@ class MotorSincronizacion(
     private suspend fun <E : Any> rechazar(
         tabla: TablaQueSube<E>,
         local: E,
-        cambio: JsonObject,
         resultado: JsonObject,
         delServidor: JsonObject?,
     ) {
         val codigo = resultado.texto("codigo")
         val motivo = resultado["motivo"]?.jsonPrimitive?.content.orEmpty()
-        guardarRechazo(tabla.entidad, tabla.id(local), cambio.getValue("fila").jsonObject, "$codigo: $motivo")
+        guardarRechazo(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
         if (delServidor != null) {
             tabla.guardar(tabla.conLaDelServidor(local, delServidor))
             return
