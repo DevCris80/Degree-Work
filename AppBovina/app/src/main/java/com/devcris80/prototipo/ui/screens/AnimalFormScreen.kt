@@ -372,8 +372,15 @@ private fun RegistrarAnimalContent(
                         seleccionada = estado.sexo == opcion,
                         onClick = { onSexoSeleccionado(opcion) },
                         modifier = Modifier.weight(1f),
+                        habilitada = !estado.sexoBloqueado,
                     )
                 }
+            }
+            if (estado.sexoBloqueado) {
+                Text(
+                    "Este animal es padre o madre de otros animales registrados, por eso su sexo no se puede cambiar.",
+                    style = MaterialTheme.typography.bodySmall,
+                )
             }
             if (estado.etapasDisponibles.isNotEmpty()) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -554,10 +561,12 @@ private fun TarjetaSeleccionable(
     seleccionada: Boolean,
     onClick: () -> Unit,
     modifier: Modifier = Modifier,
+    habilitada: Boolean = true,
 ) {
     Card(
         onClick = onClick,
         modifier = modifier,
+        enabled = habilitada,
         shape = MaterialTheme.shapes.small,
         colors = CardDefaults.cardColors(
             containerColor = if (seleccionada) {
