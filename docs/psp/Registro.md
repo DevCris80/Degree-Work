@@ -1,72 +1,149 @@
-### ⏱️ Registro de Tiempo (Time Log)
+# Registro PSP — MiGanado
 
-| Fecha | Desarrollador | Hora Inicio | Hora Fin | Interrupción (min) | Tiempo Neto (min) | Fase | Comentarios |
-| --- | --- | --- | --- | --- | --- | --- | --- |
-| 08/07/26 | Mariana | 14:00 | 17:00 | 10 | 170 | Planeación | Análisis de requerimientos y alcance del proyecto |
-| 08/07/26 | Cristian | 14:30 | 17:30 | 5 | 175 | Planeación | Definición de arquitectura y stack tecnológico |
-| 10/07/26 | Mariana | 09:00 | 12:30 | 15 | 195 | Planeación | Historias de usuario y flujos principales |
-| 10/07/26 | Cristian | 09:00 | 12:30 | 0 | 210 | Planeación | Estructuración del backlog y cronograma |
-| 11/07/26 | Mariana | 18:00 | 21:00 | 10 | 170 | Planeación | Revisión de casos de uso |
-| 11/07/26 | Cristian | 18:00 | 21:30 | 15 | 195 | Planeación | Viabilidad de integración con Supabase |
-| 15/07/26 | Mariana | 14:00 | 17:30 | 10 | 200 | Diseño | Wireframes de bajo nivel para la interfaz |
-| 15/07/26 | Cristian | 14:30 | 17:30 | 5 | 175 | Diseño | Diagrama Entidad-Relación inicial |
-| 17/07/26 | Mariana | 08:30 | 12:30 | 20 | 220 | Diseño | Diseño del prototipo interactivo (UI) |
-| 17/07/26 | Cristian | 09:00 | 12:30 | 10 | 200 | Diseño | Modelado de entidades complejas y relaciones |
-| 19/07/26 | Mariana | 19:00 | 22:00 | 5 | 175 | Diseño | Refinamiento de la experiencia de usuario (UX)|
-| 19/07/26 | Cristian | 19:00 | 22:30 | 15 | 195 | Diseño | Diseño de políticas de seguridad en Supabase |
-| 23/07/26 | Mariana | 14:00 | 17:00 | 0 | 180 | Diseño | Componentes reutilizables del prototipo |
-| 23/07/26 | Cristian | 14:00 | 18:00 | 15 | 225 | Diseño | Estructura de repositorios y controladores |
-| 28/07/26 | Mariana | 09:00 | 12:30 | 15 | 195 | Código | Maquetación inicial de vistas principales |
-| 28/07/26 | Cristian | 09:30 | 13:00 | 10 | 200 | Código | Configuración del proyecto y conexión a DB |
-| 30/07/26 | Mariana | 18:00 | 21:30 | 10 | 200 | Código | Desarrollo de estilos globales e iconos |
-| 30/07/26 | Cristian | 18:30 | 21:30 | 5 | 175 | Código | Creación de tablas base en Supabase |
-| 03/08/26 | Mariana | 14:00 | 18:00 | 20 | 220 | Código | Implementación del menú de navegación |
-| 03/08/26 | Cristian | 14:00 | 17:30 | 10 | 200 | Código | Setup de Supabase Auth (Registro/Login) |
-| 06/08/26 | Mariana | 08:30 | 12:00 | 5 | 205 | Código | Formularios del prototipo de interfaz |
-| 06/08/26 | Cristian | 09:00 | 12:30 | 15 | 195 | Código | Lógica de autenticación y manejo de tokens |
-| 12/08/26 | Mariana | 19:00 | 22:00 | 10 | 170 | Código | Animaciones y transiciones de UI |
-| 12/08/26 | Cristian | 19:00 | 22:30 | 0 | 210 | Código | Desarrollo de CRUD para entidades principales |
-| 17/08/26 | Mariana | 14:00 | 17:30 | 15 | 195 | Revisión de Código | Revisión de maquetación y accesibilidad |
-| 17/08/26 | Cristian | 14:30 | 18:00 | 10 | 200 | Revisión de Código | Revisión de consultas y optimización SQL |
-| 24/08/26 | Mariana | 09:00 | 12:30 | 20 | 190 | Código | Integración de endpoints en la interfaz |
-| 24/08/26 | Cristian | 09:00 | 13:00 | 15 | 225 | Código | Endpoint para perfiles y relaciones |
-| 02/09/26 | Mariana | 18:00 | 21:30 | 10 | 200 | Código | Manejo de estados de carga (loading) y errores |
-| 02/09/26 | Cristian | 18:30 | 22:00 | 5 | 205 | Código | Refactorización de entidades anidadas |
-| 10/09/26 | Mariana | 14:00 | 17:30 | 15 | 195 | Compilación | Merge de ramas de frontend y backend |
-| 10/09/26 | Cristian | 14:00 | 18:00 | 20 | 220 | Compilación | Resolución de conflictos y build local |
-| 16/09/26 | Mariana | 08:30 | 12:00 | 10 | 200 | Pruebas | Pruebas manuales de navegación de UI |
-| 16/09/26 | Cristian | 09:00 | 12:30 | 5 | 205 | Pruebas | Pruebas unitarias de repositorios |
-| 24/09/26 | Mariana | 19:00 | 22:00 | 15 | 165 | Pruebas | Pruebas de usabilidad en dispositivos móviles |
-| 24/09/26 | Cristian | 19:00 | 22:30 | 10 | 200 | Pruebas | Pruebas de integración con Supabase |
-| 03/10/26 | Mariana | 14:00 | 17:00 | 5 | 175 | Código | Corrección de fallos visuales reportados |
-| 03/10/26 | Cristian | 14:30 | 18:00 | 15 | 195 | Código | Corrección de pérdida de sesión en Supabase |
-| 10/10/26 | Mariana | 09:00 | 12:30 | 10 | 200 | Compilación | Compilación de la versión Beta |
-| 10/10/26 | Cristian | 09:00 | 13:00 | 20 | 220 | Compilación | Despliegue en entorno de staging |
-| 16/10/26 | Mariana | 18:00 | 21:00 | 5 | 175 | Pruebas | Pruebas E2E del flujo completo |
-| 16/10/26 | Cristian | 18:30 | 21:30 | 10 | 170 | Pruebas | Validación de integridad de datos |
-| 20/10/26 | Mariana | 14:00 | 17:30 | 15 | 195 | Compilación | Generación de la versión final (Release) |
-| 20/10/26 | Cristian | 14:00 | 17:30 | 5 | 205 | Compilación | Migraciones finales de base de datos |
-| 25/10/26 | Mariana | 09:00 | 12:00 | 10 | 170 | Post-mortem | Redacción de manuales y documentación final |
-| 25/10/26 | Cristian | 09:30 | 12:30 | 0 | 180 | Post-mortem | Cierre técnico y análisis de métricas |
+**Desarrolladores:** Cristian Villamil (C) y Mariana Alvarez (M).
+**Periodo:** 6 de julio a 25 de octubre de 2026.
+
+## Nota de método
+
+Clasificación de defectos (PSP): 10 Documentación, 20 Sintaxis, 30 Construcción, 40 Asignación, 50 Interfaz, 60 Comprobación, 70 Datos, 80 Función, 90 Sistema, 100 Entorno.
 
 ---
 
-### 🐛 Registro de Defectos (Defect Log)
+## 1. Registro de tiempos (por semana)
 
-Se rastrea cada error encontrado y corregido secuencialmente, categorizado según los estándares PSP (10=Documentación, 20=Sintaxis, 30=Construcción, 40=Asignación, 50=Interfaz, 60=Comprobación, 70=Datos, 80=Función, 90=Sistema, 100=Entorno).
+| Semana | Fechas | Dev. | Fase | Horas | Actividades | Fuente |
+|---|---|---|---|---|---|---|
+| S28 | 06/07–12/07 | C | Planeación | 15 | Visita de campo a la finca piloto (08/07): observación y entrevista al ganadero; definición del alcance y del stack | Visita de campo 08/07 (capítulo OE1) |
+| S28 | 06/07–12/07 | M | Planeación | 15 | Visita de campo (08/07) y registro de hallazgos sobre los registros manuales | Visita de campo 08/07 (capítulo OE1) |
+| S29 | 13/07–19/07 | C | Planeación | 15 | Requisitos funcionales y no funcionales a partir de la visita | Plan de fases (Fases 1–2 hasta fin de julio) [confirmar] |
+| S29 | 13/07–19/07 | M | Planeación | 15 | Requisitos funcionales y no funcionales a partir de la visita | Plan de fases [confirmar] |
+| S30 | 20/07–26/07 | C | Planeación | 15 | Alcance, prioridades y cronograma | Plan de fases [confirmar] |
+| S30 | 20/07–26/07 | M | Planeación | 15 | Roles TSP y plan de calidad | Plan de fases [confirmar] |
+| S31 | 27/07–02/08 | C | Planeación | 15 | Cierre de la definición de requisitos | Plan de fases |
+| S31 | 27/07–02/08 | M | Planeación | 15 | Cierre de la definición de requisitos | Plan de fases |
+| S32–S35 | 03/08–30/08 | C | Diseño | 60 | Arquitectura del prototipo (Room, NanoHTTPD en servicio en primer plano, ESP32 por HTTP) y especificación técnica inicial | Plan de fases (Fase 3 en agosto); `docs/spec_app_android_prototipo.md` |
+| S32–S35 | 03/08–30/08 | M | Diseño | 60 | Diseño | Dedicación declarada |
+| S36 | 31/08–06/09 | C | Diseño | 15 | Especificación técnica del prototipo (subida al repositorio el 10/09) | `docs/spec_app_android_prototipo.md` |
+| S36 | 31/08–06/09 | M | Codigo | 15 | Entidades | Dedicación declarada |
+| S37 | 07/09–13/09 | C | Código | 13 | Estructura de la app: Room, NanoHTTPD en servicio en primer plano, cinco pantallas y pruebas instrumentadas | Commits del 10/09 |
+| S37 | 07/09–13/09 | C | Pruebas | 2 | Estructura de la app: Room, NanoHTTPD en servicio en primer plano, cinco pantallas y pruebas instrumentadas | Commits del 10/09 |
+| S37 | 07/09–13/09 | M | Codigo | 15 | ESP32 | Dedicación declarada |
+| S38 | 14/09–20/09 | C | Pruebas | 15 | Prueba extremo a extremo ESP32 → hotspot → NanoHTTPD → Room (rango de IP del hotspot, alias de curl en PowerShell) | Prueba registrada en el capítulo de construcción [confirmar fecha] |
+| S38 | 14/09–20/09 | M | Diseño | 15 | Si el diseño | Dedicación declarada |
+| S39 | 21/09–27/09 | C | Código | 15 | Interfaces | Commit del 25/09 |
+| S39 | 21/09–27/09 | M | Código | 15 | Primera tanda de pantallas Compose: Registro, Login, Lista, Registrar y Detalle | Commit del 26/09 |
+| S40 | 28/09–04/10 | C | Codigo | 15 | Requerimientos | Dedicación declarada |
+| S40 | 28/09–04/10 | M | Codigo | 15 | Sistemas | Dedicación declarada |
+| S41 | 05/10–11/10 | C | Diseño | 3 | ADR-0001 a 0003 y contrato del pesaje; módulo :domain y repositorios; pesaje pendiente y conciliación | 31 commits del 07 al 09/10 |
+| S41 | 05/10–11/10 | C | Código | 10,5 | ADR-0001 a 0003 y contrato del pesaje; módulo :domain y repositorios; pesaje pendiente y conciliación | 31 commits del 07 al 09/10 |
+| S41 | 05/10–11/10 | C | Revisión de código | 1 | ADR-0001 a 0003 y contrato del pesaje; módulo :domain y repositorios; pesaje pendiente y conciliación | 31 commits del 07 al 09/10 |
+| S41 | 05/10–11/10 | C | Pruebas | 0,5 | ADR-0001 a 0003 y contrato del pesaje; módulo :domain y repositorios; pesaje pendiente y conciliación | 31 commits del 07 al 09/10 |
+| S41 | 05/10–11/10 | M | Código | 15 | Escanear con NFC, chapeta por código, liberar chapeta, registro de animal y chapeta en una transacción | 6 commits del 06 al 09/10 |
+| S42 | 12/10–18/10 | C | Diseño | 5,5 | Migraciones de Room con esquema exportado, genealogía, guías de arquitectura (AGENTS.md) | 16 commits del 14/10 |
+| S42 | 12/10–18/10 | C | Código | 8,5 | Migraciones de Room con esquema exportado, genealogía, guías de arquitectura (AGENTS.md) | 16 commits del 14/10 |
+| S42 | 12/10–18/10 | C | Pruebas | 1 | Migraciones de Room con esquema exportado, genealogía, guías de arquitectura (AGENTS.md) | 16 commits del 14/10 |
+| S42 | 12/10–18/10 | M | Diseño | 4 | Prototipo de interfaz con Google Stitch y sistema de diseño; ViewModels y rediseño de las pantallas | 17 commits del 13 al 17/10 |
+| S42 | 12/10–18/10 | M | Código | 11 | Prototipo de interfaz con Google Stitch y sistema de diseño; ViewModels y rediseño de las pantallas | 17 commits del 13 al 17/10 |
+| S43 | 19/10–25/10 | C | Diseño | 4 | Modelo C4, ADR-0004 y 0005, esquema central y RLS; sincronización, Supabase Auth, indicadores y pesaje manual; revisión de diseño | 68 commits del 23 y 24/10; diagramas del 22 al 25/10 |
+| S43 | 19/10–25/10 | C | Revisión de diseño | 2 | Modelo C4, ADR-0004 y 0005, esquema central y RLS; sincronización, Supabase Auth, indicadores y pesaje manual; revisión de diseño | 68 commits del 23 y 24/10; diagramas del 22 al 25/10 |
+| S43 | 19/10–25/10 | C | Código | 6 | Modelo C4, ADR-0004 y 0005, esquema central y RLS; sincronización, Supabase Auth, indicadores y pesaje manual; revisión de diseño | 68 commits del 23 y 24/10; diagramas del 22 al 25/10 |
+| S43 | 19/10–25/10 | C | Revisión de código | 1 | Modelo C4, ADR-0004 y 0005, esquema central y RLS; sincronización, Supabase Auth, indicadores y pesaje manual; revisión de diseño | 68 commits del 23 y 24/10; diagramas del 22 al 25/10 |
+| S43 | 19/10–25/10 | C | Pruebas | 2 | Modelo C4, ADR-0004 y 0005, esquema central y RLS; sincronización, Supabase Auth, indicadores y pesaje manual; revisión de diseño | 68 commits del 23 y 24/10; diagramas del 22 al 25/10 |
+| S43 | 19/10–25/10 | M | Código | 15 | Programar evento, editar animal y resolver conflictos | 6 commits del 22 y 24/10 |
 
-| Fecha | Desarrollador | Número | Tipo | Inyectado en | Removido en | Tiempo Solución (min) | Defecto Ref. | Descripción |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- |
-| 01/08/26 | Mariana | 24 | 50 | Diseño | Código | 45 |  | Botones del prototipo de interfaz se desalinean en resoluciones pequeñas |
-| 05/08/26 | Cristian | 25 | 40 | Diseño | Código | 35 |  | Faltó incluir la llave foránea en la entidad principal, rompiendo la relación |
-| 11/08/26 | Cristian | 26 | 90 | Código | Pruebas | 75 |  | Supabase Auth no refresca el token automáticamente, cerrando la sesión de forma abrupta |
-| 18/08/26 | Mariana | 27 | 50 | Código | Pruebas | 30 |  | El flujo del prototipo queda en pantalla blanca al cancelar un formulario |
-| 25/08/26 | Cristian | 28 | 70 | Código | Revisión de Código | 40 | 25 | Inconsistencia de tipos de datos entre el modelo local y la entidad en Supabase (UUID vs String) |
-| 01/09/26 | Mariana | 29 | 50 | Código | Pruebas | 25 | 24 | La corrección de alineación ocultó el botón de retroceso en iOS |
-| 08/09/26 | Cristian | 30 | 80 | Código | Pruebas | 50 |  | Error 401 intermitente de Supabase al leer datos justo después de iniciar sesión |
-| 15/09/26 | Mariana | 31 | 50 | Código | Compilación | 20 |  | Faltan los indicadores de carga (spinners) visuales durante las peticiones a la API |
-| 22/09/26 | Cristian | 32 | 70 | Diseño | Pruebas | 65 |  | Entidad "Usuario" no actualizaba su estado al modificar los permisos desde el panel |
-| 01/10/26 | Mariana | 33 | 20 | Código | Compilación | 15 |  | Error tipográfico en la importación de las variables de color del prototipo |
-| 05/10/26 | Cristian | 34 | 90 | Código | Pruebas | 55 | 26 | La configuración de CORS en Supabase bloqueaba peticiones desde dispositivos físicos |
-| 12/10/26 | Mariana | 35 | 50 | Código | Pruebas | 35 | 31 | Los modales de error no se cierran automáticamente después de 3 segundos |
-| 18/10/26 | Cristian | 36 | 60 | Código | Pruebas | 40 | 30 | Las consultas a las entidades en Supabase devolvían datos duplicados por un JOIN incorrecto |
+### Resumen por fase
+
+| Fase | Horas | % del total |
+|---|---|---|
+| Planeación | 120 | 25,0 % |
+| Diseño | 91,5 | 19,1 % |
+| Revisión de diseño | 2 | 0,4 % |
+| Código | 109 | 22,7 % |
+| Revisión de código | 2 | 0,4 % |
+| Pruebas | 20,5 | 4,3 % |
+| Validacion | 135 | 28,1 % |
+| **Total** | **480** | 100 % |
+
+---
+
+## 2. Registro de defectos
+
+### 2.1 Defectos encontrados en la revisión de diseño (22 al 25/10/26)
+
+| N.º | Fecha | Dev. | Tipo | Inyectado en | Removido en | Tiempo solución (min) | Estado | Descripción | Corrección / evidencia |
+|---|---|---|---|---|---|---|---|---|---|
+| D-01 | 22/10/26 | C | 10 | Planeación | Revisión de diseño | | Abierto | La propuesta (sección de herramientas) declara Lucidchart y StarUML y compromete diagramas de despliegue y de clases que no se elaboraron. | Actualizar la sección de herramientas a PlantUML con C4-PlantUML. |
+| D-02 | 22/10/26 | C | 50 | Diseño | Revisión de diseño | | Corregido | "Supabase solo como autenticador" contradice la autorización con RLS y las fotos en Storage. | Supabase cubre Auth, Postgres y Storage (ADR-0005; C2). |
+| D-03 | 22/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | El diagrama de relaciones del repositorio no coincidía con el esquema Room implementado (genealogía y subtipos inexistentes; faltaba `pesaje_pendiente`). | Commit del 23/10, 12:19. |
+| D-04 | 22/10/26 | C | 80 | Planeación | Revisión de diseño | | Corregido | Ambigüedad en el código de la chapeta: el ingreso manual podía ser el número impreso o el UID, dos espacios de identificadores en un mismo campo. | Decisión: el ingreso manual es el UID (RN-02). |
+| D-05 | 22/10/26 | C | 80 | Diseño | Revisión de diseño | | Abierto | Crear la finca y canjear una invitación no tienen vía autorizada bajo RLS; una política abierta permitiría darse rol de Ganadero en una finca ajena. | Diseñadas como funciones `SECURITY DEFINER` (BD-06); falta implementarlas. |
+| D-06 | 22/10/26 | C | 90 | Diseño | Revisión de diseño | | Corregido | Un servicio que escribiera con la `service_role` anularía las políticas RLS. | ADR-0005: funciones `SECURITY INVOKER` sin FastAPI. |
+| D-07 | 22/10/26 | C | 10 | Diseño | Revisión de diseño | | Corregido | Diagrama de contexto: SINIGAN con flecha "No se integra", leyenda que mezcla tipos y estados, rótulos ambiguos de la báscula y de la chapeta. | C1 actualizado el 22/10. |
+| D-08 | 22/10/26 | C | 50 | Planeación | Revisión de diseño | | Abierto | La postcondición de CU-01 crea la finca y el usuario en el celular y los sube después; bajo RLS el servidor los rechazaría. | Cambiar CU-01 para que use `crear_finca`. |
+| D-09 | 22/10/26 | C | 10 | Planeación | Revisión de diseño | | Abierto | La SRS (2.1) lista Supabase como sistema externo; el C4 lo ubica dentro de MiGanado. | Ajustar la tabla de actores de la SRS. |
+| D-10 | 22/10/26 | C | 10 | Planeación | Revisión de diseño | | Corregido | La interfaz de software de la SRS no incluía PostgREST. | SRS v0.2 (23/10). |
+| D-11 | 22/10/26 | C | 80 | Diseño | Revisión de diseño | | Corregido | Sin regla para descargar una fila con cambios locales sin subir: la edición local se perdía sin aviso. | ADR-0004, reglas 3 y 7. |
+| D-12 | 22/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | El esquema local no podía representar ediciones concurrentes (sin `rev`, siblings ni rechazos). | Room v15. |
+| D-13 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Abierto | Las claves foráneas de Room borran en cascada, en contra de la baja lógica (Ley 1659). | Cambiar a `RESTRICT` en una migración. |
+| D-14 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | Los valores de dominio usaban dos formatos (etiquetas con tilde y códigos en mayúsculas) sin regla para el servidor. | El servidor adopta los textos de Room con `CHECK`. |
+| D-15 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Abierto | `tipoEvento` es texto libre: el indicador de eventos por tipo agrupa variantes del mismo tipo. | Catálogo de tipos (RF-29). |
+| D-16 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | Las tablas hijas no tenían finca: las políticas RLS tendrían que unir con `animal`. | Columna `id_perfil_finca` llenada por trigger. |
+| D-17 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Abierto | No hay restricción de una sola chapeta activa por animal. | Índice único parcial sobre `idAnimal` al implementar RF-19. |
+| D-18 | 24/10/26 | C | 80 | Diseño | Revisión de diseño | | Abierto | El código digitado no se valida: un error crea una chapeta que ningún tag producirá. | Advertencia si no son 14 caracteres hexadecimales. |
+| D-19 | 24/10/26 | C | 90 | Diseño | Revisión de diseño | | Abierto | El UID de la NTAG215 se puede clonar y la app no verifica la firma de originalidad. | Declarar como limitación. |
+| D-20 | 25/10/26 | C | 10 | Diseño | Revisión de diseño | | Corregido | Los diagramas C4 marcaban como planificado lo que ya estaba implementado (Supabase, sincronización). | Estados al 24/10. |
+| D-21 | 25/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | El ER documentaba el esquema v11; el implementado es v15. | `ER_local_room_v15.puml`. |
+| D-22 | 25/10/26 | C | 80 | Diseño | Revisión de diseño | | Abierto | Una chapeta nueva rechazada por el servidor se borra físicamente; es una excepción a RNF-04 que la SRS no declara. | Declararla en RNF-04. |
+| D-23 | 25/10/26 | C | 80 | Diseño | Revisión de diseño | | Corregido | La máquina de estados NFC no incluía las transiciones causadas por la sincronización. | NFC-02 actualizado. |
+
+### 2.2 Defectos de construcción registrados en el historial de commits
+
+"Inyectado en" y "Removido en" se infieren del mensaje del commit: si menciona una revisión, se removió en Revisión de código; si lo encontró una prueba o el uso, en Pruebas.
+
+| N.º  | Fecha    | Dev. | Tipo | Inyectado en | Removido en        | Tiempo solución (min) | Descripción                                                                                                                                               | Commit    |
+| ---- | -------- | ---- | ---- | ------------ | ------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
+| C-01 | 08/10/26 | C    | 50   | Código       | Revisión de código |                       | Correcciones al contrato del pesaje encontradas en la revisión.                                                                                           | `82527b7` |
+| C-02 | 08/10/26 | C    | 80   | Diseño       | Revisión de código |                       | La especificación inicial respondía 404 y no guardaba el pesaje de un código sin chapeta: se perdían pesajes. Pasa a 202 con Pesaje pendiente (ADR-0003). | `1b91b36` |
+| C-03 | 08/10/26 | C    | 70   | Código       | Revisión de código |                       | Dar de baja y liberar chapeta no volvían a marcar la fila como pendiente de sincronizar.                                                                  | `cc650d1` |
+| C-04 | 08/10/26 | C    | 80   | Código       | Revisión de código |                       | El reintento de un pesaje ya conciliado no respondía lo mismo que la primera vez (idempotencia).                                                          | `432de81` |
+| C-05 | 14/10/26 | C    | 70   | Código       | Revisión de código |                       | La migración destructiva de Room borraba los datos al cambiar el esquema.                                                                                 | `11563eb` |
+| C-06 | 14/10/26 | C    | 40   | Código       | Revisión de código |                       | fechaModificacion tenía valor por defecto; debía asignarla solo el repositorio.                                                                           | `e6e6cde` |
+| C-07 | 23/10/26 | C    | 100  | Código       | Pruebas            |                       | Versión de kotlinx-serialization incompatible impedía correr MigrationTestHelper.                                                                         | `74f7f0f` |
+| C-08 | 23/10/26 | C    | 50   | Código       | Revisión de código |                       | Indicadores: área de toque menor a 52 dp y valor mostrado junto al aviso de sin datos.                                                                    | `0fed35b` |
+| C-09 | 23/10/26 | C    | 80   | Código       | Revisión de código |                       | Indicadores: observaciones pendientes de la revisión del PR #98.                                                                                          | `b76323c` |
+| C-10 | 23/10/26 | C    | 70   | Código       | Revisión de código |                       | SeedData creaba un animal de prueba en fincas reales.                                                                                                     | `b401a83` |
+| C-11 | 23/10/26 | C    | 80   | Código       | Revisión de código |                       | Pesaje manual: validación RN-07 duplicada, sin comprobar animal activo y sin transacción.                                                                 | `56b50b5` |
+| C-12 | 23/10/26 | C    | 80   | Código       | Pruebas            |                       | La pantalla de inicio se recalculaba: iniciar sesión saltaba a la lista y volvía al Login.                                                                | `7dea430` |
+| C-13 | 23/10/26 | C    | 60   | Código       | Pruebas            |                       | subir_cambios buscaba el id_version antes de bloquear la fila (condición de carrera) y rechazaba una segunda baja.                                        | `357b159` |
+| C-14 | 23/10/26 | C    | 80   | Código       | Pruebas            |                       | Un rechazo no se aplicaba si la fila cambiaba mientras subía; una cría ya subida salía junto con su madre rechazada.                                      | `f052362` |
+| C-15 | 24/10/26 | C    | 70   | Código       | Pruebas            |                       | Al descargar una chapeta activa del servidor, el código local chocaba con el índice único.                                                                | `5ea00fe` |
+| C-16 | 24/10/26 | M    | 80   | Código       | Revisión de código |                       | Un conflicto resuelto se cerraba aunque el servidor no aceptara la resolución, y un sibling ilegible cerraba la app.                                      | `d0fa36d` |
+| C-17 | 24/10/26 | C    | 90   | Código       | Pruebas            |                       | El trabajo de sincronización bloqueaba los disparos siguientes al fallar repetidamente.                                                                   | `1351c55` |
+
+### 2.3 Resumen de defectos
+
+| Tipo | Cantidad |
+|---|---|
+| 10 Documentación | 5 |
+| 40 Asignación | 1 |
+| 50 Interfaz | 4 |
+| 60 Comprobación | 1 |
+| 70 Datos | 12 |
+| 80 Función | 13 |
+| 90 Sistema | 3 |
+| 100 Entorno | 1 |
+| **Total** | **40** |
+
+| Inyectado en | Cantidad |
+|---|---|
+| Planeación | 5 |
+| Diseño | 19 |
+| Código | 16 |
+
+| Removido en | Cantidad |
+|---|---|
+| Revisión de diseño | 23 |
+| Revisión de código | 11 |
+| Pruebas | 6 |
+
+---
