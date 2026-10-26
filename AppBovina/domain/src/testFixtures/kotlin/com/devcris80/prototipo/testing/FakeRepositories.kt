@@ -32,7 +32,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
-/** Repositorios falsos en memoria, compartidos entre los tests de ViewModel de `ui.screens`. */
+/** Repositorios falsos en memoria, compartidos entre los tests de casos de uso de `:domain` y los de ViewModel de `:app`. */
 class FakeAnimalRepository : AnimalRepository {
     val activos = MutableStateFlow<List<Animal>>(emptyList())
     private val porId = mutableMapOf<String, MutableStateFlow<Animal?>>()
@@ -184,7 +184,10 @@ class FakePesajePendienteRepository : PesajePendienteRepository {
     }
 }
 
-/** Ejecuta el bloque directo, sin control de atomicidad real: alcanza para probar el resultado. */
+/**
+ * Ejecuta el bloque directo, sin revertir nada si falla: los tests de "todo o nada" solo comprueban que el caso de uso
+ * valide antes de escribir. La reversión real de Room es de `RoomTransaccion`.
+ */
 class FakeTransaccion : Transaccion {
     override suspend fun <T> ejecutar(bloque: suspend () -> T): T = bloque()
 }

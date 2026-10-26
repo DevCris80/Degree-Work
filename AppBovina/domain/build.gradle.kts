@@ -2,6 +2,7 @@ import org.jetbrains.kotlin.gradle.dsl.JvmTarget
 
 plugins {
     alias(libs.plugins.kotlin.jvm)
+    // Los repositorios falsos viven en testFixtures para que los usen los tests de :domain y los de :app.
     `java-test-fixtures`
 }
 
@@ -21,7 +22,7 @@ dependencies {
     api(libs.kotlinx.coroutines.core)
 }
 
-// Los repositorios falsos viven en testFixtures para que los usen los tests de :domain y los de :app.
+// Solo para pruebas: el código de producción de :domain sigue sin más dependencia que coroutines-core.
 dependencies {
     testImplementation(libs.junit)
     testImplementation(libs.kotlinx.coroutines.test)
