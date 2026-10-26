@@ -2,6 +2,8 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.devcris80.prototipo.domain.model.puedeAdministrar
+import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.usecase.DestinoEscaneo
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
@@ -10,6 +12,7 @@ import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.launch
 
@@ -31,9 +34,13 @@ sealed interface EscanearEvento {
 class EscanearViewModel(
     private val resolverDestinoEscaneo: ResolverDestinoEscaneo,
     private val liberarChapeta: LiberarChapeta,
+    cuentaRepository: CuentaRepository,
 ) : ViewModel() {
     private val _estado = MutableStateFlow<EscanearUiState>(EscanearUiState.EsperandoTag)
     val estado: StateFlow<EscanearUiState> = _estado.asStateFlow()
+
+    /** Liberar la Chapeta es del Ganadero; al Operario no se le ofrece. */
+    val puedeLiberarChapeta: Flow<Boolean> = cuentaRepository.observeUsuario().map { it.puedeAdministrar }
 
     private val _eventos = Channel<EscanearEvento>(Channel.BUFFERED)
     val eventos: Flow<EscanearEvento> = _eventos.receiveAsFlow()
@@ -47,8 +54,10 @@ class EscanearViewModel(
         val actual = _estado.value as? EscanearUiState.AnimalDadoDeBaja ?: return
         _estado.value = EscanearUiState.Resolviendo
         viewModelScope.launch {
-            liberarChapeta(actual.idChapeta)
-            resolver(actual.codigo)
+            when (liberarChapeta(actual.idChapeta)) {
+                LiberarChapeta.Resultado.Realizado -> resolver(actual.codigo)
+                LiberarChapeta.Resultado.NoPermitido -> _estado.value = actual
+            }
         }
     }
 

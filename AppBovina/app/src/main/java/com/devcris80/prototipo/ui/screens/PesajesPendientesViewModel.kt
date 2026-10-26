@@ -5,7 +5,9 @@ import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.repository.AnimalRepository
+import com.devcris80.prototipo.domain.model.puedeAdministrar
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
+import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
@@ -34,6 +36,8 @@ data class PesajesPendientesUiState(
     val animalesActivos: List<AnimalConCodigo> = emptyList(),
     val error: PesajesPendientesError? = null,
     val ofertaRestantes: OfertaRestantes? = null,
+    /** Descartar un Pesaje pendiente es del Ganadero; el Operario solo puede asignarlo. */
+    val puedeDescartar: Boolean = false,
 )
 
 /** Estado de Pesajes pendientes: la lista sin resolver con el estado de su codigo, y sus acciones. */
@@ -44,6 +48,7 @@ class PesajesPendientesViewModel(
     private val pesajePendienteRepository: PesajePendienteRepository,
     private val asignarPesajesPendientes: AsignarPesajesPendientes,
     private val descartarPesajePendiente: DescartarPesajePendiente,
+    cuentaRepository: CuentaRepository,
 ) : ViewModel() {
     private val error = MutableStateFlow<PesajesPendientesError?>(null)
     private val ofertaRestantes = MutableStateFlow<OfertaRestantes?>(null)
@@ -61,8 +66,9 @@ class PesajesPendientesViewModel(
         animalesConCodigo,
         error,
         ofertaRestantes,
-    ) { pendientes, animales, errorActual, oferta ->
-        PesajesPendientesUiState(pendientes, animales, errorActual, oferta)
+        cuentaRepository.observeUsuario(),
+    ) { pendientes, animales, errorActual, oferta, usuario ->
+        PesajesPendientesUiState(pendientes, animales, errorActual, oferta, usuario.puedeAdministrar)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PesajesPendientesUiState())
 
     fun onConfirmarAsignar(pendiente: PesajePendiente, idAnimal: String) {
@@ -89,7 +95,10 @@ class PesajesPendientesViewModel(
     fun onConfirmarDescartar(idPesajePendiente: String) {
         viewModelScope.launch {
             when (descartarPesajePendiente(idPesajePendiente)) {
-                DescartarPesajePendiente.Resultado.Descartado -> Unit
+                // La pantalla no ofrece Descartar al Operario; si igual llega, el caso de uso no escribe.
+                DescartarPesajePendiente.Resultado.Descartado,
+                DescartarPesajePendiente.Resultado.NoPermitido,
+                -> Unit
                 DescartarPesajePendiente.Resultado.PendienteNoDisponible ->
                     error.value = PesajesPendientesError.PendienteNoDisponible
             }

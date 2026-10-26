@@ -6,3 +6,6 @@ data class Usuario(
     val nombre: String,
     val rol: Rol,
 )
+
+/** Sin Usuario en el dispositivo no hay permiso: ante la duda, no se ofrece ni se hace. */
+val Usuario?.puedeAdministrar: Boolean get() = this?.rol?.puedeAdministrar == true

@@ -77,6 +77,7 @@ fun PesosScreen(
             container.pesajePendienteRepository,
             container.asignarPesajesPendientes,
             container.descartarPesajePendiente,
+            container.cuentaRepository,
         )
     }
     val servicioViewModel = appViewModel { EstadoServicioViewModel() }
@@ -159,6 +160,7 @@ fun PesosScreen(
                         item = item,
                         formatoFecha = formatoFecha,
                         onAsignarClick = { pendienteParaAsignar = item },
+                        puedeDescartar = estado.puedeDescartar,
                         onDescartarClick = { confirmarDescarte = item.pesajePendiente.idPesajePendiente },
                         onRegistrarAnimalClick = { onRegistrarAnimalConCodigo(item.pesajePendiente.codigo) },
                     )
@@ -309,6 +311,7 @@ private fun FilaPendiente(
     item: PesajePendientePorConciliar,
     formatoFecha: SimpleDateFormat,
     onAsignarClick: () -> Unit,
+    puedeDescartar: Boolean,
     onDescartarClick: () -> Unit,
     onRegistrarAnimalClick: () -> Unit,
 ) {
@@ -385,10 +388,12 @@ private fun FilaPendiente(
                     modifier = Modifier.weight(1f),
                 )
             }
-            TextButton(
-                onClick = onDescartarClick,
-                modifier = Modifier.weight(1f),
-            ) { Text("Descartar", color = MaterialTheme.colorScheme.error) }
+            if (puedeDescartar) {
+                TextButton(
+                    onClick = onDescartarClick,
+                    modifier = Modifier.weight(1f),
+                ) { Text("Descartar", color = MaterialTheme.colorScheme.error) }
+            }
         }
     }
 }

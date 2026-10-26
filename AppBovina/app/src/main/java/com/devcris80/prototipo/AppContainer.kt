@@ -92,8 +92,8 @@ class AppContainer(context: Context) {
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val actualizarAnimal = ActualizarAnimal(animalRepository, transaccion)
     val resolverConflicto = ResolverConflicto(conflictoRepository)
-    val darDeBajaAnimal = DarDeBajaAnimal(animalRepository)
-    val liberarChapeta = LiberarChapeta(chapetaRepository)
+    val darDeBajaAnimal = DarDeBajaAnimal(animalRepository, cuentaRepository)
+    val liberarChapeta = LiberarChapeta(chapetaRepository, cuentaRepository)
     val crearCuenta = CrearCuenta(cuentaRepository, transaccion)
     val observarPesajesPendientes =
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository)

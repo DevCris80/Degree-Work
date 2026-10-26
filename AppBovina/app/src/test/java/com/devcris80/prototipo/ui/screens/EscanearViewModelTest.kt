@@ -4,11 +4,14 @@ import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
+import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
+import com.devcris80.prototipo.testing.FakeCuentaRepository
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -24,14 +27,21 @@ import java.util.UUID
 class EscanearViewModelTest {
     private val animalRepository = FakeAnimalRepository()
     private val chapetaRepository = FakeChapetaRepository()
+    private val cuentaRepository = FakeCuentaRepository()
     private val viewModel = EscanearViewModel(
         ResolverDestinoEscaneo(chapetaRepository, animalRepository),
-        LiberarChapeta(chapetaRepository, clock = { 2L }),
+        LiberarChapeta(chapetaRepository, cuentaRepository, clock = { 2L }),
+        cuentaRepository,
     )
 
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        conUsuario(Rol.GANADERO)
+    }
+
+    private fun conUsuario(rol: Rol) {
+        cuentaRepository.usuario.value = Usuario("usuario-1", "perfil_local", "Ana", rol)
     }
 
     @After
@@ -84,6 +94,40 @@ class EscanearViewModelTest {
             EscanearUiState.AnimalDadoDeBaja(activa.idChapeta, "Canela", "04A1B2C3"),
             viewModel.estado.value,
         )
+    }
+
+    @Test
+    fun elGanaderoPuedeLiberarLaChapeta() = runTest {
+        assertEquals(true, viewModel.puedeLiberarChapeta.first())
+    }
+
+    @Test
+    fun elOperarioNoPuedeLiberarLaChapetaNiAunqueSeLlameLaAccion() = runTest {
+        conUsuario(Rol.OPERARIO)
+        val canela = animal("Canela", fechaBaja = 5L)
+        animalRepository.set(canela)
+        val activa = chapeta(canela.idAnimal, "04A1B2C3")
+        chapetaRepository.set(activa)
+        viewModel.onCodigoLeido("04A1B2C3")
+
+        viewModel.onLiberarChapeta()
+
+        assertEquals(false, viewModel.puedeLiberarChapeta.first())
+        assertEquals(EscanearUiState.AnimalDadoDeBaja(activa.idChapeta, "Canela", "04A1B2C3"), viewModel.estado.value)
+        assertEquals(emptyList<String>(), chapetaRepository.liberadas)
+    }
+
+    @Test
+    fun siCambiaElRolDespuesDeEscanearElPermisoSeActualiza() = runTest {
+        val canela = animal("Canela", fechaBaja = 5L)
+        animalRepository.set(canela)
+        chapetaRepository.set(chapeta(canela.idAnimal, "04A1B2C3"))
+        viewModel.onCodigoLeido("04A1B2C3")
+        assertEquals(true, viewModel.puedeLiberarChapeta.first())
+
+        conUsuario(Rol.OPERARIO)
+
+        assertEquals(false, viewModel.puedeLiberarChapeta.first())
     }
 
     @Test

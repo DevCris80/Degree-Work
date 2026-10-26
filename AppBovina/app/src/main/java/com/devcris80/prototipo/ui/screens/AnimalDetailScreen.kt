@@ -82,6 +82,7 @@ fun DetalleAnimalScreen(
             container.darDeBajaAnimal,
             container.liberarChapeta,
             container.conflictoRepository,
+            container.cuentaRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -347,7 +348,7 @@ fun DetalleAnimalScreen(
                 )
             }
             item {
-                chapeta?.let { chapetaActual ->
+                chapeta?.takeIf { estado.puedeAdministrar }?.let { chapetaActual ->
                     BovinaSecondaryButton(
                         texto = "Liberar chapeta (${chapetaActual.codigo})",
                         onClick = { confirmarLiberacion = true },
@@ -363,7 +364,7 @@ fun DetalleAnimalScreen(
                         style = MaterialTheme.typography.bodyMedium,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
-                } else {
+                } else if (estado.puedeAdministrar) {
                     BovinaSecondaryButton(
                         texto = "Dar de baja",
                         onClick = { confirmarBaja = true },
