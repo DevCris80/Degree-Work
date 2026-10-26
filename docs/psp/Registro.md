@@ -70,80 +70,53 @@ Clasificación de defectos (PSP): 10 Documentación, 20 Sintaxis, 30 Construcci�
 
 ### 2.1 Defectos encontrados en la revisión de diseño (22 al 25/10/26)
 
-| N.º | Fecha | Dev. | Tipo | Inyectado en | Removido en | Tiempo solución (min) | Estado | Descripción | Corrección / evidencia |
-|---|---|---|---|---|---|---|---|---|---|
-| D-01 | 22/10/26 | C | 10 | Planeación | Revisión de diseño | | Abierto | La propuesta (sección de herramientas) declara Lucidchart y StarUML y compromete diagramas de despliegue y de clases que no se elaboraron. | Actualizar la sección de herramientas a PlantUML con C4-PlantUML. |
-| D-02 | 22/10/26 | C | 50 | Diseño | Revisión de diseño | | Corregido | "Supabase solo como autenticador" contradice la autorización con RLS y las fotos en Storage. | Supabase cubre Auth, Postgres y Storage (ADR-0005; C2). |
-| D-03 | 22/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | El diagrama de relaciones del repositorio no coincidía con el esquema Room implementado (genealogía y subtipos inexistentes; faltaba `pesaje_pendiente`). | Commit del 23/10, 12:19. |
-| D-04 | 22/10/26 | C | 80 | Planeación | Revisión de diseño | | Corregido | Ambigüedad en el código de la chapeta: el ingreso manual podía ser el número impreso o el UID, dos espacios de identificadores en un mismo campo. | Decisión: el ingreso manual es el UID (RN-02). |
-| D-05 | 22/10/26 | C | 80 | Diseño | Revisión de diseño | | Abierto | Crear la finca y canjear una invitación no tienen vía autorizada bajo RLS; una política abierta permitiría darse rol de Ganadero en una finca ajena. | Diseñadas como funciones `SECURITY DEFINER` (BD-06); falta implementarlas. |
-| D-06 | 22/10/26 | C | 90 | Diseño | Revisión de diseño | | Corregido | Un servicio que escribiera con la `service_role` anularía las políticas RLS. | ADR-0005: funciones `SECURITY INVOKER` sin FastAPI. |
-| D-07 | 22/10/26 | C | 10 | Diseño | Revisión de diseño | | Corregido | Diagrama de contexto: SINIGAN con flecha "No se integra", leyenda que mezcla tipos y estados, rótulos ambiguos de la báscula y de la chapeta. | C1 actualizado el 22/10. |
-| D-08 | 22/10/26 | C | 50 | Planeación | Revisión de diseño | | Abierto | La postcondición de CU-01 crea la finca y el usuario en el celular y los sube después; bajo RLS el servidor los rechazaría. | Cambiar CU-01 para que use `crear_finca`. |
-| D-09 | 22/10/26 | C | 10 | Planeación | Revisión de diseño | | Abierto | La SRS (2.1) lista Supabase como sistema externo; el C4 lo ubica dentro de MiGanado. | Ajustar la tabla de actores de la SRS. |
-| D-10 | 22/10/26 | C | 10 | Planeación | Revisión de diseño | | Corregido | La interfaz de software de la SRS no incluía PostgREST. | SRS v0.2 (23/10). |
-| D-11 | 22/10/26 | C | 80 | Diseño | Revisión de diseño | | Corregido | Sin regla para descargar una fila con cambios locales sin subir: la edición local se perdía sin aviso. | ADR-0004, reglas 3 y 7. |
-| D-12 | 22/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | El esquema local no podía representar ediciones concurrentes (sin `rev`, siblings ni rechazos). | Room v15. |
-| D-13 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Abierto | Las claves foráneas de Room borran en cascada, en contra de la baja lógica (Ley 1659). | Cambiar a `RESTRICT` en una migración. |
-| D-14 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | Los valores de dominio usaban dos formatos (etiquetas con tilde y códigos en mayúsculas) sin regla para el servidor. | El servidor adopta los textos de Room con `CHECK`. |
-| D-15 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Abierto | `tipoEvento` es texto libre: el indicador de eventos por tipo agrupa variantes del mismo tipo. | Catálogo de tipos (RF-29). |
-| D-16 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | Las tablas hijas no tenían finca: las políticas RLS tendrían que unir con `animal`. | Columna `id_perfil_finca` llenada por trigger. |
-| D-17 | 23/10/26 | C | 70 | Diseño | Revisión de diseño | | Abierto | No hay restricción de una sola chapeta activa por animal. | Índice único parcial sobre `idAnimal` al implementar RF-19. |
-| D-18 | 24/10/26 | C | 80 | Diseño | Revisión de diseño | | Abierto | El código digitado no se valida: un error crea una chapeta que ningún tag producirá. | Advertencia si no son 14 caracteres hexadecimales. |
-| D-19 | 24/10/26 | C | 90 | Diseño | Revisión de diseño | | Abierto | El UID de la NTAG215 se puede clonar y la app no verifica la firma de originalidad. | Declarar como limitación. |
-| D-20 | 25/10/26 | C | 10 | Diseño | Revisión de diseño | | Corregido | Los diagramas C4 marcaban como planificado lo que ya estaba implementado (Supabase, sincronización). | Estados al 24/10. |
-| D-21 | 25/10/26 | C | 70 | Diseño | Revisión de diseño | | Corregido | El ER documentaba el esquema v11; el implementado es v15. | `ER_local_room_v15.puml`. |
-| D-22 | 25/10/26 | C | 80 | Diseño | Revisión de diseño | | Abierto | Una chapeta nueva rechazada por el servidor se borra físicamente; es una excepción a RNF-04 que la SRS no declara. | Declararla en RNF-04. |
-| D-23 | 25/10/26 | C | 80 | Diseño | Revisión de diseño | | Corregido | La máquina de estados NFC no incluía las transiciones causadas por la sincronización. | NFC-02 actualizado. |
+| N.º  | Fecha    | Dev. | Tipo | Inyectado en | Removido en        | Tiempo solución (min) | Estado    | Descripción                                                                                                                                               | Corrección / evidencia                                                     |
+| ---- | -------- | ---- | ---- | ------------ | ------------------ | --------------------- | --------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | -------------------------------------------------------------------------- |
+| D-01 | 22/10/26 | C    | 10   | Planeación   | Revisión de diseño | **10**                | Abierto   | La propuesta (sección de herramientas) declara Lucidchart y StarUML y compromete diagramas de despliegue y de clases que no se elaboraron.                | Actualizar la sección de herramientas a PlantUML con C4-PlantUML.          |
+| D-02 | 22/10/26 | C    | 50   | Diseño       | Revisión de diseño | **5**                 | Corregido | "Supabase solo como autenticador" contradice la autorización con RLS y las fotos en Storage.                                                              | Supabase cubre Auth, Postgres y Storage (ADR-0005; C2).                    |
+| D-03 | 22/10/26 | C    | 70   | Diseño       | Revisión de diseño | **25**                | Corregido | El diagrama de relaciones del repositorio no coincidía con el esquema Room implementado (genealogía y subtipos inexistentes; faltaba `pesaje_pendiente`). | Commit del 23/10, 12:19.                                                   |
+| D-04 | 22/10/26 | C    | 80   | Planeación   | Revisión de diseño | **10**                | Corregido | Ambigüedad en el código de la chapeta: el ingreso manual podía ser el número impreso o el UID, dos espacios de identificadores en un mismo campo.         | Decisión: el ingreso manual es el UID (RN-02).                             |
+| D-05 | 22/10/26 | C    | 80   | Diseño       | Revisión de diseño | **30**                | Abierto   | Crear la finca y canjear una invitación no tienen vía autorizada bajo RLS; una política abierta permitiría darse rol de Ganadero en una finca ajena.      | Diseñadas como funciones `SECURITY DEFINER` (BD-06); falta implementarlas. |
+| D-06 | 22/10/26 | C    | 90   | Diseño       | Revisión de diseño | **20**                | Corregido | Un servicio que escribiera con la `service_role` anularía las políticas RLS.                                                                              | ADR-0005: funciones `SECURITY INVOKER` sin FastAPI.                        |
+| D-07 | 22/10/26 | C    | 10   | Diseño       | Revisión de diseño | **15**                | Corregido | Diagrama de contexto: SINIGAN con flecha "No se integra", leyenda que mezcla tipos y estados, rótulos ambiguos de la báscula y de la chapeta.             | C1 actualizado el 22/10.                                                   |
+| D-08 | 22/10/26 | C    | 50   | Planeación   | Revisión de diseño | **10**                | Abierto   | La postcondición de CU-01 crea la finca y el usuario en el celular y los sube después; bajo RLS el servidor los rechazaría.                               | Cambiar CU-01 para que use `crear_finca`.                                  |
+| D-09 | 22/10/26 | C    | 10   | Planeación   | Revisión de diseño | **5**                 | Abierto   | La SRS (2.1) lista Supabase como sistema externo; el C4 lo ubica dentro de MiGanado.                                                                      | Ajustar la tabla de actores de la SRS.                                     |
+| D-10 | 22/10/26 | C    | 10   | Planeación   | Revisión de diseño | **5**                 | Corregido | La interfaz de software de la SRS no incluía PostgREST.                                                                                                   | SRS v0.2 (23/10).                                                          |
+| D-11 | 22/10/26 | C    | 80   | Diseño       | Revisión de diseño | **20**                | Corregido | Sin regla para descargar una fila con cambios locales sin subir: la edición local se perdía sin aviso.                                                    | ADR-0004, reglas 3 y 7.                                                    |
+| D-12 | 22/10/26 | C    | 70   | Diseño       | Revisión de diseño | **15**                | Corregido | El esquema local no podía representar ediciones concurrentes (sin `rev`, siblings ni rechazos).                                                           | Room v15.                                                                  |
+| D-13 | 23/10/26 | C    | 70   | Diseño       | Revisión de diseño | **10**                | Abierto   | Las claves foráneas de Room borran en cascada, en contra de la baja lógica (Ley 1659).                                                                    | Cambiar a `RESTRICT` en una migración.                                     |
+| D-14 | 23/10/26 | C    | 70   | Diseño       | Revisión de diseño | **15**                | Corregido | Los valores de dominio usaban dos formatos (etiquetas con tilde y códigos en mayúsculas) sin regla para el servidor.                                      | El servidor adopta los textos de Room con `CHECK`.                         |
+| D-15 | 23/10/26 | C    | 70   | Diseño       | Revisión de diseño | **20**                | Abierto   | `tipoEvento` es texto libre: el indicador de eventos por tipo agrupa variantes del mismo tipo.                                                            | Catálogo de tipos (RF-29).                                                 |
+| D-16 | 23/10/26 | C    | 70   | Diseño       | Revisión de diseño | **25**                | Corregido | Las tablas hijas no tenían finca: las políticas RLS tendrían que unir con `animal`.                                                                       | Columna `id_perfil_finca` llenada por trigger.                             |
+| D-17 | 23/10/26 | C    | 70   | Diseño       | Revisión de diseño | **10**                | Abierto   | No hay restricción de una sola chapeta activa por animal.                                                                                                 | Índice único parcial sobre `idAnimal` al implementar RF-19.                |
+| D-18 | 24/10/26 | C    | 80   | Diseño       | Revisión de diseño | **10**                | Abierto   | El código digitado no se valida: un error crea una chapeta que ningún tag producirá.                                                                      | Advertencia si no son 14 caracteres hexadecimales.                         |
+| D-19 | 24/10/26 | C    | 90   | Diseño       | Revisión de diseño | **5**                 | Abierto   | El UID de la NTAG215 se puede clonar y la app no verifica la firma de originalidad.                                                                       | Declarar como limitación.                                                  |
+| D-20 | 25/10/26 | C    | 10   | Diseño       | Revisión de diseño | **10**                | Corregido | Los diagramas C4 marcaban como planificado lo que ya estaba implementado (Supabase, sincronización).                                                      | Estados al 24/10.                                                          |
+| D-21 | 25/10/26 | C    | 70   | Diseño       | Revisión de diseño | **15**                | Corregido | El ER documentaba el esquema v11; el implementado es v15.                                                                                                 | `ER_local_room_v15.puml`.                                                  |
+| D-22 | 25/10/26 | C    | 80   | Diseño       | Revisión de diseño | **5**                 | Abierto   | Una chapeta nueva rechazada por el servidor se borra físicamente; es una excepción a RNF-04 que la SRS no declara.                                        | Declararla en RNF-04.                                                      |
+| D-23 | 25/10/26 | C    | 80   | Diseño       | Revisión de diseño | **20**                | Corregido | La máquina de estados NFC no incluía las transiciones causadas por la sincronización.                                                                     | NFC-02 actualizado.                                                        |
 
 ### 2.2 Defectos de construcción registrados en el historial de commits
 
-"Inyectado en" y "Removido en" se infieren del mensaje del commit: si menciona una revisión, se removió en Revisión de código; si lo encontró una prueba o el uso, en Pruebas.
+| N.º | Fecha | Dev. | Tipo | Inyectado en | Removido en | Tiempo solución (min) | Descripción | Commit |
+|---|---|---|---|---|---|---|---|---|
+| C-01 | 08/10/26 | C | 50 | Código | Revisión de código | **20** | Correcciones al contrato del pesaje encontradas en la revisión. | `82527b7` |
+| C-02 | 08/10/26 | C | 80 | Diseño | Revisión de código | **45** | La especificación inicial respondía 404 y no guardaba el pesaje de un código sin chapeta: se perdían pesajes. Pasa a 202 con Pesaje pendiente (ADR-0003). | `1b91b36` |
+| C-03 | 08/10/26 | C | 70 | Código | Revisión de código | **15** | Dar de baja y liberar chapeta no volvían a marcar la fila como pendiente de sincronizar. | `cc650d1` |
+| C-04 | 08/10/26 | C | 80 | Código | Revisión de código | **30** | El reintento de un pesaje ya conciliado no respondía lo mismo que la primera vez (idempotencia). | `432de81` |
+| C-05 | 14/10/26 | C | 70 | Código | Revisión de código | **40** | La migración destructiva de Room borraba los datos al cambiar el esquema. | `11563eb` |
+| C-06 | 14/10/26 | C | 40 | Código | Revisión de código | **10** | fechaModificacion tenía valor por defecto; debía asignarla solo el repositorio. | `e6e6cde` |
+| C-07 | 23/10/26 | C | 100 | Código | Pruebas | **25** | Versión de kotlinx-serialization incompatible impedía correr MigrationTestHelper. | `74f7f0f` |
+| C-08 | 23/10/26 | C | 50 | Código | Revisión de código | **15** | Indicadores: área de toque menor a 52 dp y valor mostrado junto al aviso de sin datos. | `0fed35b` |
+| C-09 | 23/10/26 | C | 80 | Código | Revisión de código | **30** | Indicadores: observaciones pendientes de la revisión del PR #98. | `b76323c` |
+| C-10 | 23/10/26 | C | 70 | Código | Revisión de código | **15** | SeedData creaba un animal de prueba en fincas reales. | `b401a83` |
+| C-11 | 23/10/26 | C | 80 | Código | Revisión de código | **35** | Pesaje manual: validación RN-07 duplicada, sin comprobar animal activo y sin transacción. | `56b50b5` |
+| C-12 | 23/10/26 | C | 80 | Código | Pruebas | **40** | La pantalla de inicio se recalculaba: iniciar sesión saltaba a la lista y volvía al Login. | `7dea430` |
+| C-13 | 23/10/26 | C | 60 | Código | Pruebas | **60** | subir_cambios buscaba el id_version antes de bloquear la fila (condición de carrera) y rechazaba una segunda baja. | `357b159` |
+| C-14 | 23/10/26 | C | 80 | Código | Pruebas | **50** | Un rechazo no se aplicaba si la fila cambiaba mientras subía; una cría ya subida salía junto con su madre rechazada. | `f052362` |
+| C-15 | 24/10/26 | C | 70 | Código | Pruebas | **45** | Al descargar una chapeta activa del servidor, el código local chocaba con el índice único. | `5ea00fe` |
+| C-16 | 24/10/26 | M | 80 | Código | Revisión de código | **55** | Un conflicto resuelto se cerraba aunque el servidor no aceptara la resolución, y un sibling ilegible cerraba la app. | `d0fa36d` |
+| C-17 | 24/10/26 | C | 90 | Código | Pruebas | **45** | El trabajo de sincronización bloqueaba los disparos siguientes al fallar repetidamente. | `1351c55` |
 
-| N.º  | Fecha    | Dev. | Tipo | Inyectado en | Removido en        | Tiempo solución (min) | Descripción                                                                                                                                               | Commit    |
-| ---- | -------- | ---- | ---- | ------------ | ------------------ | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------- | --------- |
-| C-01 | 08/10/26 | C    | 50   | Código       | Revisión de código |                       | Correcciones al contrato del pesaje encontradas en la revisión.                                                                                           | `82527b7` |
-| C-02 | 08/10/26 | C    | 80   | Diseño       | Revisión de código |                       | La especificación inicial respondía 404 y no guardaba el pesaje de un código sin chapeta: se perdían pesajes. Pasa a 202 con Pesaje pendiente (ADR-0003). | `1b91b36` |
-| C-03 | 08/10/26 | C    | 70   | Código       | Revisión de código |                       | Dar de baja y liberar chapeta no volvían a marcar la fila como pendiente de sincronizar.                                                                  | `cc650d1` |
-| C-04 | 08/10/26 | C    | 80   | Código       | Revisión de código |                       | El reintento de un pesaje ya conciliado no respondía lo mismo que la primera vez (idempotencia).                                                          | `432de81` |
-| C-05 | 14/10/26 | C    | 70   | Código       | Revisión de código |                       | La migración destructiva de Room borraba los datos al cambiar el esquema.                                                                                 | `11563eb` |
-| C-06 | 14/10/26 | C    | 40   | Código       | Revisión de código |                       | fechaModificacion tenía valor por defecto; debía asignarla solo el repositorio.                                                                           | `e6e6cde` |
-| C-07 | 23/10/26 | C    | 100  | Código       | Pruebas            |                       | Versión de kotlinx-serialization incompatible impedía correr MigrationTestHelper.                                                                         | `74f7f0f` |
-| C-08 | 23/10/26 | C    | 50   | Código       | Revisión de código |                       | Indicadores: área de toque menor a 52 dp y valor mostrado junto al aviso de sin datos.                                                                    | `0fed35b` |
-| C-09 | 23/10/26 | C    | 80   | Código       | Revisión de código |                       | Indicadores: observaciones pendientes de la revisión del PR #98.                                                                                          | `b76323c` |
-| C-10 | 23/10/26 | C    | 70   | Código       | Revisión de código |                       | SeedData creaba un animal de prueba en fincas reales.                                                                                                     | `b401a83` |
-| C-11 | 23/10/26 | C    | 80   | Código       | Revisión de código |                       | Pesaje manual: validación RN-07 duplicada, sin comprobar animal activo y sin transacción.                                                                 | `56b50b5` |
-| C-12 | 23/10/26 | C    | 80   | Código       | Pruebas            |                       | La pantalla de inicio se recalculaba: iniciar sesión saltaba a la lista y volvía al Login.                                                                | `7dea430` |
-| C-13 | 23/10/26 | C    | 60   | Código       | Pruebas            |                       | subir_cambios buscaba el id_version antes de bloquear la fila (condición de carrera) y rechazaba una segunda baja.                                        | `357b159` |
-| C-14 | 23/10/26 | C    | 80   | Código       | Pruebas            |                       | Un rechazo no se aplicaba si la fila cambiaba mientras subía; una cría ya subida salía junto con su madre rechazada.                                      | `f052362` |
-| C-15 | 24/10/26 | C    | 70   | Código       | Pruebas            |                       | Al descargar una chapeta activa del servidor, el código local chocaba con el índice único.                                                                | `5ea00fe` |
-| C-16 | 24/10/26 | M    | 80   | Código       | Revisión de código |                       | Un conflicto resuelto se cerraba aunque el servidor no aceptara la resolución, y un sibling ilegible cerraba la app.                                      | `d0fa36d` |
-| C-17 | 24/10/26 | C    | 90   | Código       | Pruebas            |                       | El trabajo de sincronización bloqueaba los disparos siguientes al fallar repetidamente.                                                                   | `1351c55` |
-
-### 2.3 Resumen de defectos
-
-| Tipo | Cantidad |
-|---|---|
-| 10 Documentación | 5 |
-| 40 Asignación | 1 |
-| 50 Interfaz | 4 |
-| 60 Comprobación | 1 |
-| 70 Datos | 12 |
-| 80 Función | 13 |
-| 90 Sistema | 3 |
-| 100 Entorno | 1 |
-| **Total** | **40** |
-
-| Inyectado en | Cantidad |
-|---|---|
-| Planeación | 5 |
-| Diseño | 19 |
-| Código | 16 |
-
-| Removido en | Cantidad |
-|---|---|
-| Revisión de diseño | 23 |
-| Revisión de código | 11 |
-| Pruebas | 6 |
 
 ---
