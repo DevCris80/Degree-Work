@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.ui.screens
 
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.testing.FakeSesionRepository
 import com.devcris80.prototipo.testing.FakeSincronizacionRepository
 import kotlinx.coroutines.Dispatchers
@@ -97,5 +98,80 @@ class LoginViewModelTest {
         viewModel.onIniciarSesion()
 
         assertTrue(viewModel.estado.value.error!!.contains("Desinstala"))
+    }
+
+    @Test
+    fun olvideMiContrasena_abreElDialogoConElCorreoQueYaEstabaEscrito() {
+        val viewModel = llenado()
+
+        viewModel.onOlvideContrasena()
+
+        assertEquals("ana@finca.co", viewModel.estado.value.recuperacion?.correo)
+    }
+
+    @Test
+    fun enviarLaRecuperacion_pideElCorreoSinEspaciosYConfirmaSinRevelarSiLaCuentaExiste() = runTest {
+        val viewModel = LoginViewModel(sesionRepository, sincronizacionRepository)
+        viewModel.onOlvideContrasena()
+        viewModel.onRecuperacionCorreoCambiado("  ana@finca.co ")
+
+        viewModel.onEnviarRecuperacion()
+
+        assertEquals(listOf("ana@finca.co"), sesionRepository.recuperaciones)
+        val recuperacion = viewModel.estado.value.recuperacion!!
+        assertTrue(recuperacion.enviado)
+        assertFalse(recuperacion.enviando)
+        assertEquals(
+            "Si el correo está registrado, te enviamos un enlace para recuperar la contraseña.",
+            recuperacion.mensaje,
+        )
+    }
+
+    @Test
+    fun sinCorreoNoSeEnviaLaRecuperacion() {
+        val viewModel = LoginViewModel(sesionRepository, sincronizacionRepository)
+        viewModel.onOlvideContrasena()
+
+        viewModel.onEnviarRecuperacion()
+
+        assertTrue(sesionRepository.recuperaciones.isEmpty())
+        assertFalse(viewModel.estado.value.recuperacion!!.puedeEnviar)
+    }
+
+    @Test
+    fun sinSenal_laRecuperacionLoIndicaYNoDaPorEnviado() {
+        sesionRepository.resultadoRecuperacion = ResultadoRecuperacion.SinConexion
+        val viewModel = llenado()
+        viewModel.onOlvideContrasena()
+
+        viewModel.onEnviarRecuperacion()
+
+        val recuperacion = viewModel.estado.value.recuperacion!!
+        assertFalse(recuperacion.enviado)
+        assertTrue(recuperacion.mensaje!!.contains("señal"))
+    }
+
+    @Test
+    fun siElServidorFalla_laRecuperacionPermiteReintentar() {
+        sesionRepository.resultadoRecuperacion = ResultadoRecuperacion.NoSePudo
+        val viewModel = llenado()
+        viewModel.onOlvideContrasena()
+
+        viewModel.onEnviarRecuperacion()
+
+        val recuperacion = viewModel.estado.value.recuperacion!!
+        assertFalse(recuperacion.enviado)
+        assertTrue(recuperacion.puedeEnviar)
+        assertTrue(recuperacion.mensaje!!.contains("Inténtalo"))
+    }
+
+    @Test
+    fun cerrarElDialogoLoDescarta() {
+        val viewModel = llenado()
+        viewModel.onOlvideContrasena()
+
+        viewModel.onCerrarRecuperacion()
+
+        assertNull(viewModel.estado.value.recuperacion)
     }
 }

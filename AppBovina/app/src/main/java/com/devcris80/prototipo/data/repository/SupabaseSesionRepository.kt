@@ -5,6 +5,7 @@ import com.devcris80.prototipo.data.local.dao.UsuarioDao
 import com.devcris80.prototipo.data.remote.SesionCifrada
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import io.github.jan.supabase.SupabaseClient
@@ -54,6 +55,17 @@ class SupabaseSesionRepository(
     } catch (e: Exception) {
         cerrarSesion()
         if (e.esFaltaDeConexion()) ResultadoInicioSesion.SinConexion else ResultadoInicioSesion.NoSePudo
+    }
+
+    override suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion = try {
+        supabase.auth.resetPasswordForEmail(correo)
+        ResultadoRecuperacion.Enviado
+    } catch (e: CancellationException) {
+        throw e
+    } catch (e: AuthRestException) {
+        ResultadoRecuperacion.NoSePudo
+    } catch (e: Exception) {
+        if (e.esFaltaDeConexion()) ResultadoRecuperacion.SinConexion else ResultadoRecuperacion.NoSePudo
     }
 
     override suspend fun cerrarSesion() {

@@ -21,6 +21,7 @@ import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
@@ -191,12 +192,18 @@ internal class FakeSesionRepository : SesionRepository {
     val guardada = MutableStateFlow(false)
     var resultado: ResultadoInicioSesion = ResultadoInicioSesion.Exito
     val intentos = mutableListOf<Pair<String, String>>()
+    var resultadoRecuperacion: ResultadoRecuperacion = ResultadoRecuperacion.Enviado
+    val recuperaciones = mutableListOf<String>()
 
     override fun observeSesionGuardada(): Flow<Boolean> = guardada
     override suspend fun iniciarSesion(correo: String, contrasena: String): ResultadoInicioSesion {
         intentos.add(correo to contrasena)
         if (resultado == ResultadoInicioSesion.Exito) guardada.value = true
         return resultado
+    }
+    override suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion {
+        recuperaciones.add(correo)
+        return resultadoRecuperacion
     }
     override suspend fun cerrarSesion() {
         guardada.value = false

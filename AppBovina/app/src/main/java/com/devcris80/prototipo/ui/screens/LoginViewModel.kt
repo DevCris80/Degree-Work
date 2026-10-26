@@ -3,6 +3,7 @@ package com.devcris80.prototipo.ui.screens
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import kotlinx.coroutines.channels.Channel
@@ -14,11 +15,22 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/** El diálogo de "¿Olvidaste tu contraseña?": pide el correo y dice qué pasó al enviarlo. */
+data class RecuperacionUiState(
+    val correo: String,
+    val enviando: Boolean = false,
+    val enviado: Boolean = false,
+    val mensaje: String? = null,
+) {
+    val puedeEnviar: Boolean get() = correo.isNotBlank() && !enviando && !enviado
+}
+
 data class LoginUiState(
     val correo: String = "",
     val contrasena: String = "",
     val cargando: Boolean = false,
     val error: String? = null,
+    val recuperacion: RecuperacionUiState? = null,
 ) {
     val puedeIniciar: Boolean get() = correo.isNotBlank() && contrasena.isNotBlank() && !cargando
 }
@@ -40,6 +52,31 @@ class LoginViewModel(
 
     fun onCorreoCambiado(valor: String) = _estado.update { it.copy(correo = valor, error = null) }
     fun onContrasenaCambiada(valor: String) = _estado.update { it.copy(contrasena = valor, error = null) }
+
+    fun onOlvideContrasena() = _estado.update { it.copy(recuperacion = RecuperacionUiState(correo = it.correo)) }
+
+    fun onRecuperacionCorreoCambiado(valor: String) =
+        _estado.update { it.copy(recuperacion = it.recuperacion?.copy(correo = valor, mensaje = null)) }
+
+    fun onCerrarRecuperacion() = _estado.update { it.copy(recuperacion = null) }
+
+    fun onEnviarRecuperacion() {
+        val actual = _estado.value.recuperacion ?: return
+        if (!actual.puedeEnviar) return
+        _estado.update { it.copy(recuperacion = actual.copy(enviando = true, mensaje = null)) }
+        viewModelScope.launch {
+            val resultado = sesionRepository.recuperarContrasena(actual.correo.trim())
+            _estado.update {
+                it.copy(
+                    recuperacion = it.recuperacion?.copy(
+                        enviando = false,
+                        enviado = resultado == ResultadoRecuperacion.Enviado,
+                        mensaje = resultado.mensaje(),
+                    ),
+                )
+            }
+        }
+    }
 
     fun onIniciarSesion() {
         val actual = _estado.value
@@ -66,4 +103,12 @@ private fun ResultadoInicioSesion.mensaje(): String? = when (this) {
     ResultadoInicioSesion.OtraCuentaEnElDispositivo ->
         "Este celular tiene los datos de otra cuenta. Desinstala la app para empezar limpio."
     ResultadoInicioSesion.NoSePudo -> "No se pudo iniciar sesión. Inténtalo de nuevo en un momento."
+}
+
+// El mismo mensaje con o sin cuenta: no se revela quién está registrado.
+private fun ResultadoRecuperacion.mensaje(): String = when (this) {
+    ResultadoRecuperacion.Enviado ->
+        "Si el correo está registrado, te enviamos un enlace para recuperar la contraseña."
+    ResultadoRecuperacion.SinConexion -> "Sin señal. Hace falta conexión para enviar el correo de recuperación."
+    ResultadoRecuperacion.NoSePudo -> "No se pudo enviar el correo. Inténtalo de nuevo en un momento."
 }

@@ -13,8 +13,22 @@ interface SesionRepository {
     /** Valida las credenciales y deja en este dispositivo la finca y el Usuario de la cuenta. */
     suspend fun iniciarSesion(correo: String, contrasena: String): ResultadoInicioSesion
 
+    /**
+     * Pide a Supabase Auth que envíe el correo de recuperación. Un correo sin cuenta responde igual que uno
+     * con cuenta, para no revelar quién está registrado.
+     */
+    suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion
+
     /** Olvida la sesión; los datos de la finca quedan en el dispositivo. */
     suspend fun cerrarSesion()
+}
+
+sealed interface ResultadoRecuperacion {
+    data object Enviado : ResultadoRecuperacion
+    data object SinConexion : ResultadoRecuperacion
+
+    /** El servidor respondió con un error inesperado, por ejemplo por pedir demasiados correos seguidos. */
+    data object NoSePudo : ResultadoRecuperacion
 }
 
 sealed interface ResultadoInicioSesion {
