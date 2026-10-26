@@ -139,7 +139,8 @@ class FakeRegistroRepository : RegistroRepository {
         val actuales = porAnimal.getOrPut(registro.idAnimal) { MutableStateFlow(emptyList()) }
         actuales.value = listOf(registro) + actuales.value
     }
-    override suspend fun findByIdLectura(idLectura: String): Registro? = null
+    override suspend fun findByIdLectura(idLectura: String): Registro? =
+        porAnimal.values.flatMap { it.value }.firstOrNull { it.idLectura == idLectura }
     override fun observeByAnimal(idAnimal: String): Flow<List<Registro>> =
         porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }
     override fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?> =
