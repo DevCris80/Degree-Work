@@ -51,11 +51,12 @@ fun AppNavHost() {
     val currentRoute = backStackEntry?.destination?.hierarchy?.firstOrNull()?.route
     val inicioViewModel = appViewModel { container -> InicioViewModel(container.cuentaRepository, container.sesionRepository) }
     // InicioViewModel decide una sola vez; después, iniciar sesión navega desde el Login, y perder la
-    // sesión (cerrarla o que el servidor rechace renovarla) vuelve al Login desde cualquier pantalla.
+    // sesión (cerrarla o que el servidor rechace renovarla) vuelve al Login desde cualquier pantalla. Crear
+    // cuenta también se queda: un intento fallido cierra la sesión que abrió, y la persona sigue en su formulario.
     val puedeEntrar by inicioViewModel.puedeEntrar.collectAsState()
     LaunchedEffect(inicioViewModel) {
         inicioViewModel.sesionPerdida.collect {
-            if (navController.currentDestination?.route != Rutas.Login.ruta) {
+            if (navController.currentDestination?.route !in setOf(Rutas.Login.ruta, Rutas.CrearCuenta.ruta)) {
                 navController.navigate(Rutas.Login.ruta) { popUpTo(0) { inclusive = true } }
             }
         }
@@ -117,15 +118,15 @@ fun AppNavHost() {
             startDestination = if (puedeEntrar == true) Rutas.ListaAnimales.ruta else Rutas.Login.ruta,
             modifier = Modifier.padding(innerPadding),
         ) {
-            // Sin entrada desde el Login hasta #87 (crear cuenta con Supabase).
+            // Se llega desde Iniciar sesión, así que al crearla salen las dos de la pila.
             composable(Rutas.CrearCuenta.ruta) {
                 CrearCuentaScreen(
                     onCuentaCreada = {
                         navController.navigate(Rutas.ListaAnimales.ruta) {
-                            popUpTo(Rutas.CrearCuenta.ruta) { inclusive = true }
+                            popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
-                    onIrALogin = { navController.navigate(Rutas.Login.ruta) },
+                    onIrALogin = { navController.popBackStack(Rutas.Login.ruta, inclusive = false) },
                 )
             }
             composable(Rutas.Login.ruta) {
@@ -135,6 +136,7 @@ fun AppNavHost() {
                             popUpTo(Rutas.Login.ruta) { inclusive = true }
                         }
                     },
+                    onCrearCuenta = { navController.navigate(Rutas.CrearCuenta.ruta) },
                 )
             }
             composable(Rutas.ListaAnimales.ruta) {

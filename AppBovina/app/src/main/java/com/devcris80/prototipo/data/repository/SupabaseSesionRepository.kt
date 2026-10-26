@@ -4,6 +4,7 @@ import com.devcris80.prototipo.data.local.dao.PerfilFincaDao
 import com.devcris80.prototipo.data.local.dao.UsuarioDao
 import com.devcris80.prototipo.data.remote.SesionCifrada
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
+import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
@@ -20,10 +21,12 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
- * Inicia sesión contra Supabase Auth y deja en Room la finca y el Usuario de la cuenta, tal como
- * están en el servidor. Un dispositivo es de un solo Usuario: si ya tiene los datos de otra finca u
+ * Inicia sesión o crea la cuenta contra Supabase Auth y deja en Room la finca y el Usuario de la cuenta,
+ * tal como están en el servidor. Un dispositivo es de un solo Usuario: si ya tiene los datos de otra finca u
  * otro Usuario, no inicia sesión (hay que desinstalar la app para empezar limpio) y nunca borra
  * datos por su cuenta.
  */
@@ -55,6 +58,51 @@ class SupabaseSesionRepository(
     } catch (e: Exception) {
         cerrarSesion()
         if (e.esFaltaDeConexion()) ResultadoInicioSesion.SinConexion else ResultadoInicioSesion.NoSePudo
+    }
+
+    override suspend fun crearCuenta(
+        nombre: String,
+        nombreFinca: String,
+        correo: String,
+        contrasena: String,
+        versionAutorizacion: String,
+    ): ResultadoCreacionCuenta {
+        // Con datos de otra cuenta en el dispositivo no se crea nada, ni siquiera en el servidor.
+        if (perfilFincaDao.getOnce() != null || usuarioDao.getOnce() != null) {
+            return ResultadoCreacionCuenta.OtraCuentaEnElDispositivo
+        }
+        val resultado = try {
+            // El trigger crear_finca (supabase/migrations) crea la finca en el mismo alta, con estos metadatos.
+            supabase.auth.signUpWith(Email) {
+                email = correo
+                password = contrasena
+                data = buildJsonObject {
+                    put("nombre", nombre)
+                    put("nombre_finca", nombreFinca)
+                    put("version_autorizacion", versionAutorizacion)
+                }
+            }
+            // La confirmación de correo está desactivada en el proyecto: el registro deja la sesión abierta.
+            val idUsuario = checkNotNull(supabase.auth.currentUserOrNull()) { "El registro no dejó sesión" }.id
+            if (guardarCuenta(idUsuario) == ResultadoInicioSesion.Exito) {
+                ResultadoCreacionCuenta.Exito
+            } else {
+                ResultadoCreacionCuenta.NoSePudo
+            }
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: AuthRestException) {
+            when (e.errorCode) {
+                AuthErrorCode.UserAlreadyExists, AuthErrorCode.EmailExists -> ResultadoCreacionCuenta.CorreoYaRegistrado
+                AuthErrorCode.WeakPassword -> ResultadoCreacionCuenta.ContrasenaRechazada
+                else -> ResultadoCreacionCuenta.NoSePudo
+            }
+        } catch (e: Exception) {
+            if (e.esFaltaDeConexion()) ResultadoCreacionCuenta.SinConexion else ResultadoCreacionCuenta.NoSePudo
+        }
+        // Sin finca guardada la sesión no sirve: el dispositivo queda como antes de intentarlo.
+        if (resultado != ResultadoCreacionCuenta.Exito) cerrarSesion()
+        return resultado
     }
 
     override suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion = try {

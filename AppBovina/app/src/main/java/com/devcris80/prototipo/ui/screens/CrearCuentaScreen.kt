@@ -2,6 +2,7 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
@@ -9,12 +10,14 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.AlertDialog
+import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
@@ -30,9 +33,12 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import com.devcris80.prototipo.domain.model.AutorizacionDatos
+import com.devcris80.prototipo.domain.model.CuentaNueva
 import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
+import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.EncabezadoAuth
 import com.devcris80.prototipo.ui.components.PillBadge
@@ -47,13 +53,9 @@ fun CrearCuentaScreen(
     val viewModel = appViewModel { container -> CrearCuentaViewModel(container.crearCuenta) }
     val estado by viewModel.estado.collectAsState()
 
-    var correo by remember { mutableStateOf("") }
-    var password by remember { mutableStateOf("") }
-    var confirmarPassword by remember { mutableStateOf("") }
     var passwordVisible by remember { mutableStateOf(false) }
     var confirmarVisible by remember { mutableStateOf(false) }
-
-    val puedeCrear = estado.puedeCrear && correo.isNotBlank() && password.length >= 6 && password == confirmarPassword
+    var leyendoAutorizacion by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
@@ -61,6 +63,29 @@ fun CrearCuentaScreen(
                 CrearCuentaEvento.CuentaCreada -> onCuentaCreada()
             }
         }
+    }
+
+    if (leyendoAutorizacion) {
+        AlertDialog(
+            onDismissRequest = { leyendoAutorizacion = false },
+            title = { Text("Autorización de datos personales") },
+            text = {
+                Text(
+                    text = AutorizacionDatos.TEXTO,
+                    style = MaterialTheme.typography.bodyMedium,
+                    modifier = Modifier.verticalScroll(rememberScrollState()),
+                )
+            },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.onAutorizacionCambiada(true)
+                    leyendoAutorizacion = false
+                }) { Text("Acepto") }
+            },
+            dismissButton = {
+                TextButton(onClick = { leyendoAutorizacion = false }) { Text("Cerrar") }
+            },
+        )
     }
 
     Scaffold { innerPadding ->
@@ -95,41 +120,73 @@ fun CrearCuentaScreen(
                     )
                     CampoConIcono(
                         label = "Correo electrónico",
-                        value = correo,
-                        onValueChange = { correo = it },
+                        value = estado.correo,
+                        onValueChange = viewModel::onCorreoCambiado,
                         icon = Icons.Filled.Email,
                         keyboardType = KeyboardType.Email,
                     )
                     CampoConIcono(
                         label = "Contraseña",
-                        value = password,
-                        onValueChange = { password = it },
+                        value = estado.contrasena,
+                        onValueChange = viewModel::onContrasenaCambiada,
                         icon = Icons.Filled.Lock,
-                        helperText = "Mínimo 6 caracteres",
+                        helperText = "Mínimo ${CuentaNueva.CONTRASENA_MINIMA} caracteres",
                         esPassword = true,
                         passwordVisible = passwordVisible,
                         onTogglePasswordVisible = { passwordVisible = !passwordVisible },
                     )
                     CampoConIcono(
                         label = "Confirmar contraseña",
-                        value = confirmarPassword,
-                        onValueChange = { confirmarPassword = it },
+                        value = estado.confirmacion,
+                        onValueChange = viewModel::onConfirmacionCambiada,
                         icon = Icons.Filled.Shield,
                         esPassword = true,
                         passwordVisible = confirmarVisible,
                         onTogglePasswordVisible = { confirmarVisible = !confirmarVisible },
                     )
 
+                    // CU-01 paso 3: la autorización se acepta después de ver su texto, en el diálogo.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Checkbox(
+                            checked = estado.aceptaAutorizacion,
+                            onCheckedChange = { marcada ->
+                                if (marcada) leyendoAutorizacion = true else viewModel.onAutorizacionCambiada(false)
+                            },
+                        )
+                        Column {
+                            Text(
+                                text = "Acepto el tratamiento de mis datos personales (Ley 1581 de 2012).",
+                                style = MaterialTheme.typography.bodyMedium,
+                            )
+                            TextButton(onClick = { leyendoAutorizacion = true }) { Text("Leer la autorización") }
+                        }
+                    }
+
                     BannerInformativo(
-                        texto = "Sus registros de pesaje y ganado se guardan automáticamente en este " +
-                            "celular sin gastar sus datos.",
-                        icon = Icons.Filled.CheckCircle,
+                        texto = "Crear la cuenta necesita señal. Después, sus registros se guardan en este " +
+                            "celular aunque no haya cobertura.",
+                        icon = Icons.Filled.WifiOff,
                     )
 
+                    estado.error?.let { error ->
+                        Text(
+                            text = error,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = MaterialTheme.colorScheme.error,
+                        )
+                    }
+                    if (estado.ofrecerIniciarSesion) {
+                        BovinaSecondaryButton(
+                            texto = "Iniciar sesión con este correo",
+                            onClick = onIrALogin,
+                            modifier = Modifier.fillMaxWidth(),
+                        )
+                    }
+
                     BovinaPrimaryButton(
-                        texto = "Crear cuenta",
+                        texto = if (estado.cargando) "Creando cuenta…" else "Crear cuenta",
                         onClick = viewModel::onCrearCuenta,
-                        enabled = puedeCrear,
+                        enabled = estado.puedeCrear,
                         modifier = Modifier.fillMaxWidth(),
                         trailingIcon = Icons.AutoMirrored.Filled.ArrowForward,
                     )

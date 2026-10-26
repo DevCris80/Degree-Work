@@ -20,6 +20,7 @@ import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
@@ -30,7 +31,6 @@ import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
-import java.util.UUID
 
 /** Repositorios falsos en memoria, compartidos entre los tests de casos de uso de `:domain` y los de ViewModel de `:app`. */
 class FakeAnimalRepository : AnimalRepository {
@@ -114,16 +114,8 @@ class FakeCuentaRepository : CuentaRepository {
 
     override fun observePerfilFinca(): Flow<PerfilFinca?> = perfil
     override suspend fun getPerfilFinca(): PerfilFinca? = perfil.value
-    override suspend fun crearPerfilFinca(nombreFinca: String): PerfilFinca {
-        val nuevo = PerfilFinca(idPerfilFinca = UUID.randomUUID().toString(), nombreFinca = nombreFinca)
-        perfil.value = nuevo
-        return nuevo
-    }
     override fun observeUsuario(): Flow<Usuario?> = usuario
     override suspend fun getUsuario(): Usuario? = usuario.value
-    override suspend fun insertUsuario(usuario: Usuario) {
-        this.usuario.value = usuario
-    }
 }
 
 class FakeRegistroRepository : RegistroRepository {
@@ -207,6 +199,28 @@ class FakeSesionRepository : SesionRepository {
         intentos.add(correo to contrasena)
         if (resultado == ResultadoInicioSesion.Exito) guardada.value = true
         return resultado
+    }
+    data class CreacionDeCuenta(
+        val nombre: String,
+        val nombreFinca: String,
+        val correo: String,
+        val contrasena: String,
+        val versionAutorizacion: String,
+    )
+
+    var resultadoCreacion: ResultadoCreacionCuenta = ResultadoCreacionCuenta.Exito
+    val creaciones = mutableListOf<CreacionDeCuenta>()
+
+    override suspend fun crearCuenta(
+        nombre: String,
+        nombreFinca: String,
+        correo: String,
+        contrasena: String,
+        versionAutorizacion: String,
+    ): ResultadoCreacionCuenta {
+        creaciones.add(CreacionDeCuenta(nombre, nombreFinca, correo, contrasena, versionAutorizacion))
+        if (resultadoCreacion == ResultadoCreacionCuenta.Exito) guardada.value = true
+        return resultadoCreacion
     }
     override suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion {
         recuperaciones.add(correo)

@@ -4,6 +4,8 @@ import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.data.repository.RoomAnimalRepository
 import com.devcris80.prototipo.data.repository.RoomChapetaRepository
 import com.devcris80.prototipo.data.repository.RoomCuentaRepository
@@ -14,9 +16,7 @@ import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
-import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
-import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
@@ -67,10 +67,10 @@ class PesajeHttpServerIntegracionTest {
     }
 
     private fun conCuentaYAnimalConChapeta() = runBlocking {
-        val perfil = cuentas.crearPerfilFinca("Finca de prueba")
-        cuentas.insertUsuario(Usuario("usuario-1", perfil.idPerfilFinca, "Ana", Rol.GANADERO))
+        db.perfilFincaDao().guardar(PerfilFincaEntity("finca-1", "Finca de prueba", fechaModificacion = 0))
+        db.usuarioDao().insert(UsuarioEntity("usuario-1", "finca-1", "Ana", fechaModificacion = 0, delDispositivo = true))
         animales.insert(
-            Animal("animal-1", perfil.idPerfilFinca, "Lucero", "Brahman", Sexo.HEMBRA, Etapa.VACA, 0, proposito = Proposito.LECHE),
+            Animal("animal-1", "finca-1", "Lucero", "Brahman", Sexo.HEMBRA, Etapa.VACA, 0, proposito = Proposito.LECHE),
         )
         chapetas.insert(Chapeta("chapeta-1", "04A31B2C", "animal-1", fechaAsociacion = 1L))
     }

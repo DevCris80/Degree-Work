@@ -42,19 +42,19 @@ Lo crea una sola vez el dueño del proyecto:
 3. `npx supabase@2.122.0 db push --linked` aplica las migraciones pendientes. Se repite con cada migración nueva que llegue a `main`. Desde ese momento, esas migraciones ya no se editan: un cambio es una migración nueva.
 4. `npx supabase@2.122.0 test db --linked` corre las mismas pruebas pgTAP contra la nube. Cada archivo trabaja dentro de una transacción que se deshace, así que no deja datos.
 
-Mientras no exista Crear cuenta con Supabase (#87), una cuenta de prueba se arma a mano:
+La cuenta de una finca nueva se crea desde la app, en Crear cuenta (ver abajo). Mientras no existan las invitaciones (CU-04), un Operario de prueba se arma a mano:
 
 1. En Authentication → Users, crear el usuario con correo y contraseña, y copiar su id.
-2. En el SQL Editor, que corre como `postgres` y no pasa por RLS, crear primero su finca y después su `Usuario` con ese id:
+2. En el SQL Editor, que corre como `postgres` y no pasa por RLS, crear su `Usuario` con ese id en una finca que ya exista:
 
    ```sql
-   insert into public.perfil_finca (id_perfil_finca, nombre_finca, fecha_modificacion)
-     values (gen_random_uuid(), 'Finca de prueba', now()) returning id_perfil_finca;
    insert into public.usuario (id_usuario, id_perfil_finca, nombre, rol, fecha_modificacion)
-     values ('<id del usuario>', '<id de la finca>', 'Ganadero de prueba', 'Ganadero', now());
+     values ('<id del usuario>', '<id de la finca>', 'Operario de prueba', 'Operario', now());
    ```
 
-Desde la app no se puede hacer: `perfil_finca` y `usuario` no conceden INSERT a `authenticated`.
+Desde la app no se puede hacer: `perfil_finca` y `usuario` no conceden INSERT a `authenticated`, y solo el alta de una cuenta nueva los escribe, por el trigger `crear_finca`.
+
+Crear cuenta necesita que el proyecto no pida confirmar el correo (Authentication → Sign In / Providers → Email → Confirm email desactivado): la app lee la finca con la sesión que deja el registro.
 
 ## Credenciales para la app
 
@@ -92,6 +92,14 @@ Errores que devuelve, para clasificar un rechazo:
 | `23514` | Datos inválidos: etapa que no corresponde al sexo, código sin normalizar, peso fuera de 0–1500 kg. |
 | `22xxx` | Datos que no se pueden leer: un UUID o una fecha mal escritos, o una entidad que no se sube (`22023`). Solo los devuelve `subir_cambios`. |
 | `55000` | Un estado definitivo: deshacer una baja, una Chapeta liberada, una conciliación o un sibling resuelto; o cambiar lo que no se edita (el código de una Chapeta, el peso de un Pesaje pendiente, la finca de un Animal). |
+
+## Crear cuenta
+
+El celular registra la identidad con Supabase Auth (`POST /auth/v1/signup`) y manda como metadatos del registro (`data`) `{"nombre": "...", "nombre_finca": "...", "version_autorizacion": "0.1-provisional"}` (CU-01, RN-20). El trigger `crear_finca` de `auth.users` llama `privado.crear_finca` en la misma transacción del alta: crea la finca, su primer `Usuario` con rol Ganadero y una fila en `aceptacion_datos` con la versión del texto de la Ley 1581 y su fecha (RF-04, RNF-13). Si algo falla, Supabase Auth no da de alta la identidad. Después el celular lee su finca y su Usuario como al iniciar sesión.
+
+- La versión tiene que estar en `privado.texto_autorizacion`; sin ella, o sin el nombre de la persona o de la finca, el alta falla con `22023`. Cambiar el texto de la app es una migración que agrega su versión.
+- Los metadatos no deciden el rol ni la finca: el primer Usuario siempre es Ganadero de una finca nueva. Un alta sin `nombre_finca` (un Operario creado a mano) no crea finca.
+- `aceptacion_datos` y `texto_autorizacion` solo existen en el servidor: no se leen ni se escriben por la API, y no viajan en la descarga. `privado.crear_finca` no se puede llamar por la API.
 
 ## Subir cambios
 

@@ -42,7 +42,7 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
-fun LoginScreen(onSesionIniciada: () -> Unit) {
+fun LoginScreen(onSesionIniciada: () -> Unit, onCrearCuenta: () -> Unit) {
     val viewModel = appViewModel { container -> LoginViewModel(container.sesionRepository, container.sincronizacionRepository) }
     val estado by viewModel.estado.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -176,14 +176,18 @@ fun LoginScreen(onSesionIniciada: () -> Unit) {
                             trailingIcon = Icons.AutoMirrored.Filled.ArrowForward,
                         )
 
-                        // Crear una cuenta desde la app llega con #87; mientras tanto la crea quien administra el proyecto.
-                        Text(
-                            text = "¿No tienes cuenta? Pídesela al Ganadero de tu finca.",
-                            style = MaterialTheme.typography.bodySmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            textAlign = TextAlign.Center,
+                        // Un Operario no crea cuenta: entra con la invitación de su Ganadero (CU-04).
+                        TextButton(
+                            onClick = onCrearCuenta,
                             modifier = Modifier.fillMaxWidth(),
-                        )
+                        ) {
+                            Text(
+                                text = "¿Tu finca no tiene cuenta? Créala aquí",
+                                style = MaterialTheme.typography.labelLarge,
+                                color = MaterialTheme.colorScheme.primary,
+                                textAlign = TextAlign.Center,
+                            )
+                        }
                     }
                 }
 

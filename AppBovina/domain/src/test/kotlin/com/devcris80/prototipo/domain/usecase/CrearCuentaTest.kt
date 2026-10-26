@@ -1,29 +1,82 @@
 package com.devcris80.prototipo.domain.usecase
 
-import com.devcris80.prototipo.domain.model.Rol
-import com.devcris80.prototipo.testing.FakeCuentaRepository
-import com.devcris80.prototipo.testing.FakeTransaccion
+import com.devcris80.prototipo.domain.model.AutorizacionDatos
+import com.devcris80.prototipo.domain.model.CuentaNueva
+import com.devcris80.prototipo.domain.model.FaltaParaCrear
+import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
+import com.devcris80.prototipo.testing.FakeSesionRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotEquals
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CrearCuentaTest {
-    private val cuentaRepository = FakeCuentaRepository()
-    private val crearCuenta = CrearCuenta(cuentaRepository, FakeTransaccion())
+    private val sesionRepository = FakeSesionRepository()
+    private val crearCuenta = CrearCuenta(sesionRepository)
+
+    private fun cuenta(
+        nombre: String = "Ana",
+        nombreFinca: String = "La Esperanza",
+        correo: String = "ana@finca.co",
+        contrasena: String = "secreta",
+        confirmacion: String = contrasena,
+        aceptaAutorizacion: Boolean = true,
+    ) = CuentaNueva(nombre, nombreFinca, correo, contrasena, confirmacion, aceptaAutorizacion)
 
     @Test
-    fun creaLaFincaYSuPrimerUsuarioGanaderoEnLaMismaFinca() = runTest {
-        val usuario = crearCuenta(nombreUsuario = "Ana", nombreFinca = "La Esperanza")
+    fun sinAceptarLaAutorizacionNoSeCreaNadaNiSeLlamaAlServidor() = runTest {
+        val resultado = crearCuenta(cuenta(aceptaAutorizacion = false))
 
-        val perfil = cuentaRepository.getPerfilFinca()!!
-        assertEquals("La Esperanza", perfil.nombreFinca)
-        assertEquals(usuario, cuentaRepository.getUsuario())
-        assertEquals("Ana", usuario.nombre)
-        assertEquals(Rol.GANADERO, usuario.rol)
-        assertEquals(perfil.idPerfilFinca, usuario.idPerfilFinca)
-        assertTrue(usuario.idUsuario.isNotBlank())
-        assertNotEquals("el Usuario no reutiliza el id de la finca", perfil.idPerfilFinca, usuario.idUsuario)
+        assertEquals(CrearCuenta.Resultado.Incompleta(FaltaParaCrear.AUTORIZACION), resultado)
+        assertTrue(sesionRepository.creaciones.isEmpty())
+    }
+
+    @Test
+    fun unaContrasenaDeMenosDe6CaracteresOUnaConfirmacionDistintaNoLleganAlServidor() = runTest {
+        assertEquals(
+            CrearCuenta.Resultado.Incompleta(FaltaParaCrear.CONTRASENA_CORTA),
+            crearCuenta(cuenta(contrasena = "12345")),
+        )
+        assertEquals(
+            CrearCuenta.Resultado.Incompleta(FaltaParaCrear.CONFIRMACION_DISTINTA),
+            crearCuenta(cuenta(contrasena = "secreta", confirmacion = "secretA")),
+        )
+        assertTrue(sesionRepository.creaciones.isEmpty())
+    }
+
+    @Test
+    fun sinNombreFincaOCorreoNoLlegaAlServidor() = runTest {
+        for (incompleta in listOf(cuenta(nombre = " "), cuenta(nombreFinca = ""), cuenta(correo = "  "))) {
+            assertEquals(CrearCuenta.Resultado.Incompleta(FaltaParaCrear.DATOS), crearCuenta(incompleta))
+        }
+        assertTrue(sesionRepository.creaciones.isEmpty())
+    }
+
+    @Test
+    fun conTodoAceptadoPideCrearLaCuentaConLaVersionDelTextoYLosDatosSinEspaciosDeMas() = runTest {
+        val resultado = crearCuenta(cuenta(nombre = " Ana ", nombreFinca = " La Esperanza ", correo = " ana@finca.co "))
+
+        assertEquals(CrearCuenta.Resultado.DelServidor(ResultadoCreacionCuenta.Exito), resultado)
+        assertEquals(
+            FakeSesionRepository.CreacionDeCuenta("Ana", "La Esperanza", "ana@finca.co", "secreta", AutorizacionDatos.VERSION),
+            sesionRepository.creaciones.single(),
+        )
+    }
+
+    @Test
+    fun laContrasenaLlegaTalCualAunqueTengaEspacios() = runTest {
+        crearCuenta(cuenta(contrasena = " con espacio "))
+
+        assertEquals(" con espacio ", sesionRepository.creaciones.single().contrasena)
+    }
+
+    @Test
+    fun devuelveLoQueRespondeElServidor() = runTest {
+        sesionRepository.resultadoCreacion = ResultadoCreacionCuenta.CorreoYaRegistrado
+
+        assertEquals(
+            CrearCuenta.Resultado.DelServidor(ResultadoCreacionCuenta.CorreoYaRegistrado),
+            crearCuenta(cuenta()),
+        )
     }
 }
