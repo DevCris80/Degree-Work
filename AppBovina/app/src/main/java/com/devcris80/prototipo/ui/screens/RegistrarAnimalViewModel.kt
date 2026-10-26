@@ -44,6 +44,8 @@ data class RegistrarAnimalUiState(
     val errorAsignacionPendientes: Boolean = false,
     /** Solo al editar: el Animal no existe o está dado de baja. */
     val noEditable: Boolean = false,
+    /** Solo al editar: el Animal es padre o madre de otros, así que su sexo no puede cambiar. */
+    val sexoBloqueado: Boolean = false,
 ) {
     val etapasDisponibles: List<Etapa> get() = sexo?.let(Etapa::de).orEmpty()
     val puedeGuardar: Boolean

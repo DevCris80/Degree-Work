@@ -60,6 +60,9 @@ internal class FakeAnimalRepository : AnimalRepository {
         porId.getOrPut(idAnimal) { MutableStateFlow(null) }
     override suspend fun findById(idAnimal: String): Animal? =
         porId[idAnimal]?.value ?: activos.value.firstOrNull { it.idAnimal == idAnimal }
+    override suspend fun tieneCrias(idAnimal: String): Boolean =
+        (activos.value + porId.values.mapNotNull { it.value })
+            .any { it.idPadre == idAnimal || it.idMadre == idAnimal }
     override suspend fun update(animal: Animal) {
         actualizados.add(animal)
         set(animal)

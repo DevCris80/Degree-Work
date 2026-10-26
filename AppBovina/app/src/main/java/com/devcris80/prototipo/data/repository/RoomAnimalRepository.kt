@@ -27,6 +27,8 @@ class RoomAnimalRepository(
 
     override suspend fun findById(idAnimal: String): Animal? = animalDao.findById(idAnimal)?.toDomain()
 
+    override suspend fun tieneCrias(idAnimal: String): Boolean = animalDao.tieneCrias(idAnimal)
+
     override suspend fun update(animal: Animal) {
         val fila = animal.toEntity(fechaModificacion = clock(), idVersion = nuevoIdVersion())
         animalDao.editar(

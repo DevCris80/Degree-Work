@@ -59,6 +59,9 @@ interface AnimalDao {
     @Query("SELECT * FROM animal WHERE idPadre = :idAnimal OR idMadre = :idAnimal")
     suspend fun findCrias(idAnimal: String): List<AnimalEntity>
 
+    @Query("SELECT EXISTS(SELECT 1 FROM animal WHERE idPadre = :idAnimal OR idMadre = :idAnimal)")
+    suspend fun tieneCrias(idAnimal: String): Boolean
+
     @Update
     suspend fun update(animal: AnimalEntity)
 
