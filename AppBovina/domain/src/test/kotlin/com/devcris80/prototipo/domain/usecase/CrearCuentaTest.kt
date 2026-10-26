@@ -6,6 +6,7 @@ import com.devcris80.prototipo.testing.FakeTransaccion
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNotEquals
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class CrearCuentaTest {
@@ -22,6 +23,7 @@ class CrearCuentaTest {
         assertEquals("Ana", usuario.nombre)
         assertEquals(Rol.GANADERO, usuario.rol)
         assertEquals(perfil.idPerfilFinca, usuario.idPerfilFinca)
-        assertNotEquals("", usuario.idUsuario)
+        assertTrue(usuario.idUsuario.isNotBlank())
+        assertNotEquals("el Usuario no reutiliza el id de la finca", perfil.idPerfilFinca, usuario.idUsuario)
     }
 }

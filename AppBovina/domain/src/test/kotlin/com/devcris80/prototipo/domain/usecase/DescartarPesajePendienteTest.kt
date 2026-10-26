@@ -1,7 +1,9 @@
 package com.devcris80.prototipo.domain.usecase
 
+import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PesajePendiente
+import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.testing.FakeCuentaRepository
@@ -9,7 +11,6 @@ import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeTransaccion
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Test
 
@@ -44,7 +45,34 @@ class DescartarPesajePendienteTest {
         val resultado = descartarPesajePendiente("pendiente-1")
 
         assertEquals(DescartarPesajePendiente.Resultado.Descartado, resultado)
-        assertNotNull(conciliacionGuardada())
+        assertEquals(Conciliacion(ResolucionPesajePendiente.DESCARTADO, "usuario-1", 7L), conciliacionGuardada())
+    }
+
+    @Test
+    fun descartarNoCreaRegistrosNiBorraElPendiente() = runTest {
+        conPendiente(Rol.GANADERO)
+
+        descartarPesajePendiente("pendiente-1")
+
+        assertEquals(1, pesajePendienteRepository.todos.value.size)
+    }
+
+    @Test
+    fun unPendienteQueNoExisteNoEstaDisponible() = runTest {
+        conPendiente(Rol.GANADERO)
+
+        assertEquals(DescartarPesajePendiente.Resultado.PendienteNoDisponible, descartarPesajePendiente("no-existe"))
+        assertNull(conciliacionGuardada())
+    }
+
+    @Test
+    fun unPendienteYaResueltoNoSeVuelveAConciliar() = runTest {
+        conPendiente(Rol.GANADERO)
+        val yaResuelto = Conciliacion(ResolucionPesajePendiente.ASIGNADO, "otro-usuario", 3L)
+        pesajePendienteRepository.conciliar("pendiente-1", yaResuelto)
+
+        assertEquals(DescartarPesajePendiente.Resultado.PendienteNoDisponible, descartarPesajePendiente("pendiente-1"))
+        assertEquals(yaResuelto, conciliacionGuardada())
     }
 
     @Test

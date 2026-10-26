@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.Pesaje
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
@@ -134,6 +135,26 @@ class RegistrarPesajeTest {
     }
 
     @Test
+    fun laHoraDeUnPesajePendienteTambienEsLaDeRecepcionMenosLaAntiguedad() = runTest {
+        conUsuario()
+
+        registrarPesaje(pesaje(codigo = "FFEEDD00", antiguedadMs = 1_200))
+
+        assertEquals(RECIBIDO_EN - 1_200, pesajePendienteRepository.todos.value.single().timestamp)
+    }
+
+    @Test
+    fun reenviarUnPesajePendienteSinConciliarDevuelveElMismoPendienteYNoCreaOtro() = runTest {
+        conUsuario()
+        val primero = registrarPesaje(pesaje(codigo = "FFEEDD00"))
+
+        val reintento = registrarPesaje(pesaje(codigo = "OTRO", peso = 100f))
+
+        assertEquals(primero, reintento)
+        assertEquals(1, pesajePendienteRepository.todos.value.size)
+    }
+
+    @Test
     fun laChapetaDeUnAnimalDadoDeBajaQuedaComoPendienteConEseMotivo() = runTest {
         conUsuario()
         conAnimalConChapeta(fechaBaja = 5L)
@@ -154,9 +175,7 @@ class RegistrarPesajeTest {
         val pendiente = pesajePendienteRepository.todos.value.single()
         // Alguien lo asigna a un Animal: además del Registro, el pendiente queda conciliado.
         conAnimalConChapeta(codigo = "FFEEDD00")
-        registroRepository.insert(
-            com.devcris80.prototipo.domain.model.Registro("registro-1", "animal-1", "usuario-1", "lectura-1", 450.5f, 1L),
-        )
+        registroRepository.insert(Registro("registro-1", "animal-1", "usuario-1", "lectura-1", 450.5f, 1L))
         pesajePendienteRepository.conciliar(
             pendiente.idPesajePendiente,
             Conciliacion(ResolucionPesajePendiente.ASIGNADO, "usuario-1", 9L),

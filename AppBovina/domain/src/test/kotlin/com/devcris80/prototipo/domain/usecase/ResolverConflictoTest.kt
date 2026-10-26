@@ -7,7 +7,6 @@ import com.devcris80.prototipo.testing.FakeConflictoRepository
 import com.devcris80.prototipo.testing.conflictoDeAnimal
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -42,15 +41,20 @@ class ResolverConflictoTest {
     }
 
     @Test
-    fun unSiblingQueNoEsDelConflictoOUnConflictoSinSiblingsSeRechaza() = runTest {
+    fun unSiblingQueNoEsDelConflictoSeRechazaYNoEscribeNada() = runTest {
         val conflicto = conflictoDeAnimal("a1", "v1" to "Jersey")
 
-        assertThrows(IllegalArgumentException::class.java) {
-            kotlinx.coroutines.runBlocking { resolverConflicto(conflicto, Eleccion.DeSibling("de-otro")) }
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            kotlinx.coroutines.runBlocking { resolverConflicto(conflictoDeAnimal("a1"), Eleccion.Vigente) }
-        }
+        val error = runCatching { resolverConflicto(conflicto, Eleccion.DeSibling("de-otro")) }.exceptionOrNull()
+
+        assertTrue(error is IllegalArgumentException)
+        assertTrue(conflictoRepository.resoluciones.isEmpty())
+    }
+
+    @Test
+    fun unConflictoSinSiblingsSeRechazaYNoEscribeNada() = runTest {
+        val error = runCatching { resolverConflicto(conflictoDeAnimal("a1"), Eleccion.Vigente) }.exceptionOrNull()
+
+        assertTrue(error is IllegalArgumentException)
         assertTrue(conflictoRepository.resoluciones.isEmpty())
     }
 

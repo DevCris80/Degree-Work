@@ -1,6 +1,7 @@
 package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Animal
+import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
@@ -12,6 +13,7 @@ import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes.Resultado
 import com.devcris80.prototipo.testing.FakeAnimalRepository
+import com.devcris80.prototipo.testing.FakeChapetaRepository
 import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
@@ -26,6 +28,7 @@ import org.junit.Test
 class AsignarPesajesPendientesTest {
     private val pesajePendienteRepository = FakePesajePendienteRepository()
     private val animalRepository = FakeAnimalRepository()
+    private val chapetaRepository = FakeChapetaRepository()
     private val registroRepository = FakeRegistroRepository()
     private val cuentaRepository = FakeCuentaRepository()
     private val asignarPesajesPendientes = AsignarPesajesPendientes(
@@ -99,6 +102,35 @@ class AsignarPesajesPendientesTest {
 
         assertTrue(registros().isEmpty())
         assertNull(pesajePendienteRepository.todos.value.first { it.idPesajePendiente == "p1" }.conciliacion)
+    }
+
+    @Test
+    fun elAnimalElegidoNoTieneQueSerElDeLaChapetaConEseCodigo() = runTest {
+        conUsuarioYAnimal()
+        animalRepository.set(
+            Animal("otro", "perfil_local", "Canela", "Holstein", Sexo.HEMBRA, Etapa.VACA, 1L, proposito = Proposito.LECHE),
+        )
+        chapetaRepository.set(Chapeta("c1", "FFEEDD00", "otro", fechaAsociacion = 1L))
+        pendiente("p1")
+
+        assertEquals(Resultado.Asignados, asignarPesajesPendientes(listOf("p1"), "animal-1"))
+
+        assertEquals(1, registros().size)
+        assertTrue(registroRepository.observeByAnimal("otro").first().isEmpty())
+    }
+
+    @Test
+    fun sinUsuarioEnElDispositivoNoHayQuienConcilieYNoSeGuardaNada() = runTest {
+        animalRepository.set(
+            Animal("animal-1", "perfil_local", "Manchas", "Holstein", Sexo.HEMBRA, Etapa.VACA, 1L, proposito = Proposito.LECHE),
+        )
+        pendiente("p1")
+
+        val error = runCatching { asignarPesajesPendientes(listOf("p1"), "animal-1") }.exceptionOrNull()
+
+        assertTrue(error is IllegalStateException)
+        assertTrue(registros().isEmpty())
+        assertNull(pesajePendienteRepository.todos.value.single().conciliacion)
     }
 
     @Test

@@ -1,10 +1,12 @@
 package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Animal
+import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal.Resultado
 import com.devcris80.prototipo.testing.FakeAnimalRepository
@@ -14,7 +16,6 @@ import com.devcris80.prototipo.testing.FakeTransaccion
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertThrows
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -90,19 +91,44 @@ class RegistrarAnimalTest {
     }
 
     @Test
-    fun elPadreDebeSerMachoYLaMadreHembraYSiNoNoSeGuardaNada() = runTest {
+    fun conUnPadreMachoYUnaMadreHembraSeGuardaLaCria() = runTest {
         animalRepository.set(animal("macho", Sexo.MACHO))
         animalRepository.set(animal("hembra", Sexo.HEMBRA))
 
-        assertEquals(Resultado.Exito("cria-1", emptyList()), registrarAnimal(animal("cria-1", idPadre = "macho", idMadre = "hembra"), null))
-        assertThrows(IllegalArgumentException::class.java) {
-            kotlinx.coroutines.runBlocking { registrarAnimal(animal("cria-2", idPadre = "hembra"), "BBBB") }
-        }
-        assertThrows(IllegalArgumentException::class.java) {
-            kotlinx.coroutines.runBlocking { registrarAnimal(animal("cria-3", idMadre = "no-existe"), "CCCC") }
-        }
+        val resultado = registrarAnimal(animal("cria-1", idPadre = "macho", idMadre = "hembra"), null)
 
-        assertEquals(listOf("cria-1"), animalRepository.insertados.map { it.idAnimal })
+        assertEquals(Resultado.Exito("cria-1", emptyList()), resultado)
+    }
+
+    @Test
+    fun unPadreQueEsHembraSeRechazaYNoSeGuardaNiElAnimalNiSuChapeta() = runTest {
+        animalRepository.set(animal("hembra", Sexo.HEMBRA))
+
+        val error = runCatching { registrarAnimal(animal("cria-2", idPadre = "hembra"), "BBBB") }.exceptionOrNull()
+
+        assertTrue(error is IllegalArgumentException)
+        assertTrue(animalRepository.insertados.isEmpty())
         assertTrue(chapetaRepository.observeActivas().first().isEmpty())
+    }
+
+    @Test
+    fun unaMadreQueNoExisteSeRechazaYNoSeGuardaNada() = runTest {
+        val error = runCatching { registrarAnimal(animal("cria-3", idMadre = "no-existe"), "CCCC") }.exceptionOrNull()
+
+        assertTrue(error is IllegalArgumentException)
+        assertTrue(animalRepository.insertados.isEmpty())
+        assertTrue(chapetaRepository.observeActivas().first().isEmpty())
+    }
+
+    @Test
+    fun losPendientesYaResueltosDeEseCodigoNoSeOfrecen() = runTest {
+        pendiente("p1", "AAAA")
+        val resuelto = pendiente("p2", "AAAA")
+        pesajePendienteRepository.conciliar("p2", Conciliacion(ResolucionPesajePendiente.DESCARTADO, "usuario-1", 2L))
+
+        val resultado = registrarAnimal(animal(), "AAAA") as Resultado.Exito
+
+        assertEquals(listOf("p1"), resultado.pesajesPendientes.map { it.idPesajePendiente })
+        assertTrue(resuelto.idPesajePendiente !in resultado.pesajesPendientes.map { it.idPesajePendiente })
     }
 }

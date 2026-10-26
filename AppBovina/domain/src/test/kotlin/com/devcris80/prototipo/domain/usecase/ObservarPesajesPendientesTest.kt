@@ -2,10 +2,12 @@ package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Chapeta
+import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
@@ -43,25 +45,23 @@ class ObservarPesajesPendientesTest {
         pendiente("p2", "BBBB", timestamp = 2L, motivo = MotivoPesajePendiente.ANIMAL_DADO_DE_BAJA)
         pendiente("p3", "CCCC", timestamp = 1L, motivo = MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA)
 
-        val lista = observarPesajesPendientes().first()
+        val estados = observarPesajesPendientes().first()
+            .associate { it.pesajePendiente.idPesajePendiente to it.estadoCodigo }
 
-        assertEquals(listOf("p1", "p2", "p3"), lista.map { it.pesajePendiente.idPesajePendiente })
-        assertEquals(EstadoCodigo.ChapetaDeAnimalActivo(activo), lista[0].estadoCodigo)
-        assertEquals(EstadoCodigo.ChapetaDeAnimalDadoDeBaja, lista[1].estadoCodigo)
-        assertEquals(EstadoCodigo.SinChapetaActiva, lista[2].estadoCodigo)
+        assertEquals(
+            mapOf(
+                "p1" to EstadoCodigo.ChapetaDeAnimalActivo(activo),
+                "p2" to EstadoCodigo.ChapetaDeAnimalDadoDeBaja,
+                "p3" to EstadoCodigo.SinChapetaActiva,
+            ),
+            estados,
+        )
     }
 
     @Test
     fun losPendientesYaResueltosNoAparecen() = runTest {
         pendiente("p1", "AAAA", timestamp = 1L, motivo = MotivoPesajePendiente.CODIGO_SIN_CHAPETA_ACTIVA).also {
-            pesajePendienteRepository.conciliar(
-                "p1",
-                com.devcris80.prototipo.domain.model.Conciliacion(
-                    com.devcris80.prototipo.domain.model.ResolucionPesajePendiente.DESCARTADO,
-                    "usuario-1",
-                    2L,
-                ),
-            )
+            pesajePendienteRepository.conciliar("p1", Conciliacion(ResolucionPesajePendiente.DESCARTADO, "usuario-1", 2L))
         }
 
         assertEquals(emptyList<PesajePendientePorConciliar>(), observarPesajesPendientes().first())
