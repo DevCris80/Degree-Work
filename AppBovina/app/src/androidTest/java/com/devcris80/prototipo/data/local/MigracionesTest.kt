@@ -140,6 +140,79 @@ class MigracionesTest {
         }
     }
 
+    @Test
+    fun de10a11PoneAlUnicoUsuarioComoAutorDeLosEventosYConservaSusDatos() {
+        helper.createDatabase(BASE, 10).use { db ->
+            insertarInstalacionDeLaVersion10(db)
+        }
+
+        helper.runMigrationsAndValidate(BASE, 11, true, MIGRACION_10_11).use { db ->
+            db.query("SELECT idEvento, idUsuario, tipoEvento, detalle FROM evento").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("evento-1", fila.getString(0))
+                assertEquals("usuario-1", fila.getString(1))
+                assertEquals("Vacunación", fila.getString(2))
+                assertEquals("Aftosa", fila.getString(3))
+                assertTrue("no se duplica ni se pierde ningún Evento", fila.isLast)
+            }
+        }
+    }
+
+    @Test
+    fun unaInstalacionEnLaVersion10LlegaALaActualSinPerderNingunDato() {
+        helper.createDatabase(BASE, 10).use { db ->
+            insertarInstalacionDeLaVersion10(db)
+        }
+
+        helper.runMigrationsAndValidate(
+            BASE, 15, true,
+            MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15,
+        ).use { db ->
+            db.query("SELECT nombreFinca FROM perfil_finca").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Finca", fila.getString(0))
+            }
+            db.query("SELECT nombre, delDispositivo FROM usuario").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Ganadero", fila.getString(0))
+                assertEquals("el único Usuario es el del dispositivo", 1, fila.getInt(1))
+            }
+            db.query("SELECT nombre, idVersion, idPadre, idMadre FROM animal").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Lucero", fila.getString(0))
+                assertTrue(UUID.matches(fila.getString(1)))
+                assertTrue(fila.isNull(2))
+                assertTrue(fila.isNull(3))
+            }
+            db.query("SELECT idUsuario, detalle FROM evento").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("usuario-1", fila.getString(0))
+                assertEquals("Aftosa", fila.getString(1))
+            }
+            db.query("SELECT peso FROM registro").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals(410.0, fila.getDouble(0), 0.0)
+            }
+            db.query("SELECT codigo FROM chapeta").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("04A1B2C3", fila.getString(0))
+            }
+        }
+    }
+
+    private fun insertarInstalacionDeLaVersion10(db: androidx.sqlite.db.SupportSQLiteDatabase) {
+        db.execSQL("INSERT INTO perfil_finca VALUES ('finca-1', 'Finca', 0, 0)")
+        db.execSQL("INSERT INTO usuario VALUES ('usuario-1', 'finca-1', 'Ganadero', 'Ganadero', 0, 0)")
+        db.execSQL(
+            "INSERT INTO animal (idAnimal, idPerfilFinca, nombre, raza, sexo, etapa, fechaNacimiento, " +
+                "fechaNacimientoEsEstimada, proposito, sincronizado, fechaModificacion) VALUES " +
+                "('animal-1', 'finca-1', 'Lucero', 'Brahman', 'Hembra', 'Vaca', 0, 0, 'Leche', 0, 0)",
+        )
+        db.execSQL("INSERT INTO evento VALUES ('evento-1', 'animal-1', 'Vacunación', 0, 'Aftosa', NULL, 0, 0)")
+        db.execSQL("INSERT INTO registro VALUES ('registro-1', 'animal-1', 'usuario-1', 'lectura-1', 410.0, 0, NULL, 0, 0)")
+        db.execSQL("INSERT INTO chapeta VALUES ('chapeta-1', '04A1B2C3', 'animal-1', 0, NULL, 0, 0)")
+    }
+
     private companion object {
         const val BASE = "migracion-test"
         val UUID = Regex("[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}")

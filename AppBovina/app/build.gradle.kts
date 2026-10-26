@@ -80,6 +80,7 @@ dependencies {
     implementation(libs.supabase.postgrest)
     implementation(libs.ktor.client.okhttp)
     testImplementation(libs.junit)
+    testImplementation(testFixtures(project(":domain")))
     testImplementation(libs.kotlinx.coroutines.test)
     androidTestImplementation(platform(libs.androidx.compose.bom))
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

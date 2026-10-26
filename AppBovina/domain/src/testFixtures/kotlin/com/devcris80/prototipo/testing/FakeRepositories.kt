@@ -32,8 +32,8 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.map
 import java.util.UUID
 
-/** Repositorios falsos en memoria, compartidos entre los tests de ViewModel de `ui.screens`. */
-internal class FakeAnimalRepository : AnimalRepository {
+/** Repositorios falsos en memoria, compartidos entre los tests de casos de uso de `:domain` y los de ViewModel de `:app`. */
+class FakeAnimalRepository : AnimalRepository {
     val activos = MutableStateFlow<List<Animal>>(emptyList())
     private val porId = mutableMapOf<String, MutableStateFlow<Animal?>>()
     val bajas = mutableListOf<Pair<String, Long>>()
@@ -74,7 +74,7 @@ internal class FakeAnimalRepository : AnimalRepository {
     }
 }
 
-internal class FakeChapetaRepository : ChapetaRepository {
+class FakeChapetaRepository : ChapetaRepository {
     private val todas = MutableStateFlow<List<Chapeta>>(emptyList())
     private val porAnimal = mutableMapOf<String, MutableStateFlow<Chapeta?>>()
     val liberadas = mutableListOf<String>()
@@ -108,7 +108,7 @@ internal class FakeChapetaRepository : ChapetaRepository {
     }
 }
 
-internal class FakeCuentaRepository : CuentaRepository {
+class FakeCuentaRepository : CuentaRepository {
     val perfil = MutableStateFlow<PerfilFinca?>(null)
     val usuario = MutableStateFlow<Usuario?>(null)
 
@@ -126,7 +126,7 @@ internal class FakeCuentaRepository : CuentaRepository {
     }
 }
 
-internal class FakeRegistroRepository : RegistroRepository {
+class FakeRegistroRepository : RegistroRepository {
     private val porAnimal = mutableMapOf<String, MutableStateFlow<List<Registro>>>()
 
     fun set(idAnimal: String, registros: List<Registro>) {
@@ -139,14 +139,15 @@ internal class FakeRegistroRepository : RegistroRepository {
         val actuales = porAnimal.getOrPut(registro.idAnimal) { MutableStateFlow(emptyList()) }
         actuales.value = listOf(registro) + actuales.value
     }
-    override suspend fun findByIdLectura(idLectura: String): Registro? = null
+    override suspend fun findByIdLectura(idLectura: String): Registro? =
+        porAnimal.values.flatMap { it.value }.firstOrNull { it.idLectura == idLectura }
     override fun observeByAnimal(idAnimal: String): Flow<List<Registro>> =
         porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }
     override fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?> =
         observeByAnimal(idAnimal).map { it.firstOrNull() }
 }
 
-internal class FakeEventoRepository : EventoRepository {
+class FakeEventoRepository : EventoRepository {
     private val todos = MutableStateFlow<List<Evento>>(emptyList())
 
     fun set(idAnimal: String, eventos: List<Evento>) {
@@ -162,7 +163,7 @@ internal class FakeEventoRepository : EventoRepository {
         todos.map { lista -> lista.filter { it.fechaBaja == null }.sortedByDescending { it.fecha } }
 }
 
-internal class FakePesajePendienteRepository : PesajePendienteRepository {
+class FakePesajePendienteRepository : PesajePendienteRepository {
     val todos = MutableStateFlow<List<PesajePendiente>>(emptyList())
 
     fun set(pesajePendiente: PesajePendiente) {
@@ -183,12 +184,15 @@ internal class FakePesajePendienteRepository : PesajePendienteRepository {
     }
 }
 
-/** Ejecuta el bloque directo, sin control de atomicidad real: alcanza para probar el resultado. */
-internal class FakeTransaccion : Transaccion {
+/**
+ * Ejecuta el bloque directo, sin revertir nada si falla: los tests de "todo o nada" solo comprueban que el caso de uso
+ * valide antes de escribir. La reversión real de Room es de `RoomTransaccion`.
+ */
+class FakeTransaccion : Transaccion {
     override suspend fun <T> ejecutar(bloque: suspend () -> T): T = bloque()
 }
 
-internal class FakeSesionRepository : SesionRepository {
+class FakeSesionRepository : SesionRepository {
     val guardada = MutableStateFlow(false)
     var resultado: ResultadoInicioSesion = ResultadoInicioSesion.Exito
     val intentos = mutableListOf<Pair<String, String>>()
@@ -214,7 +218,7 @@ internal class FakeSesionRepository : SesionRepository {
     }
 }
 
-internal class FakeSincronizacionRepository : SincronizacionRepository {
+class FakeSincronizacionRepository : SincronizacionRepository {
     var resultado: ResultadoSincronizacion = ResultadoSincronizacion.Completa(0, 0, 0)
     var sincronizaciones = 0
     var programaciones = 0
@@ -237,7 +241,7 @@ internal class FakeSincronizacionRepository : SincronizacionRepository {
 }
 
 /** Conflictos en memoria. `resoluciones` guarda lo que pidió resolver, y la fila sale del conflicto como en Room. */
-internal class FakeConflictoRepository : ConflictoRepository {
+class FakeConflictoRepository : ConflictoRepository {
     data class Resolucion(
         val entidad: EntidadConRevisiones,
         val idFila: String,

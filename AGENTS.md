@@ -18,7 +18,7 @@ Single-context layout — `CONTEXT.md` + `docs/adr/` at the repo root. See `docs
 
 Three layers, `ui → domain ← data`. The why is in `docs/adr/0001-capas-con-dominio-puro-y-datos-offline-first.md`.
 
-- **`:domain`** (Gradle module, pure Kotlin) holds the models, the repository interfaces and the use cases. Its only dependency is `kotlinx-coroutines-core`.
+- **`:domain`** (Gradle module, pure Kotlin) holds the models, the repository interfaces and the use cases. Its only dependency is `kotlinx-coroutines-core`; JUnit and `kotlinx-coroutines-test` are test-only. The fake repositories live in its `testFixtures` and are shared with `:app` tests.
 - **`data`** (package in `:app`) is the only code that touches Room. `data/local` holds the database, the `*Entity` classes (`entity/`) and the DAOs (`dao/`); `data/repository` holds the mappers and the `Room*Repository` implementations. Every read and write from outside `data` goes through a repository interface.
 - **Schema changes** bump `AppDatabase.version`, add an explicit `Migration` and commit the schema Room exports to `AppBovina/app/schemas/`. There is no destructive fallback from version 10 on: a missing Migration crashes the app instead of wiping data.
   - Bump the version before compiling the changed entity: Room rewrites the exported schema of whatever version is current, so compiling first overwrites the previous version's JSON.
