@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.data.repository
 
+import android.database.sqlite.SQLiteConstraintException
 import androidx.room.Room
 import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
@@ -63,7 +64,7 @@ class RoomPesajePendienteRepositoryTest {
 
         val error = runCatching { repositorio.insert(pendiente("p1").copy(idPesajePendiente = "p2")) }.exceptionOrNull()
 
-        assertTrue("el idLectura es único", error != null)
+        assertTrue("el idLectura es único: $error", error is SQLiteConstraintException)
         assertEquals(1, db.pesajePendienteDao().findPendientes().size)
     }
 
