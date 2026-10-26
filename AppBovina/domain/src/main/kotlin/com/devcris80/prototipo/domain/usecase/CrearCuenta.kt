@@ -2,6 +2,7 @@ package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.AutorizacionDatos
 import com.devcris80.prototipo.domain.model.CuentaNueva
+import com.devcris80.prototipo.domain.model.FaltaParaCrear
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.SesionRepository
 
@@ -11,14 +12,21 @@ import com.devcris80.prototipo.domain.repository.SesionRepository
  * incompleto, no llama al servidor. La contraseña se envía tal cual; el resto, sin espacios de más.
  */
 class CrearCuenta(private val sesionRepository: SesionRepository) {
-    suspend operator fun invoke(cuenta: CuentaNueva): ResultadoCreacionCuenta {
-        cuenta.faltaParaCrear?.let { return ResultadoCreacionCuenta.Incompleta(it) }
-        return sesionRepository.crearCuenta(
+    sealed interface Resultado {
+        /** Al formulario le falta algo: no se llamó al servidor. */
+        data class Incompleta(val falta: FaltaParaCrear) : Resultado
+
+        data class DelServidor(val resultado: ResultadoCreacionCuenta) : Resultado
+    }
+
+    suspend operator fun invoke(cuenta: CuentaNueva): Resultado {
+        cuenta.faltaParaCrear?.let { return Resultado.Incompleta(it) }
+        return Resultado.DelServidor(sesionRepository.crearCuenta(
             nombre = cuenta.nombre.trim(),
             nombreFinca = cuenta.nombreFinca.trim(),
             correo = cuenta.correo.trim(),
             contrasena = cuenta.contrasena,
             versionAutorizacion = AutorizacionDatos.VERSION,
-        )
+        ))
     }
 }

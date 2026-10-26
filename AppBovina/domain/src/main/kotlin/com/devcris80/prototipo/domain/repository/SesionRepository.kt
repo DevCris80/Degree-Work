@@ -1,6 +1,5 @@
 package com.devcris80.prototipo.domain.repository
 
-import com.devcris80.prototipo.domain.model.FaltaParaCrear
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -21,7 +20,7 @@ interface SesionRepository {
     suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion
 
     /**
-     * Crea la identidad en Supabase Auth y, en el servidor, la finca, su primer Usuario Ganadero y la aceptación
+     * Crea la identidad en Supabase Auth y, en el mismo alta, la finca, su primer Usuario Ganadero y la aceptación
      * de [versionAutorizacion]; después deja la finca y el Usuario en el dispositivo. Si algo falla, el dispositivo
      * queda sin sesión y sin filas nuevas.
      */
@@ -39,9 +38,6 @@ interface SesionRepository {
 
 sealed interface ResultadoCreacionCuenta {
     data object Exito : ResultadoCreacionCuenta
-
-    /** Al formulario le falta algo: no se llamó al servidor. Solo lo devuelve CrearCuenta. */
-    data class Incompleta(val falta: FaltaParaCrear) : ResultadoCreacionCuenta
 
     /** El correo ya tiene una cuenta con finca: hay que iniciar sesión. */
     data object CorreoYaRegistrado : ResultadoCreacionCuenta

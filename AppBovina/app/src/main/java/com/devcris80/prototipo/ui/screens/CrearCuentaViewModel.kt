@@ -60,7 +60,14 @@ class CrearCuentaViewModel(private val crearCuenta: CrearCuenta) : ViewModel() {
         if (!actual.puedeCrear) return
         _estado.update { it.copy(cargando = true, error = null, ofrecerIniciarSesion = false) }
         viewModelScope.launch {
-            val resultado = crearCuenta(actual.cuenta)
+            // El botón no se habilita con el formulario incompleto; si igual llega, no hay nada que contar.
+            val resultado = when (val creacion = crearCuenta(actual.cuenta)) {
+                is CrearCuenta.Resultado.Incompleta -> {
+                    _estado.update { it.copy(cargando = false) }
+                    return@launch
+                }
+                is CrearCuenta.Resultado.DelServidor -> creacion.resultado
+            }
             _estado.update {
                 it.copy(
                     cargando = false,
@@ -75,8 +82,6 @@ class CrearCuentaViewModel(private val crearCuenta: CrearCuenta) : ViewModel() {
 
 private fun ResultadoCreacionCuenta.mensaje(): String? = when (this) {
     ResultadoCreacionCuenta.Exito -> null
-    // El botón no se habilita con el formulario incompleto; si igual llega, no hay nada que contar.
-    is ResultadoCreacionCuenta.Incompleta -> null
     ResultadoCreacionCuenta.CorreoYaRegistrado -> "Este correo ya tiene una cuenta. Inicia sesión con él."
     ResultadoCreacionCuenta.ContrasenaRechazada ->
         "El servidor no aceptó la contraseña. Usa una más larga, con letras y números."
