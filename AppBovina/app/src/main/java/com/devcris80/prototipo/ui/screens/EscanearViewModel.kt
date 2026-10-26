@@ -2,6 +2,7 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.usecase.DestinoEscaneo
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
 import com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneo
@@ -16,7 +17,13 @@ import kotlinx.coroutines.launch
 sealed interface EscanearUiState {
     data object EsperandoTag : EscanearUiState
     data object Resolviendo : EscanearUiState
-    data class AnimalDadoDeBaja(val idChapeta: String, val nombreAnimal: String, val codigo: String) : EscanearUiState
+    data class AnimalDadoDeBaja(
+        val idChapeta: String,
+        val nombreAnimal: String,
+        val codigo: String,
+        /** Liberar la Chapeta es del Ganadero; al Operario no se le ofrece. */
+        val puedeLiberarChapeta: Boolean,
+    ) : EscanearUiState
 }
 
 sealed interface EscanearEvento {
@@ -31,6 +38,7 @@ sealed interface EscanearEvento {
 class EscanearViewModel(
     private val resolverDestinoEscaneo: ResolverDestinoEscaneo,
     private val liberarChapeta: LiberarChapeta,
+    private val cuentaRepository: CuentaRepository,
 ) : ViewModel() {
     private val _estado = MutableStateFlow<EscanearUiState>(EscanearUiState.EsperandoTag)
     val estado: StateFlow<EscanearUiState> = _estado.asStateFlow()
@@ -47,8 +55,10 @@ class EscanearViewModel(
         val actual = _estado.value as? EscanearUiState.AnimalDadoDeBaja ?: return
         _estado.value = EscanearUiState.Resolviendo
         viewModelScope.launch {
-            liberarChapeta(actual.idChapeta)
-            resolver(actual.codigo)
+            when (liberarChapeta(actual.idChapeta)) {
+                LiberarChapeta.Resultado.Realizado -> resolver(actual.codigo)
+                LiberarChapeta.Resultado.NoPermitido -> _estado.value = actual
+            }
         }
     }
 
@@ -63,6 +73,7 @@ class EscanearViewModel(
                 destino.idChapeta,
                 destino.nombreAnimal,
                 destino.codigo,
+                puedeLiberarChapeta = cuentaRepository.getUsuario()?.rol?.puedeAdministrar == true,
             )
             is DestinoEscaneo.RegistrarConAviso -> volverAEsperarYEmitir(
                 EscanearEvento.Registrar(destino.codigo, "Este tag estuvo asociado a ${destino.nombreAnimalAnterior}"),

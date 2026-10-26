@@ -9,7 +9,7 @@ import com.devcris80.prototipo.domain.repository.Transaccion
 /**
  * Concilia un Pesaje pendiente descartándolo: no corresponde a ningún Animal. No crea ningún
  * Registro ni borra nada; el pendiente queda resuelto como descartado, a nombre del Usuario de
- * este dispositivo.
+ * este dispositivo. Solo el Ganadero puede; el Operario es rechazado aunque se llame directo.
  */
 class DescartarPesajePendiente(
     private val pesajePendienteRepository: PesajePendienteRepository,
@@ -20,17 +20,20 @@ class DescartarPesajePendiente(
     sealed interface Resultado {
         data object Descartado : Resultado
 
+        /** El Usuario de este dispositivo no es Ganadero. */
+        data object NoPermitido : Resultado
+
         /** El Pesaje pendiente no existe o ya está resuelto. */
         data object PendienteNoDisponible : Resultado
     }
 
     suspend operator fun invoke(idPesajePendiente: String): Resultado = transaccion.ejecutar {
+        val usuario = cuentaRepository.getUsuario()
+        if (usuario?.rol?.puedeAdministrar != true) return@ejecutar Resultado.NoPermitido
         val pendiente = pesajePendienteRepository.findById(idPesajePendiente)
         if (pendiente == null || pendiente.conciliacion != null) {
             return@ejecutar Resultado.PendienteNoDisponible
         }
-        // Un Pesaje pendiente solo se guarda con una cuenta creada, así que aquí hay Usuario.
-        val usuario = checkNotNull(cuentaRepository.getUsuario()) { "No hay Usuario que concilie" }
         pesajePendienteRepository.conciliar(
             idPesajePendiente,
             Conciliacion(

@@ -49,6 +49,7 @@ class PesajesPendientesViewModelTest {
         pesajePendienteRepository,
         AsignarPesajesPendientes(pesajePendienteRepository, animalRepository, registroRepository, cuentaRepository, FakeTransaccion()),
         DescartarPesajePendiente(pesajePendienteRepository, cuentaRepository, FakeTransaccion()),
+        cuentaRepository,
     )
 
     @Before
@@ -303,5 +304,39 @@ class PesajesPendientesViewModelTest {
             ResolucionPesajePendiente.DESCARTADO,
             pesajePendienteRepository.todos.value.first().conciliacion?.resolucion,
         )
+    }
+
+    @Test
+    fun elGanaderoPuedeDescartarPesajesPendientes() = runTest {
+        pesajePendienteRepository.set(pendiente("04A1B2C3"))
+        val viewModel = crearViewModel()
+        val job = launch { viewModel.estado.collect { } }
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.estado.value.puedeDescartar)
+        job.cancel()
+    }
+
+    @Test
+    fun elOperarioNoPuedeDescartarPeroSiAsignar() = runTest {
+        cuentaRepository.usuario.value = Usuario(UUID.randomUUID().toString(), "perfil_local", "Beto", Rol.OPERARIO)
+        val manchas = animal("Manchas")
+        animalRepository.activos.value = listOf(manchas)
+        val unico = pendiente("04A1B2C3")
+        pesajePendienteRepository.set(unico)
+        val viewModel = crearViewModel()
+        val job = launch { viewModel.estado.collect { } }
+        advanceUntilIdle()
+        assertEquals(false, viewModel.estado.value.puedeDescartar)
+
+        viewModel.onConfirmarDescartar(unico.idPesajePendiente)
+        assertNull(pesajePendienteRepository.todos.value.single().conciliacion)
+
+        viewModel.onConfirmarAsignar(unico, manchas.idAnimal)
+        assertEquals(
+            ResolucionPesajePendiente.ASIGNADO,
+            pesajePendienteRepository.todos.value.single().conciliacion?.resolucion,
+        )
+        job.cancel()
     }
 }

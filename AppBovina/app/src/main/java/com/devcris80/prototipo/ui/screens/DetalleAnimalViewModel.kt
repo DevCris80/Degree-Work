@@ -10,6 +10,7 @@ import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
+import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
@@ -21,6 +22,7 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -36,6 +38,8 @@ data class DetalleAnimalUiState(
     /** Los Eventos y Registros de su historial que están en Conflicto. */
     val eventosEnConflicto: Set<String> = emptySet(),
     val registrosEnConflicto: Set<String> = emptySet(),
+    /** Dar de baja y liberar la Chapeta son del Ganadero; al Operario no se le ofrecen. */
+    val puedeAdministrar: Boolean = false,
 )
 
 private data class FilasEnConflicto(val animal: Boolean, val eventos: Set<String>, val registros: Set<String>)
@@ -51,6 +55,7 @@ class DetalleAnimalViewModel(
     private val darDeBajaAnimal: DarDeBajaAnimal,
     private val liberarChapeta: LiberarChapeta,
     conflictoRepository: ConflictoRepository,
+    cuentaRepository: CuentaRepository,
 ) : ViewModel() {
     private val enConflicto: Flow<FilasEnConflicto> = combine(
         conflictoRepository.observeEnConflicto(EntidadConRevisiones.ANIMAL, idAnimal),
@@ -65,13 +70,17 @@ class DetalleAnimalViewModel(
         }
     }
 
+    private val puedeAdministrar: Flow<Boolean> =
+        cuentaRepository.observeUsuario().map { it?.rol?.puedeAdministrar == true }
+
     val estado: StateFlow<DetalleAnimalUiState> = combine(
-        animalConPadres,
-        eventoRepository.observeByAnimal(idAnimal),
-        registroRepository.observeByAnimal(idAnimal),
-        chapetaRepository.observeActivaByAnimal(idAnimal),
-        enConflicto,
-    ) { (animal, padre, madre), eventos, registros, chapeta, conflictos ->
+        combine(
+            animalConPadres,
+            eventoRepository.observeByAnimal(idAnimal),
+            registroRepository.observeByAnimal(idAnimal),
+            chapetaRepository.observeActivaByAnimal(idAnimal),
+            enConflicto,
+        ) { (animal, padre, madre), eventos, registros, chapeta, conflictos ->
         DetalleAnimalUiState(
             animal = animal,
             eventos = eventos,
@@ -83,7 +92,9 @@ class DetalleAnimalViewModel(
             eventosEnConflicto = conflictos.eventos,
             registrosEnConflicto = conflictos.registros,
         )
-    }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetalleAnimalUiState())
+        },
+        puedeAdministrar,
+    ) { detalle, puede -> detalle.copy(puedeAdministrar = puede) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetalleAnimalUiState())
 
     private fun observarSiHay(idAnimal: String?): Flow<Animal?> =
         idAnimal?.let(animalRepository::observeById) ?: flowOf(null)

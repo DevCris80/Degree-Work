@@ -6,12 +6,15 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.Rol
+import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
 import com.devcris80.prototipo.testing.FakeAnimalRepository
 import com.devcris80.prototipo.testing.FakeChapetaRepository
 import com.devcris80.prototipo.testing.FakeConflictoRepository
+import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.conflictoDeAnimal
 import com.devcris80.prototipo.testing.conflictoDeEvento
 import com.devcris80.prototipo.testing.FakeEventoRepository
@@ -35,6 +38,7 @@ class DetalleAnimalViewModelTest {
     private val registroRepository = FakeRegistroRepository()
     private val chapetaRepository = FakeChapetaRepository()
     private val conflictoRepository = FakeConflictoRepository()
+    private val cuentaRepository = FakeCuentaRepository()
     private val idAnimal = UUID.randomUUID().toString()
 
     private fun crearViewModel() = DetalleAnimalViewModel(
@@ -43,9 +47,10 @@ class DetalleAnimalViewModelTest {
         eventoRepository,
         registroRepository,
         chapetaRepository,
-        DarDeBajaAnimal(animalRepository, clock = { 5L }),
-        LiberarChapeta(chapetaRepository, clock = { 9L }),
+        DarDeBajaAnimal(animalRepository, cuentaRepository, clock = { 5L }),
+        LiberarChapeta(chapetaRepository, cuentaRepository, clock = { 9L }),
         conflictoRepository,
+        cuentaRepository,
     )
 
     private fun animal() = Animal(
@@ -62,6 +67,11 @@ class DetalleAnimalViewModelTest {
     @Before
     fun setUp() {
         Dispatchers.setMain(UnconfinedTestDispatcher())
+        conUsuario(Rol.GANADERO)
+    }
+
+    private fun conUsuario(rol: Rol) {
+        cuentaRepository.usuario.value = Usuario("usuario-1", "perfil_local", "Ana", rol)
     }
 
     @After
@@ -169,5 +179,43 @@ class DetalleAnimalViewModelTest {
 
         assertEquals(listOf(chapeta.idChapeta), chapetaRepository.liberadas)
         assertEquals(9L, chapetaRepository.chapeta(chapeta.idChapeta)?.fechaDesasociacion)
+    }
+
+    @Test
+    fun elGanaderoVeLasAccionesDeAdministrar() = runTest {
+        animalRepository.set(animal())
+        val viewModel = crearViewModel()
+        val job = launch { viewModel.estado.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(true, viewModel.estado.value.puedeAdministrar)
+        job.cancel()
+    }
+
+    @Test
+    fun elOperarioNoVeLasAccionesDeAdministrar() = runTest {
+        conUsuario(Rol.OPERARIO)
+        animalRepository.set(animal())
+        val viewModel = crearViewModel()
+        val job = launch { viewModel.estado.collect {} }
+        advanceUntilIdle()
+
+        assertEquals(false, viewModel.estado.value.puedeAdministrar)
+        job.cancel()
+    }
+
+    @Test
+    fun elOperarioNoDaDeBajaNiLiberaAunqueSeLlamenLasAcciones() = runTest {
+        conUsuario(Rol.OPERARIO)
+        animalRepository.set(animal())
+        val chapeta = Chapeta(UUID.randomUUID().toString(), "04A1B2C3", idAnimal, fechaAsociacion = 1L)
+        chapetaRepository.set(chapeta)
+        val viewModel = crearViewModel()
+
+        viewModel.onDarDeBaja()
+        viewModel.onLiberarChapeta(chapeta.idChapeta)
+
+        assertEquals(emptyList<Pair<String, Long>>(), animalRepository.bajas)
+        assertEquals(emptyList<String>(), chapetaRepository.liberadas)
     }
 }
