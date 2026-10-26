@@ -231,15 +231,6 @@ fun UsuarioEntity.toDomain() = Usuario(
     rol = TEXTO_ROL.desdeTexto(rol),
 )
 
-fun Usuario.toEntity(fechaModificacion: Long) = UsuarioEntity(
-    idUsuario = idUsuario,
-    idPerfilFinca = idPerfilFinca,
-    nombre = nombre,
-    rol = TEXTO_ROL.aTexto(rol),
-    fechaModificacion = fechaModificacion,
-    delDispositivo = true,
-)
-
 fun SiblingEntity.toDomain() = Sibling(
     idVersion = idVersion,
     entidad = TEXTO_ENTIDAD_CON_REVISIONES.desdeTexto(entidad),
