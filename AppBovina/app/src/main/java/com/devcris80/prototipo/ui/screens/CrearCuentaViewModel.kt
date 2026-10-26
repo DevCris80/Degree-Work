@@ -2,6 +2,8 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.devcris80.prototipo.domain.model.CuentaNueva
+import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -15,15 +17,29 @@ import kotlinx.coroutines.launch
 data class CrearCuentaUiState(
     val nombreGanadero: String = "",
     val nombreFinca: String = "",
+    val correo: String = "",
+    val contrasena: String = "",
+    val confirmacion: String = "",
+    val aceptaAutorizacion: Boolean = false,
+    val cargando: Boolean = false,
+    val error: String? = null,
+    /** El correo ya tiene cuenta: la pantalla ofrece ir a Iniciar sesión. */
+    val ofrecerIniciarSesion: Boolean = false,
 ) {
-    val puedeCrear: Boolean get() = nombreGanadero.isNotBlank() && nombreFinca.isNotBlank()
+    val cuenta: CuentaNueva
+        get() = CuentaNueva(nombreGanadero, nombreFinca, correo, contrasena, confirmacion, aceptaAutorizacion)
+
+    val puedeCrear: Boolean get() = cuenta.faltaParaCrear == null && !cargando
 }
 
 sealed interface CrearCuentaEvento {
     data object CuentaCreada : CrearCuentaEvento
 }
 
-/** Estado de Crear cuenta: guarda la finca y su primer Usuario con el caso de uso CrearCuenta. */
+/**
+ * Estado de Crear cuenta (CU-01): los datos de la persona y de su finca, la aceptación del texto de autorización
+ * y la creación de la cuenta en Supabase con el caso de uso CrearCuenta.
+ */
 class CrearCuentaViewModel(private val crearCuenta: CrearCuenta) : ViewModel() {
     private val _estado = MutableStateFlow(CrearCuentaUiState())
     val estado: StateFlow<CrearCuentaUiState> = _estado.asStateFlow()
@@ -31,15 +47,41 @@ class CrearCuentaViewModel(private val crearCuenta: CrearCuenta) : ViewModel() {
     private val _eventos = Channel<CrearCuentaEvento>(Channel.BUFFERED)
     val eventos: Flow<CrearCuentaEvento> = _eventos.receiveAsFlow()
 
-    fun onNombreGanaderoCambiado(valor: String) = _estado.update { it.copy(nombreGanadero = valor) }
-    fun onNombreFincaCambiado(valor: String) = _estado.update { it.copy(nombreFinca = valor) }
+    fun onNombreGanaderoCambiado(valor: String) = _estado.update { it.copy(nombreGanadero = valor, error = null) }
+    fun onNombreFincaCambiado(valor: String) = _estado.update { it.copy(nombreFinca = valor, error = null) }
+    fun onCorreoCambiado(valor: String) =
+        _estado.update { it.copy(correo = valor, error = null, ofrecerIniciarSesion = false) }
+    fun onContrasenaCambiada(valor: String) = _estado.update { it.copy(contrasena = valor, error = null) }
+    fun onConfirmacionCambiada(valor: String) = _estado.update { it.copy(confirmacion = valor, error = null) }
+    fun onAutorizacionCambiada(acepta: Boolean) = _estado.update { it.copy(aceptaAutorizacion = acepta) }
 
     fun onCrearCuenta() {
         val actual = _estado.value
         if (!actual.puedeCrear) return
+        _estado.update { it.copy(cargando = true, error = null, ofrecerIniciarSesion = false) }
         viewModelScope.launch {
-            crearCuenta(actual.nombreGanadero, actual.nombreFinca)
-            _eventos.send(CrearCuentaEvento.CuentaCreada)
+            val resultado = crearCuenta(actual.cuenta)
+            _estado.update {
+                it.copy(
+                    cargando = false,
+                    error = resultado.mensaje(),
+                    ofrecerIniciarSesion = resultado == ResultadoCreacionCuenta.CorreoYaRegistrado,
+                )
+            }
+            if (resultado == ResultadoCreacionCuenta.Exito) _eventos.send(CrearCuentaEvento.CuentaCreada)
         }
     }
+}
+
+private fun ResultadoCreacionCuenta.mensaje(): String? = when (this) {
+    ResultadoCreacionCuenta.Exito -> null
+    // El botón no se habilita con el formulario incompleto; si igual llega, no hay nada que contar.
+    is ResultadoCreacionCuenta.Incompleta -> null
+    ResultadoCreacionCuenta.CorreoYaRegistrado -> "Este correo ya tiene una cuenta. Inicia sesión con él."
+    ResultadoCreacionCuenta.ContrasenaRechazada ->
+        "El servidor no aceptó la contraseña. Usa una más larga, con letras y números."
+    ResultadoCreacionCuenta.SinConexion -> "Sin señal. Crear la cuenta necesita conexión a internet."
+    ResultadoCreacionCuenta.OtraCuentaEnElDispositivo ->
+        "Este celular tiene los datos de otra cuenta. Desinstala la app para empezar limpio."
+    ResultadoCreacionCuenta.NoSePudo -> "No se pudo crear la cuenta. Inténtalo de nuevo en un momento."
 }

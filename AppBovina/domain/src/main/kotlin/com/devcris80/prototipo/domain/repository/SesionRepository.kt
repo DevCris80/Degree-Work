@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.domain.repository
 
+import com.devcris80.prototipo.domain.model.FaltaParaCrear
 import kotlinx.coroutines.flow.Flow
 
 /**
@@ -19,8 +20,42 @@ interface SesionRepository {
      */
     suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion
 
+    /**
+     * Crea la identidad en Supabase Auth y, en el servidor, la finca, su primer Usuario Ganadero y la aceptación
+     * de [versionAutorizacion]; después deja la finca y el Usuario en el dispositivo. Si algo falla, el dispositivo
+     * queda sin sesión y sin filas nuevas.
+     */
+    suspend fun crearCuenta(
+        nombre: String,
+        nombreFinca: String,
+        correo: String,
+        contrasena: String,
+        versionAutorizacion: String,
+    ): ResultadoCreacionCuenta
+
     /** Olvida la sesión; los datos de la finca quedan en el dispositivo. */
     suspend fun cerrarSesion()
+}
+
+sealed interface ResultadoCreacionCuenta {
+    data object Exito : ResultadoCreacionCuenta
+
+    /** Al formulario le falta algo: no se llamó al servidor. Solo lo devuelve CrearCuenta. */
+    data class Incompleta(val falta: FaltaParaCrear) : ResultadoCreacionCuenta
+
+    /** El correo ya tiene una cuenta con finca: hay que iniciar sesión. */
+    data object CorreoYaRegistrado : ResultadoCreacionCuenta
+
+    /** El servidor no aceptó la contraseña, por ejemplo por débil. */
+    data object ContrasenaRechazada : ResultadoCreacionCuenta
+
+    data object SinConexion : ResultadoCreacionCuenta
+
+    /** El dispositivo ya tiene los datos de otra finca: hay que desinstalar la app para empezar limpio. */
+    data object OtraCuentaEnElDispositivo : ResultadoCreacionCuenta
+
+    /** El servidor respondió con un error inesperado. */
+    data object NoSePudo : ResultadoCreacionCuenta
 }
 
 sealed interface ResultadoRecuperacion {

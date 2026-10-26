@@ -1,28 +1,24 @@
 package com.devcris80.prototipo.domain.usecase
 
-import com.devcris80.prototipo.domain.model.Rol
-import com.devcris80.prototipo.domain.model.Usuario
-import com.devcris80.prototipo.domain.repository.CuentaRepository
-import com.devcris80.prototipo.domain.repository.Transaccion
-import java.util.UUID
+import com.devcris80.prototipo.domain.model.AutorizacionDatos
+import com.devcris80.prototipo.domain.model.CuentaNueva
+import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
+import com.devcris80.prototipo.domain.repository.SesionRepository
 
 /**
- * Crea el PerfilFinca de este dispositivo y su primer Usuario, con rol Ganadero, en una sola
- * transacción: o se guardan ambos o ninguno.
+ * Crea la cuenta de una finca nueva (CU-01): la identidad en Supabase Auth y, en el servidor, la finca con su
+ * primer Usuario Ganadero (RN-20). Sin aceptar el texto de autorización de la Ley 1581 (RF-04), o con el formulario
+ * incompleto, no llama al servidor. La contraseña se envía tal cual; el resto, sin espacios de más.
  */
-class CrearCuenta(
-    private val cuentaRepository: CuentaRepository,
-    private val transaccion: Transaccion,
-) {
-    suspend operator fun invoke(nombreUsuario: String, nombreFinca: String): Usuario = transaccion.ejecutar {
-        val perfilFinca = cuentaRepository.crearPerfilFinca(nombreFinca)
-        val usuario = Usuario(
-            idUsuario = UUID.randomUUID().toString(),
-            idPerfilFinca = perfilFinca.idPerfilFinca,
-            nombre = nombreUsuario,
-            rol = Rol.GANADERO,
+class CrearCuenta(private val sesionRepository: SesionRepository) {
+    suspend operator fun invoke(cuenta: CuentaNueva): ResultadoCreacionCuenta {
+        cuenta.faltaParaCrear?.let { return ResultadoCreacionCuenta.Incompleta(it) }
+        return sesionRepository.crearCuenta(
+            nombre = cuenta.nombre.trim(),
+            nombreFinca = cuenta.nombreFinca.trim(),
+            correo = cuenta.correo.trim(),
+            contrasena = cuenta.contrasena,
+            versionAutorizacion = AutorizacionDatos.VERSION,
         )
-        cuentaRepository.insertUsuario(usuario)
-        usuario
     }
 }
