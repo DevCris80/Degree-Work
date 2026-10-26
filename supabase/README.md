@@ -52,9 +52,9 @@ La cuenta de una finca nueva se crea desde la app, en Crear cuenta (ver abajo). 
      values ('<id del usuario>', '<id de la finca>', 'Operario de prueba', 'Operario', now());
    ```
 
-Desde la app no se puede hacer: `perfil_finca` y `usuario` no conceden INSERT a `authenticated`, y solo `crear_finca` los escribe por ella.
+Desde la app no se puede hacer: `perfil_finca` y `usuario` no conceden INSERT a `authenticated`, y solo el alta de una cuenta nueva los escribe, por el trigger `crear_finca`.
 
-Crear cuenta necesita que el proyecto no pida confirmar el correo (Authentication → Sign In / Providers → Email → Confirm email desactivado): la app crea la finca con la sesión que deja el registro.
+Crear cuenta necesita que el proyecto no pida confirmar el correo (Authentication → Sign In / Providers → Email → Confirm email desactivado): la app lee la finca con la sesión que deja el registro.
 
 ## Credenciales para la app
 
@@ -95,11 +95,11 @@ Errores que devuelve, para clasificar un rechazo:
 
 ## Crear cuenta
 
-El celular registra la identidad con Supabase Auth y, con la sesión que queda, llama `POST /rest/v1/rpc/crear_finca` con `{"nombre_usuario": "...", "nombre_finca": "...", "version_autorizacion": "0.1-provisional"}` (CU-01, RN-20). En una transacción crea la finca, su primer `Usuario` con rol Ganadero y una fila en `aceptacion_datos` con la versión del texto de la Ley 1581 y su fecha (RF-04, RNF-13). Responde `{"perfil_finca": {...}, "usuario": {...}}`.
+El celular registra la identidad con Supabase Auth (`POST /auth/v1/signup`) y manda como metadatos del registro (`data`) `{"nombre": "...", "nombre_finca": "...", "version_autorizacion": "0.1-provisional"}` (CU-01, RN-20). El trigger `crear_finca` de `auth.users` llama `privado.crear_finca` en la misma transacción del alta: crea la finca, su primer `Usuario` con rol Ganadero y una fila en `aceptacion_datos` con la versión del texto de la Ley 1581 y su fecha (RF-04, RNF-13). Si algo falla, Supabase Auth no da de alta la identidad. Después el celular lee su finca y su Usuario como al iniciar sesión.
 
-- Sin sesión da `42501`; sin versión aceptada, o sin nombre de la persona o de la finca, `22023`.
-- Nadie tiene dos fincas: si la persona ya es Usuario de una, devuelve la suya sin crear nada. Así un reintento que perdió la respuesta no duplica la finca.
-- `aceptacion_datos` solo existe en el servidor: no se lee ni se escribe por la API, y no viaja en la descarga.
+- La versión tiene que estar en `privado.texto_autorizacion`; sin ella, o sin el nombre de la persona o de la finca, el alta falla con `22023`. Cambiar el texto de la app es una migración que agrega su versión.
+- Los metadatos no deciden el rol ni la finca: el primer Usuario siempre es Ganadero de una finca nueva. Un alta sin `nombre_finca` (un Operario creado a mano) no crea finca.
+- `aceptacion_datos` y `texto_autorizacion` solo existen en el servidor: no se leen ni se escriben por la API, y no viajan en la descarga. `privado.crear_finca` no se puede llamar por la API.
 
 ## Subir cambios
 
