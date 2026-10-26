@@ -15,6 +15,7 @@ import androidx.compose.material.icons.filled.Email
 import androidx.compose.material.icons.filled.Flag
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.WifiOff
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
@@ -52,6 +53,52 @@ fun LoginScreen(onSesionIniciada: () -> Unit) {
                 LoginEvento.SesionIniciada -> onSesionIniciada()
             }
         }
+    }
+
+    estado.recuperacion?.let { recuperacion ->
+        AlertDialog(
+            onDismissRequest = viewModel::onCerrarRecuperacion,
+            title = { Text("Recuperar contraseña") },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    if (!recuperacion.enviado) {
+                        Text("Escribe tu correo y te enviamos un enlace para recuperar la contraseña.")
+                        CampoConIcono(
+                            label = "Correo electrónico",
+                            value = recuperacion.correo,
+                            onValueChange = viewModel::onRecuperacionCorreoCambiado,
+                            icon = Icons.Filled.Email,
+                            keyboardType = KeyboardType.Email,
+                        )
+                    }
+                    recuperacion.mensaje?.let { mensaje ->
+                        Text(
+                            text = mensaje,
+                            style = MaterialTheme.typography.bodyMedium,
+                            color = if (recuperacion.enviado) {
+                                MaterialTheme.colorScheme.onSurface
+                            } else {
+                                MaterialTheme.colorScheme.error
+                            },
+                        )
+                    }
+                }
+            },
+            confirmButton = {
+                if (recuperacion.enviado) {
+                    TextButton(onClick = viewModel::onCerrarRecuperacion) { Text("Listo") }
+                } else {
+                    TextButton(onClick = viewModel::onEnviarRecuperacion, enabled = recuperacion.puedeEnviar) {
+                        Text(if (recuperacion.enviando) "Enviando…" else "Enviar")
+                    }
+                }
+            },
+            dismissButton = {
+                if (!recuperacion.enviado) {
+                    TextButton(onClick = viewModel::onCerrarRecuperacion) { Text("Cancelar") }
+                }
+            },
+        )
     }
 
     Scaffold { innerPadding ->
@@ -103,7 +150,7 @@ fun LoginScreen(onSesionIniciada: () -> Unit) {
                         )
 
                         TextButton(
-                            onClick = {},
+                            onClick = viewModel::onOlvideContrasena,
                             modifier = Modifier.align(Alignment.End),
                         ) {
                             Text(
