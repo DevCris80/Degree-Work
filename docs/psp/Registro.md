@@ -15,10 +15,10 @@ Clasificación de defectos (PSP): 10 Documentación, 20 Sintaxis, 30 Construcci�
 |---|---|---|---|---|---|---|
 | S28 | 06/07–12/07 | C | Planeación | 15 | Visita de campo a la finca piloto (08/07): observación y entrevista al ganadero; definición del alcance y del stack | Visita de campo 08/07 (capítulo OE1) |
 | S28 | 06/07–12/07 | M | Planeación | 15 | Visita de campo (08/07) y registro de hallazgos sobre los registros manuales | Visita de campo 08/07 (capítulo OE1) |
-| S29 | 13/07–19/07 | C | Planeación | 15 | Requisitos funcionales y no funcionales a partir de la visita | Plan de fases (Fases 1–2 hasta fin de julio) [confirmar] |
-| S29 | 13/07–19/07 | M | Planeación | 15 | Requisitos funcionales y no funcionales a partir de la visita | Plan de fases [confirmar] |
-| S30 | 20/07–26/07 | C | Planeación | 15 | Alcance, prioridades y cronograma | Plan de fases [confirmar] |
-| S30 | 20/07–26/07 | M | Planeación | 15 | Roles TSP y plan de calidad | Plan de fases [confirmar] |
+| S29 | 13/07–19/07 | C | Planeación | 15 | Requisitos funcionales y no funcionales a partir de la visita | Plan de fases (Fases 1–2 hasta fin de julio) |
+| S29 | 13/07–19/07 | M | Planeación | 15 | Requisitos funcionales y no funcionales a partir de la visita | Plan de fases |
+| S30 | 20/07–26/07 | C | Planeación | 15 | Alcance, prioridades y cronograma | Plan de fases |
+| S30 | 20/07–26/07 | M | Planeación | 15 | Roles TSP y plan de calidad | Plan de fases  |
 | S31 | 27/07–02/08 | C | Planeación | 15 | Cierre de la definición de requisitos | Plan de fases |
 | S31 | 27/07–02/08 | M | Planeación | 15 | Cierre de la definición de requisitos | Plan de fases |
 | S32–S35 | 03/08–30/08 | C | Diseño | 60 | Arquitectura del prototipo (Room, NanoHTTPD en servicio en primer plano, ESP32 por HTTP) y especificación técnica inicial | Plan de fases (Fase 3 en agosto); `docs/spec_app_android_prototipo.md` |
@@ -28,7 +28,7 @@ Clasificación de defectos (PSP): 10 Documentación, 20 Sintaxis, 30 Construcci�
 | S37 | 07/09–13/09 | C | Código | 13 | Estructura de la app: Room, NanoHTTPD en servicio en primer plano, cinco pantallas y pruebas instrumentadas | Commits del 10/09 |
 | S37 | 07/09–13/09 | C | Pruebas | 2 | Estructura de la app: Room, NanoHTTPD en servicio en primer plano, cinco pantallas y pruebas instrumentadas | Commits del 10/09 |
 | S37 | 07/09–13/09 | M | Codigo | 15 | ESP32 | Dedicación declarada |
-| S38 | 14/09–20/09 | C | Pruebas | 15 | Prueba extremo a extremo ESP32 → hotspot → NanoHTTPD → Room (rango de IP del hotspot, alias de curl en PowerShell) | Prueba registrada en el capítulo de construcción [confirmar fecha] |
+| S38 | 14/09–20/09 | C | Pruebas | 15 | Prueba extremo a extremo ESP32 → hotspot → NanoHTTPD → Room (rango de IP del hotspot, alias de curl en PowerShell) | Prueba registrada en el capítulo de construcción |
 | S38 | 14/09–20/09 | M | Diseño | 15 | Si el diseño | Dedicación declarada |
 | S39 | 21/09–27/09 | C | Código | 15 | Interfaces | Commit del 25/09 |
 | S39 | 21/09–27/09 | M | Código | 15 | Primera tanda de pantallas Compose: Registro, Login, Lista, Registrar y Detalle | Commit del 26/09 |
