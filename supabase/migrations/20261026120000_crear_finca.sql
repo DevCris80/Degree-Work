@@ -1,21 +1,27 @@
 -- Crear cuenta (CU-01, RF-01, RF-04, RN-20, RNF-13).
 --
--- El celular crea primero la identidad en Supabase Auth y después llama `crear_finca` con el JWT de esa persona.
--- La función crea, en una sola transacción, la finca, su primer Usuario con rol Ganadero y el registro de que la
--- persona aceptó el texto de autorización de la Ley 1581, con su versión y su fecha. `perfil_finca` y `usuario`
--- no conceden INSERT a `authenticated`, así que la función es SECURITY DEFINER y solo escribe a nombre de
--- `auth.uid()`.
+-- El celular registra la identidad en Supabase Auth con, como metadatos del registro, el nombre de la persona, el
+-- de su finca y la versión del texto de autorización de la Ley 1581 que aceptó. Un trigger sobre `auth.users`
+-- llama `privado.crear_finca` en la misma transacción del alta: la identidad, la finca, su primer Usuario con rol
+-- Ganadero y la aceptación se crean juntas, o no se crea ninguna. Así, si el registro falla o se corta la señal
+-- antes de que Supabase lo confirme, no queda una identidad sin finca.
 --
--- Nadie tiene dos fincas: si la persona ya es Usuario de una (un reintento después de perder la respuesta, o un
--- Operario), devuelve la suya sin crear nada.
---
--- Respuesta: {"perfil_finca": la fila de la finca, "usuario": la fila del Usuario}, sin `cursor_descarga`.
+-- Un alta sin `nombre_finca` en los metadatos (un Operario creado a mano, o las invitaciones de CU-04) no crea
+-- finca. Los metadatos no deciden el rol ni la finca: el primer Usuario siempre es Ganadero de una finca nueva.
+
+-- Los textos de autorización que la app puede mostrar. Cambiar el texto es una migración que agrega su versión.
+create table privado.texto_autorizacion (
+  version text primary key,
+  fecha_publicacion timestamptz not null default now()
+);
+insert into privado.texto_autorizacion (version) values ('0.1-provisional');
+revoke all on privado.texto_autorizacion from anon, authenticated;
 
 -- Solo en el servidor (diagrama de relaciones): ningún celular la descarga.
 create table public.aceptacion_datos (
   id_aceptacion uuid primary key default gen_random_uuid(),
   id_usuario uuid not null references auth.users (id),
-  version_texto text not null check (btrim(version_texto) <> ''),
+  version_texto text not null references privado.texto_autorizacion (version),
   fecha_aceptacion timestamptz not null default now()
 );
 create index on public.aceptacion_datos (id_usuario);
@@ -23,47 +29,46 @@ create index on public.aceptacion_datos (id_usuario);
 revoke all on public.aceptacion_datos from anon, authenticated;
 alter table public.aceptacion_datos enable row level security;
 
-create function public.crear_finca(nombre_usuario text, nombre_finca text, version_autorizacion text) returns jsonb
-language plpgsql security definer set search_path = '' as $$
+create function privado.crear_finca(persona uuid, nombre_usuario text, nombre_finca text, version_autorizacion text)
+returns void
+language plpgsql set search_path = '' as $$
 declare
-  persona uuid := auth.uid();
-  finca public.perfil_finca;
-  nuevo public.usuario;
+  finca uuid := gen_random_uuid();
 begin
-  if persona is null then
-    raise exception 'Crear una finca necesita una sesión' using errcode = '42501';
-  end if;
-
-  select * into nuevo from public.usuario where id_usuario = persona;
-  if found then
-    select * into finca from public.perfil_finca where id_perfil_finca = nuevo.id_perfil_finca;
-    return jsonb_build_object(
-      'perfil_finca', to_jsonb(finca) - 'cursor_descarga',
-      'usuario', to_jsonb(nuevo) - 'cursor_descarga'
-    );
-  end if;
-
-  if coalesce(btrim(version_autorizacion), '') = '' then
-    raise exception 'Sin aceptar el texto de autorización no se crea la cuenta' using errcode = '22023';
+  if not exists (select 1 from privado.texto_autorizacion t where t.version = version_autorizacion) then
+    raise exception 'Sin aceptar un texto de autorización vigente no se crea la cuenta' using errcode = '22023';
   end if;
   if coalesce(btrim(nombre_usuario), '') = '' or coalesce(btrim(nombre_finca), '') = '' then
     raise exception 'Faltan el nombre de la persona o el de la finca' using errcode = '22023';
   end if;
 
   insert into public.perfil_finca (id_perfil_finca, nombre_finca, fecha_modificacion)
-    values (gen_random_uuid(), btrim(nombre_finca), now())
-    returning * into finca;
+    values (finca, btrim(nombre_finca), now());
   insert into public.usuario (id_usuario, id_perfil_finca, nombre, rol, fecha_modificacion)
-    values (persona, finca.id_perfil_finca, btrim(nombre_usuario), 'Ganadero', now())
-    returning * into nuevo;
-  insert into public.aceptacion_datos (id_usuario, version_texto) values (persona, btrim(version_autorizacion));
-
-  return jsonb_build_object(
-    'perfil_finca', to_jsonb(finca) - 'cursor_descarga',
-    'usuario', to_jsonb(nuevo) - 'cursor_descarga'
-  );
+    values (persona, finca, btrim(nombre_usuario), 'Ganadero', now());
+  insert into public.aceptacion_datos (id_usuario, version_texto) values (persona, version_autorizacion);
 end;
 $$;
 
-revoke execute on function public.crear_finca(text, text, text) from public, anon;
-grant execute on function public.crear_finca(text, text, text) to authenticated;
+-- SECURITY DEFINER: corre como el dueño de la migración, no como `supabase_auth_admin`, que hace el alta y no
+-- tiene permisos sobre las tablas de la finca.
+create function privado.crear_finca_al_registrarse() returns trigger
+language plpgsql security definer set search_path = '' as $$
+begin
+  if new.raw_user_meta_data ? 'nombre_finca' then
+    perform privado.crear_finca(
+      new.id,
+      new.raw_user_meta_data ->> 'nombre',
+      new.raw_user_meta_data ->> 'nombre_finca',
+      new.raw_user_meta_data ->> 'version_autorizacion'
+    );
+  end if;
+  return new;
+end;
+$$;
+
+revoke execute on function privado.crear_finca(uuid, text, text, text) from public, anon, authenticated;
+revoke execute on function privado.crear_finca_al_registrarse() from public, anon, authenticated;
+
+create trigger crear_finca after insert on auth.users
+  for each row execute function privado.crear_finca_al_registrarse();
