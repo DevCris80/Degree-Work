@@ -378,7 +378,7 @@ private fun RegistrarAnimalContent(
             }
             if (estado.sexoBloqueado) {
                 Text(
-                    "Este animal es padre o madre de otros animales registrados, por eso su sexo no se puede cambiar.",
+                    "Este animal es padre o madre de otros animales, también de los dados de baja, por eso su sexo no se puede cambiar.",
                     style = MaterialTheme.typography.bodySmall,
                 )
             }
@@ -563,17 +563,20 @@ private fun TarjetaSeleccionable(
     modifier: Modifier = Modifier,
     habilitada: Boolean = true,
 ) {
+    val fondo = if (seleccionada) {
+        MaterialTheme.colorScheme.secondaryContainer
+    } else {
+        MaterialTheme.colorScheme.surfaceContainerLowest
+    }
     Card(
         onClick = onClick,
         modifier = modifier,
         enabled = habilitada,
         shape = MaterialTheme.shapes.small,
         colors = CardDefaults.cardColors(
-            containerColor = if (seleccionada) {
-                MaterialTheme.colorScheme.secondaryContainer
-            } else {
-                MaterialTheme.colorScheme.surfaceContainerLowest
-            },
+            containerColor = fondo,
+            // Deshabilitada conserva el fondo: la selección sigue viéndose, solo se atenúa.
+            disabledContainerColor = fondo,
         ),
         border = if (seleccionada) {
             BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
@@ -584,7 +587,7 @@ private fun TarjetaSeleccionable(
         Text(
             text = texto,
             style = MaterialTheme.typography.bodyMedium,
-            color = BovinaForest,
+            color = if (habilitada) BovinaForest else BovinaForest.copy(alpha = 0.6f),
             fontWeight = if (seleccionada) FontWeight.Bold else FontWeight.Normal,
             modifier = Modifier.padding(16.dp),
         )
