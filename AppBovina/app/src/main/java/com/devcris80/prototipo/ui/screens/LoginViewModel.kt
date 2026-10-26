@@ -6,6 +6,7 @@ import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
+import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -39,7 +40,7 @@ sealed interface LoginEvento {
     data object SesionIniciada : LoginEvento
 }
 
-/** Estado de Iniciar sesión: credenciales, inicio de sesión contra Supabase Auth y su error. */
+/** Estado de Iniciar sesión: credenciales, inicio de sesión contra Supabase Auth y su error, y el diálogo de recuperar la contraseña. */
 class LoginViewModel(
     private val sesionRepository: SesionRepository,
     private val sincronizacionRepository: SincronizacionRepository,
@@ -53,18 +54,27 @@ class LoginViewModel(
     fun onCorreoCambiado(valor: String) = _estado.update { it.copy(correo = valor, error = null) }
     fun onContrasenaCambiada(valor: String) = _estado.update { it.copy(contrasena = valor, error = null) }
 
-    fun onOlvideContrasena() = _estado.update { it.copy(recuperacion = RecuperacionUiState(correo = it.correo)) }
+    private var envioDeRecuperacion: Job? = null
+
+    fun onOlvideContrasena() {
+        envioDeRecuperacion?.cancel()
+        _estado.update { it.copy(recuperacion = RecuperacionUiState(correo = it.correo)) }
+    }
 
     fun onRecuperacionCorreoCambiado(valor: String) =
         _estado.update { it.copy(recuperacion = it.recuperacion?.copy(correo = valor, mensaje = null)) }
 
-    fun onCerrarRecuperacion() = _estado.update { it.copy(recuperacion = null) }
+    // Un envío en curso se cancela: su resultado no debe aparecer en un diálogo que se abra después.
+    fun onCerrarRecuperacion() {
+        envioDeRecuperacion?.cancel()
+        _estado.update { it.copy(recuperacion = null) }
+    }
 
     fun onEnviarRecuperacion() {
         val actual = _estado.value.recuperacion ?: return
         if (!actual.puedeEnviar) return
         _estado.update { it.copy(recuperacion = actual.copy(enviando = true, mensaje = null)) }
-        viewModelScope.launch {
+        envioDeRecuperacion = viewModelScope.launch {
             val resultado = sesionRepository.recuperarContrasena(actual.correo.trim())
             _estado.update {
                 it.copy(

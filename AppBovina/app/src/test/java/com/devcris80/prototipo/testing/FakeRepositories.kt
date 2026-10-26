@@ -195,6 +195,9 @@ internal class FakeSesionRepository : SesionRepository {
     var resultadoRecuperacion: ResultadoRecuperacion = ResultadoRecuperacion.Enviado
     val recuperaciones = mutableListOf<String>()
 
+    /** Mientras no se complete, la recuperación queda en curso. */
+    var pausaRecuperacion: CompletableDeferred<Unit>? = null
+
     override fun observeSesionGuardada(): Flow<Boolean> = guardada
     override suspend fun iniciarSesion(correo: String, contrasena: String): ResultadoInicioSesion {
         intentos.add(correo to contrasena)
@@ -203,6 +206,7 @@ internal class FakeSesionRepository : SesionRepository {
     }
     override suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion {
         recuperaciones.add(correo)
+        pausaRecuperacion?.await()
         return resultadoRecuperacion
     }
     override suspend fun cerrarSesion() {

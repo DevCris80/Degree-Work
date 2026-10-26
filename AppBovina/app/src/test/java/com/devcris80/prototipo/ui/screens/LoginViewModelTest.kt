@@ -4,6 +4,7 @@ import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.testing.FakeSesionRepository
 import com.devcris80.prototipo.testing.FakeSincronizacionRepository
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.UnconfinedTestDispatcher
@@ -163,6 +164,23 @@ class LoginViewModelTest {
         assertFalse(recuperacion.enviado)
         assertTrue(recuperacion.puedeEnviar)
         assertTrue(recuperacion.mensaje!!.contains("Inténtalo"))
+    }
+
+    @Test
+    fun siSeCierraElDialogoConUnEnvioEnCursoSuResultadoNoLlegaAlDialogoNuevo() = runTest {
+        val enCurso = CompletableDeferred<Unit>()
+        sesionRepository.pausaRecuperacion = enCurso
+        val viewModel = llenado()
+        viewModel.onOlvideContrasena()
+        viewModel.onEnviarRecuperacion()
+        viewModel.onCerrarRecuperacion()
+        viewModel.onOlvideContrasena()
+
+        enCurso.complete(Unit)
+
+        val recuperacion = viewModel.estado.value.recuperacion!!
+        assertFalse(recuperacion.enviado)
+        assertNull(recuperacion.mensaje)
     }
 
     @Test

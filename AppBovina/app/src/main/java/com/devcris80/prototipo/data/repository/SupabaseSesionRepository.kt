@@ -63,7 +63,13 @@ class SupabaseSesionRepository(
     } catch (e: CancellationException) {
         throw e
     } catch (e: AuthRestException) {
-        ResultadoRecuperacion.NoSePudo
+        // Un correo con cuenta, pedido otra vez de seguida, topa con este límite. Mostrarlo como fallo delataría
+        // qué correos están registrados: el primer correo ya va en camino, así que se confirma igual.
+        if (e.errorCode == AuthErrorCode.OverEmailSendRateLimit) {
+            ResultadoRecuperacion.Enviado
+        } else {
+            ResultadoRecuperacion.NoSePudo
+        }
     } catch (e: Exception) {
         if (e.esFaltaDeConexion()) ResultadoRecuperacion.SinConexion else ResultadoRecuperacion.NoSePudo
     }

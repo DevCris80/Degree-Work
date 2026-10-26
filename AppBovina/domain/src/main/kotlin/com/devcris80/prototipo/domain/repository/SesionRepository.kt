@@ -24,10 +24,11 @@ interface SesionRepository {
 }
 
 sealed interface ResultadoRecuperacion {
+    /** El correo salió o ya va en camino: también cuando el servidor limita los envíos de una cuenta. */
     data object Enviado : ResultadoRecuperacion
     data object SinConexion : ResultadoRecuperacion
 
-    /** El servidor respondió con un error inesperado, por ejemplo por pedir demasiados correos seguidos. */
+    /** El servidor respondió con un error inesperado. */
     data object NoSePudo : ResultadoRecuperacion
 }
 
