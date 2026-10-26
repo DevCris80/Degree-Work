@@ -5,6 +5,7 @@ import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.repository.AnimalRepository
+import com.devcris80.prototipo.domain.model.puedeAdministrar
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
@@ -67,7 +68,7 @@ class PesajesPendientesViewModel(
         ofertaRestantes,
         cuentaRepository.observeUsuario(),
     ) { pendientes, animales, errorActual, oferta, usuario ->
-        PesajesPendientesUiState(pendientes, animales, errorActual, oferta, usuario?.rol?.puedeAdministrar == true)
+        PesajesPendientesUiState(pendientes, animales, errorActual, oferta, usuario.puedeAdministrar)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), PesajesPendientesUiState())
 
     fun onConfirmarAsignar(pendiente: PesajePendiente, idAnimal: String) {

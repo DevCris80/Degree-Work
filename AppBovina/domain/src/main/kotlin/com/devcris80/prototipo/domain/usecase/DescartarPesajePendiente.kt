@@ -2,6 +2,7 @@ package com.devcris80.prototipo.domain.usecase
 
 import com.devcris80.prototipo.domain.model.Conciliacion
 import com.devcris80.prototipo.domain.model.ResolucionPesajePendiente
+import com.devcris80.prototipo.domain.model.puedeAdministrar
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
@@ -29,7 +30,7 @@ class DescartarPesajePendiente(
 
     suspend operator fun invoke(idPesajePendiente: String): Resultado = transaccion.ejecutar {
         val usuario = cuentaRepository.getUsuario()
-        if (usuario?.rol?.puedeAdministrar != true) return@ejecutar Resultado.NoPermitido
+        if (usuario == null || !usuario.puedeAdministrar) return@ejecutar Resultado.NoPermitido
         val pendiente = pesajePendienteRepository.findById(idPesajePendiente)
         if (pendiente == null || pendiente.conciliacion != null) {
             return@ejecutar Resultado.PendienteNoDisponible

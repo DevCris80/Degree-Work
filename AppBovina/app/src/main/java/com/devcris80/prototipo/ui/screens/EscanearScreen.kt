@@ -55,6 +55,7 @@ fun EscanearScreen(
         EscanearViewModel(container.resolverDestinoEscaneo, container.liberarChapeta, container.cuentaRepository)
     }
     val estado by viewModel.estado.collectAsState()
+    val puedeLiberarChapeta by viewModel.puedeLiberarChapeta.collectAsState(initial = false)
 
     val context = LocalContext.current
     val activity = context as? Activity
@@ -143,7 +144,7 @@ fun EscanearScreen(
                         style = MaterialTheme.typography.titleMedium,
                         textAlign = TextAlign.Center,
                     )
-                    if (dadoDeBaja.puedeLiberarChapeta) {
+                    if (puedeLiberarChapeta) {
                         BovinaPrimaryButton(
                             texto = "Liberar chapeta",
                             onClick = { viewModel.onLiberarChapeta() },

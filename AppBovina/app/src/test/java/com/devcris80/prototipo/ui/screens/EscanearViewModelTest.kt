@@ -91,13 +91,18 @@ class EscanearViewModelTest {
         viewModel.onCodigoLeido("04A1B2C3")
 
         assertEquals(
-            EscanearUiState.AnimalDadoDeBaja(activa.idChapeta, "Canela", "04A1B2C3", puedeLiberarChapeta = true),
+            EscanearUiState.AnimalDadoDeBaja(activa.idChapeta, "Canela", "04A1B2C3"),
             viewModel.estado.value,
         )
     }
 
     @Test
-    fun tagDeAnimalDadoDeBaja_conOperarioNoOfreceLiberarLaChapetaYNoLaLibera() = runTest {
+    fun elGanaderoPuedeLiberarLaChapeta() = runTest {
+        assertEquals(true, viewModel.puedeLiberarChapeta.first())
+    }
+
+    @Test
+    fun elOperarioNoPuedeLiberarLaChapetaNiAunqueSeLlameLaAccion() = runTest {
         conUsuario(Rol.OPERARIO)
         val canela = animal("Canela", fechaBaja = 5L)
         animalRepository.set(canela)
@@ -107,11 +112,22 @@ class EscanearViewModelTest {
 
         viewModel.onLiberarChapeta()
 
-        assertEquals(
-            EscanearUiState.AnimalDadoDeBaja(activa.idChapeta, "Canela", "04A1B2C3", puedeLiberarChapeta = false),
-            viewModel.estado.value,
-        )
+        assertEquals(false, viewModel.puedeLiberarChapeta.first())
+        assertEquals(EscanearUiState.AnimalDadoDeBaja(activa.idChapeta, "Canela", "04A1B2C3"), viewModel.estado.value)
         assertEquals(emptyList<String>(), chapetaRepository.liberadas)
+    }
+
+    @Test
+    fun siCambiaElRolDespuesDeEscanearElPermisoSeActualiza() = runTest {
+        val canela = animal("Canela", fechaBaja = 5L)
+        animalRepository.set(canela)
+        chapetaRepository.set(chapeta(canela.idAnimal, "04A1B2C3"))
+        viewModel.onCodigoLeido("04A1B2C3")
+        assertEquals(true, viewModel.puedeLiberarChapeta.first())
+
+        conUsuario(Rol.OPERARIO)
+
+        assertEquals(false, viewModel.puedeLiberarChapeta.first())
     }
 
     @Test

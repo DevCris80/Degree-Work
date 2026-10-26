@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.model.Chapeta
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.puedeAdministrar
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
@@ -22,7 +23,6 @@ import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.flow.flatMapLatest
 import kotlinx.coroutines.flow.flowOf
-import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
 import kotlinx.coroutines.launch
 
@@ -70,17 +70,13 @@ class DetalleAnimalViewModel(
         }
     }
 
-    private val puedeAdministrar: Flow<Boolean> =
-        cuentaRepository.observeUsuario().map { it?.rol?.puedeAdministrar == true }
-
-    val estado: StateFlow<DetalleAnimalUiState> = combine(
-        combine(
-            animalConPadres,
-            eventoRepository.observeByAnimal(idAnimal),
-            registroRepository.observeByAnimal(idAnimal),
-            chapetaRepository.observeActivaByAnimal(idAnimal),
-            enConflicto,
-        ) { (animal, padre, madre), eventos, registros, chapeta, conflictos ->
+    private val detalle: Flow<DetalleAnimalUiState> = combine(
+        animalConPadres,
+        eventoRepository.observeByAnimal(idAnimal),
+        registroRepository.observeByAnimal(idAnimal),
+        chapetaRepository.observeActivaByAnimal(idAnimal),
+        enConflicto,
+    ) { (animal, padre, madre), eventos, registros, chapeta, conflictos ->
         DetalleAnimalUiState(
             animal = animal,
             eventos = eventos,
@@ -92,9 +88,13 @@ class DetalleAnimalViewModel(
             eventosEnConflicto = conflictos.eventos,
             registrosEnConflicto = conflictos.registros,
         )
-        },
-        puedeAdministrar,
-    ) { detalle, puede -> detalle.copy(puedeAdministrar = puede) }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetalleAnimalUiState())
+    }
+
+    val estado: StateFlow<DetalleAnimalUiState> = combine(
+        detalle,
+        cuentaRepository.observeUsuario(),
+    ) { detalle, usuario -> detalle.copy(puedeAdministrar = usuario.puedeAdministrar) }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DetalleAnimalUiState())
 
     private fun observarSiHay(idAnimal: String?): Flow<Animal?> =
         idAnimal?.let(animalRepository::observeById) ?: flowOf(null)

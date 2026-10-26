@@ -1,5 +1,6 @@
 package com.devcris80.prototipo.domain.usecase
 
+import com.devcris80.prototipo.domain.model.puedeAdministrar
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 
@@ -20,7 +21,7 @@ class DarDeBajaAnimal(
     }
 
     suspend operator fun invoke(idAnimal: String): Resultado {
-        if (cuentaRepository.getUsuario()?.rol?.puedeAdministrar != true) return Resultado.NoPermitido
+        if (!cuentaRepository.getUsuario().puedeAdministrar) return Resultado.NoPermitido
         animalRepository.darDeBaja(idAnimal, clock())
         return Resultado.Realizado
     }
