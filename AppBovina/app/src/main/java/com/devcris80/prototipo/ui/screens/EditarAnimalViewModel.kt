@@ -39,6 +39,7 @@ class EditarAnimalViewModel(
     val eventos: Flow<EditarAnimalEvento> = _eventos.receiveAsFlow()
 
     private var idPerfilFinca: String? = null
+    private var animalCargado: Animal? = null
 
     init {
         viewModelScope.launch {
@@ -47,7 +48,9 @@ class EditarAnimalViewModel(
                 _estado.update { it.copy(noEditable = true) }
             } else {
                 idPerfilFinca = animal.idPerfilFinca
-                _estado.update { it.alCargar(animal) }
+                animalCargado = animal
+                val sexoBloqueado = animalRepository.tieneCrias(idAnimal)
+                _estado.update { it.alCargar(animal).copy(sexoBloqueado = sexoBloqueado) }
             }
         }
         viewModelScope.launch {
@@ -87,7 +90,7 @@ class EditarAnimalViewModel(
 
     fun onSexoSeleccionado(sexo: Sexo) = _estado.update {
         // Elegir el mismo sexo no pide la etapa otra vez: no hay nada que cambiar.
-        if (it.sexo == sexo) it else it.copy(sexo = sexo, etapa = null)
+        if (it.sexoBloqueado || it.sexo == sexo) it else it.copy(sexo = sexo, etapa = null)
     }
 
     fun onEtapaSeleccionada(etapa: Etapa) = _estado.update { it.copy(etapa = etapa) }
@@ -116,6 +119,11 @@ class EditarAnimalViewModel(
                 ActualizarAnimal.Resultado.SinCambios,
                 -> _eventos.send(EditarAnimalEvento.Guardado)
                 ActualizarAnimal.Resultado.NoEditable -> _estado.update { it.copy(noEditable = true) }
+                // Llegó una cría mientras se editaba: el formulario vuelve al sexo guardado y lo explica.
+                ActualizarAnimal.Resultado.SexoConCrias -> {
+                    val cargado = checkNotNull(animalCargado)
+                    _estado.update { it.copy(sexo = cargado.sexo, etapa = cargado.etapa, sexoBloqueado = true) }
+                }
             }
         }
     }

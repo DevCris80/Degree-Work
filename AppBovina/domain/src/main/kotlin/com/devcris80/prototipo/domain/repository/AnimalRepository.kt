@@ -20,6 +20,9 @@ interface AnimalRepository {
 
     suspend fun findById(idAnimal: String): Animal?
 
+    /** Si algún Animal, también uno dado de baja, lo tiene como padre o madre. */
+    suspend fun tieneCrias(idAnimal: String): Boolean
+
     /** Guarda los cambios de un Animal que ya existe. La baja se hace con [darDeBaja]. */
     suspend fun update(animal: Animal)
 

@@ -99,6 +99,43 @@ class EditarAnimalViewModelTest {
     }
 
     @Test
+    fun unAnimalQueEsPadreOMadreDeOtrosTieneElSexoBloqueadoYNoLoCambia() = runTest {
+        animalRepository.set(animal(id = "madre-1"))
+        animalRepository.set(animal(id = "cria-1", etapa = Etapa.TERNERA).copy(idMadre = "madre-1"))
+        val viewModel = crearViewModel("madre-1")
+
+        viewModel.onSexoSeleccionado(Sexo.MACHO)
+
+        assertTrue(viewModel.estado.value.sexoBloqueado)
+        assertEquals(Sexo.HEMBRA, viewModel.estado.value.sexo)
+        assertEquals(Etapa.VACA, viewModel.estado.value.etapa)
+        assertTrue(viewModel.estado.value.puedeGuardar)
+    }
+
+    @Test
+    fun unAnimalSinCriasTieneElSexoDesbloqueado() = runTest {
+        animalRepository.set(animal())
+
+        assertFalse(crearViewModel().estado.value.sexoBloqueado)
+    }
+
+    @Test
+    fun siLlegaUnaCriaMientrasSeEditaGuardarNoCambiaElSexoYElFormularioLoExplica() = runTest {
+        animalRepository.set(animal(id = "madre-1"))
+        val viewModel = crearViewModel("madre-1")
+        viewModel.onSexoSeleccionado(Sexo.MACHO)
+        viewModel.onEtapaSeleccionada(Etapa.TORO)
+        animalRepository.set(animal(id = "cria-1", etapa = Etapa.TERNERA).copy(idMadre = "madre-1"))
+
+        viewModel.onGuardar()
+
+        assertTrue(animalRepository.actualizados.isEmpty())
+        assertTrue(viewModel.estado.value.sexoBloqueado)
+        assertEquals(Sexo.HEMBRA, viewModel.estado.value.sexo)
+        assertEquals(Etapa.VACA, viewModel.estado.value.etapa)
+    }
+
+    @Test
     fun guardarSinCambiosNoCreaUnaEscrituraNueva() = runTest {
         animalRepository.set(animal())
         val viewModel = crearViewModel()
