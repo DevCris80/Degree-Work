@@ -145,10 +145,13 @@ fun CrearCuentaScreen(
                         onTogglePasswordVisible = { confirmarVisible = !confirmarVisible },
                     )
 
+                    // CU-01 paso 3: la autorización se acepta después de ver su texto, en el diálogo.
                     Row(verticalAlignment = Alignment.CenterVertically) {
                         Checkbox(
                             checked = estado.aceptaAutorizacion,
-                            onCheckedChange = viewModel::onAutorizacionCambiada,
+                            onCheckedChange = { marcada ->
+                                if (marcada) leyendoAutorizacion = true else viewModel.onAutorizacionCambiada(false)
+                            },
                         )
                         Column {
                             Text(
