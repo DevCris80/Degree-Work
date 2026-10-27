@@ -84,6 +84,30 @@ class EditarAnimalViewModelTest {
     }
 
     @Test
+    fun guardarSinTocarLaFotoConservaLaQueBajoMientrasElFormularioEstabaAbierto() = runTest {
+        animalRepository.set(animal().copy(fotoUri = "content://vieja"))
+        val viewModel = crearViewModel()
+        animalRepository.set(animal().copy(fotoUri = "content://bajada"))
+
+        viewModel.onRazaCambiada("Jersey")
+        viewModel.onGuardar()
+
+        assertEquals(listOf(animal().copy(raza = "Jersey", fotoUri = "content://bajada")), animalRepository.actualizados)
+    }
+
+    @Test
+    fun unaFotoTomadaEnElFormularioSeGuardaAunqueHayaBajadoOtra() = runTest {
+        animalRepository.set(animal().copy(fotoUri = "content://vieja"))
+        val viewModel = crearViewModel()
+        animalRepository.set(animal().copy(fotoUri = "content://bajada"))
+
+        viewModel.onFotoCapturada("content://tomada")
+        viewModel.onGuardar()
+
+        assertEquals(listOf(animal().copy(fotoUri = "content://tomada")), animalRepository.actualizados)
+    }
+
+    @Test
     fun cambiarElSexoObligaAElegirDeNuevoLaEtapaYSinEllaNoSePuedeGuardar() = runTest {
         animalRepository.set(animal())
         val viewModel = crearViewModel()

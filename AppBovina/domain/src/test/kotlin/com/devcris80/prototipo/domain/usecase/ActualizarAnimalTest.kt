@@ -69,4 +69,24 @@ class ActualizarAnimalTest {
         assertEquals(ActualizarAnimal.Resultado.Actualizado, resultado)
         assertEquals(Sexo.HEMBRA, animalRepository.actualizados.single().sexo)
     }
+
+    @Test
+    fun unaFotoQueBajoMientrasSeEditabaSeConservaSiLaPersonaNoCambioLaFoto() = runTest {
+        // El formulario se abrió con la foto A; mientras tanto, la sincronización bajó la B de otro celular.
+        animalRepository.set(toro().copy(fotoUri = "content://foto-b"))
+
+        val resultado = actualizarAnimal(toro().copy(fotoUri = "content://foto-a", raza = "Cebú"), fotoCambiada = false)
+
+        assertEquals(ActualizarAnimal.Resultado.Actualizado, resultado)
+        assertEquals(listOf(toro().copy(fotoUri = "content://foto-b", raza = "Cebú")), animalRepository.actualizados)
+    }
+
+    @Test
+    fun unaFotoNuevaDelFormularioReemplazaLaGuardada() = runTest {
+        animalRepository.set(toro().copy(fotoUri = "content://foto-b"))
+
+        actualizarAnimal(toro().copy(fotoUri = "content://foto-nueva"), fotoCambiada = true)
+
+        assertEquals(listOf(toro().copy(fotoUri = "content://foto-nueva")), animalRepository.actualizados)
+    }
 }
