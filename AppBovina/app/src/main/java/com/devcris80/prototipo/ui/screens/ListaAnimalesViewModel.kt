@@ -45,6 +45,8 @@ data class ListaAnimalesUiState(
     val animalesEnConflicto: Set<String> = emptySet(),
     /** Los cambios que el servidor no aceptó y nadie ha corregido (RN-24). */
     val rechazosAbiertos: Int = 0,
+    /** Las filas con cambios guardados en el celular que el servidor todavía no confirmó. */
+    val cambiosSinSubir: Int = 0,
     val sincronizando: Boolean = false,
     /** Lo que pasó con la última sincronización, hasta que la pantalla lo muestra. */
     val avisoSincronizacion: String? = null,
@@ -109,6 +111,8 @@ class ListaAnimalesViewModel(
         estado.copy(animalesEnConflicto = enConflicto)
     }.combine(rechazoRepository.observeAbiertos()) { estado, rechazos ->
         estado.copy(rechazosAbiertos = rechazos.size)
+    }.combine(sincronizacionRepository.observeEstado()) { estado, sync ->
+        estado.copy(cambiosSinSubir = sync.cambiosSinSubir)
     }.combine(sincronizacion) { estado, sync ->
         estado.copy(sincronizando = sync.sincronizando, avisoSincronizacion = sync.aviso)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListaAnimalesUiState())
