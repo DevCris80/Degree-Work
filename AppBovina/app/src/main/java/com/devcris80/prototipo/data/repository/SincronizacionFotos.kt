@@ -3,7 +3,6 @@ package com.devcris80.prototipo.data.repository
 import androidx.room.withTransaction
 import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.FotoRechazada
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
@@ -24,8 +23,7 @@ internal class SincronizacionFotos(
     private val almacen: AlmacenFotos,
     private val fotos: FotosLocales,
     private val database: AppDatabase,
-    private val clock: () -> Long,
-    private val nuevoIdRechazo: () -> String,
+    private val bandeja: BandejaDeRechazos,
 ) {
     private val animales = database.animalDao()
 
@@ -84,18 +82,14 @@ internal class SincronizacionFotos(
      * sin foto.
      */
     private suspend fun rechazar(idAnimal: String, fotoUri: String, rechazo: FotoRechazada) = database.withTransaction {
-        database.rechazoDao().insert(
-            RechazoEntity(
-                idRechazo = nuevoIdRechazo(),
-                entidad = "foto",
-                idFila = idAnimal,
-                contenido = buildJsonObject {
-                    put("id_animal", idAnimal)
-                    put("foto_uri", fotoUri)
-                }.toString(),
-                motivo = "${rechazo.codigo}: ${rechazo.motivo}",
-                fechaRechazo = clock(),
-            ),
+        bandeja.guardar(
+            ENTIDAD_FOTO,
+            idAnimal,
+            buildJsonObject {
+                put("id_animal", idAnimal)
+                put("foto_uri", fotoUri)
+            },
+            "${rechazo.codigo}: ${rechazo.motivo}",
         )
         animales.descartarFotoRechazada(idAnimal, fotoUri)
     }

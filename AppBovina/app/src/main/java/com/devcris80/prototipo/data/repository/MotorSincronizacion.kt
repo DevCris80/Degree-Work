@@ -4,7 +4,6 @@ import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.local.entity.EstadoSyncEntity
-import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
@@ -59,7 +58,8 @@ class MotorSincronizacion(
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
-    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, clock, nuevoIdRechazo)
+    private val bandeja = BandejaDeRechazos(database.rechazoDao(), clock, nuevoIdRechazo)
+    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, bandeja)
     private val enCurso = Mutex()
     private val fotosEnCurso = Mutex()
 
@@ -188,7 +188,7 @@ class MotorSincronizacion(
         motivo: String,
         delServidor: JsonObject?,
     ) {
-        guardarRechazo(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
+        bandeja.guardar(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
         if (delServidor != null) {
             // Por ejemplo, una Chapeta cuya liberación se rechazó vuelve a quedar activa.
             val vigente = tabla.conLaDelServidor(local, delServidor)
@@ -197,7 +197,7 @@ class MotorSincronizacion(
             return
         }
         for (dependiente in tabla.sacar(local)) {
-            guardarRechazo(
+            bandeja.guardar(
                 dependiente.entidad,
                 dependiente.idFila,
                 dependiente.fila,
@@ -282,19 +282,6 @@ class MotorSincronizacion(
     private suspend fun guardarUsuario(fila: JsonObject) {
         val local = database.usuarioDao().findById(fila.texto("id_usuario"))
         database.usuarioDao().guardar(fila.aUsuarioEntity(delDispositivo = local?.delDispositivo ?: false))
-    }
-
-    private suspend fun guardarRechazo(entidad: String, idFila: String, fila: JsonObject, motivo: String) {
-        database.rechazoDao().insert(
-            RechazoEntity(
-                idRechazo = nuevoIdRechazo(),
-                entidad = entidad,
-                idFila = idFila,
-                contenido = fila.toString(),
-                motivo = motivo,
-                fechaRechazo = clock(),
-            ),
-        )
     }
 
     private companion object {
