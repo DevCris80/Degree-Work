@@ -40,7 +40,7 @@ data class IndicadoresHato(
 
 /**
  * Los indicadores del hato, calculados sobre la copia local (LIM-05). Lo dado de baja no cuenta
- * en ninguno (RN-04).
+ * en ninguno (RN-04), ni un Evento con fecha futura en los eventos por mes.
  */
 @OptIn(ExperimentalCoroutinesApi::class)
 class ObservarIndicadoresHato(
@@ -74,7 +74,8 @@ class ObservarIndicadoresHato(
             animalesSinPesajeReciente = animales
                 .filter { it.ultimoRegistro == null || it.ultimoRegistro.timestamp < desde }
                 .map { it.animal },
-            eventosPorMes = eventosPorMes(eventos.filter { it.idAnimal in idsActivos }),
+            // Un Evento programado todavía no ocurrió, así que no cuenta hasta que llegue su fecha.
+            eventosPorMes = eventosPorMes(eventos.filter { it.idAnimal in idsActivos && it.fecha <= clock() }),
         )
     }
 
