@@ -61,6 +61,7 @@ class MotorSincronizacion(
     private val tablas = tablasSincronizadas(database)
     private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, clock, nuevoIdRechazo)
     private val enCurso = Mutex()
+    private val fotosEnCurso = Mutex()
 
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
         salvoCancelacion(
@@ -75,9 +76,10 @@ class MotorSincronizacion(
 
     override fun programar() = programarTrabajo()
 
-    // Con el mismo candado que los datos: guardar una fila entera pisaría la foto que se acaba de bajar. Lo que no
-    // pasó queda por subir o por bajar, y se intenta la próxima vez.
-    override suspend fun sincronizarFotos() = enCurso.withLock {
+    // Con su propio candado, para que una foto lenta no haga esperar a los datos. Puede correr a la vez que ellos: cada
+    // escritura de una foto es una sola sentencia, y los datos leen y guardan una fila entera dentro de una transacción.
+    // Lo que no pasó queda por subir o por bajar, y se intenta la próxima vez.
+    override suspend fun sincronizarFotos() = fotosEnCurso.withLock {
         salvoCancelacion(bloque = { fotos.sincronizar() }, alFallar = {})
     }
 

@@ -79,8 +79,9 @@ internal class SincronizacionFotos(
     }
 
     /**
-     * Como una fila que el servidor rechazó (RN-24): queda en la bandeja y no se reintenta. Al dejar de estar por subir,
-     * la foto del servidor, si hay una, baja en este mismo paso, como la fila vuelve a la versión del servidor.
+     * Como una fila que el servidor rechazó (RN-24): queda en la bandeja y no se reintenta. El Animal vuelve a la foto
+     * del servidor, que baja en este mismo paso, como la fila vuelve a la del servidor; si el servidor no tiene, queda
+     * sin foto.
      */
     private suspend fun rechazar(idAnimal: String, fotoUri: String, rechazo: FotoRechazada) = database.withTransaction {
         database.rechazoDao().insert(
@@ -96,7 +97,7 @@ internal class SincronizacionFotos(
                 fechaRechazo = clock(),
             ),
         )
-        animales.quitarFotoPorSubir(idAnimal, fotoUri)
+        animales.descartarFotoRechazada(idAnimal, fotoUri)
     }
 
     /**

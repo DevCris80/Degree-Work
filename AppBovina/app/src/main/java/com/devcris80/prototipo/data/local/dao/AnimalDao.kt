@@ -32,7 +32,7 @@ interface AnimalDao {
             "fechaNacimiento = :fechaNacimiento, fechaNacimientoEsEstimada = :fechaNacimientoEsEstimada, " +
             "proposito = :proposito, idPadre = :idPadre, idMadre = :idMadre, " +
             "fotoPorSubir = CASE WHEN :fotoUri IS NULL THEN 0 WHEN fotoUri IS NOT :fotoUri THEN 1 ELSE fotoPorSubir END, " +
-            "fotoUri = :fotoUri, " +
+            "fotoVersion = CASE WHEN :fotoUri IS NULL THEN NULL ELSE fotoVersion END, fotoUri = :fotoUri, " +
             EDICION_LOCAL + " WHERE idAnimal = :idAnimal",
     )
     suspend fun editar(
@@ -81,6 +81,14 @@ interface AnimalDao {
     // Si la foto cambió mientras subía, la nueva sigue por subir.
     @Query("UPDATE animal SET fotoPorSubir = 0 WHERE idAnimal = :idAnimal AND fotoUri = :fotoUri")
     suspend fun quitarFotoPorSubir(idAnimal: String, fotoUri: String)
+
+    // Storage no aceptará nunca esta foto: el Animal queda sin ella, y sin la fecha del servidor para que la del
+    // servidor, si hay una, vuelva a bajar. Si la foto cambió mientras subía, la nueva sigue por subir.
+    @Query(
+        "UPDATE animal SET fotoPorSubir = 0, fotoUri = NULL, fotoVersion = NULL " +
+            "WHERE idAnimal = :idAnimal AND fotoUri = :fotoUri",
+    )
+    suspend fun descartarFotoRechazada(idAnimal: String, fotoUri: String)
 
     // Nunca pisa una foto local que todavía no ha subido. Devuelve cuántas filas cambió: 0 si la local cambió.
     @Query(

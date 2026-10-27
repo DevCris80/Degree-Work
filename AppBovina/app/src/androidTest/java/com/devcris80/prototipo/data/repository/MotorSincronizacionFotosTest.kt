@@ -14,9 +14,14 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
+import kotlinx.coroutines.CompletableDeferred
+import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.async
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
+import kotlinx.coroutines.withContext
+import kotlinx.coroutines.withTimeout
 import org.junit.After
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertFalse
@@ -74,6 +79,24 @@ class MotorSincronizacionFotosTest {
         assertEquals(emptyList<String>(), almacen.subidas)
         assertEquals(emptyList<String>(), almacen.descargas)
         assertEquals(1, celularA.estado().fotosSinSubir)
+    }
+
+    @Test
+    fun unaPasadaDeFotosEnCursoNoHaceEsperarALosDatos() = runTest {
+        celularA.animales.insert(lucero(fotoUri = "content://camara/lucero.jpg"))
+        celularA.sincronizarSoloDatos()
+        val pausa = CompletableDeferred<Unit>()
+        almacen.pausaAlSubir = pausa
+        val fotos = async(Dispatchers.Default) { celularA.sincronizarSoloFotos() }
+        almacen.subiendo.await()
+        celularA.animales.update(lucero(fotoUri = "content://camara/lucero.jpg").copy(raza = "Gyr"))
+
+        val resultado = withContext(Dispatchers.Default) { withTimeout(10_000) { celularA.sincronizarSoloDatos() } }
+
+        assertEquals(ResultadoSincronizacion.Completa(aceptados = 1, enConflicto = 0, rechazados = 0), resultado)
+        pausa.complete(Unit)
+        fotos.await()
+        assertEquals(listOf("finca-1/lucero.webp"), almacen.subidas)
     }
 
     @Test
@@ -142,7 +165,8 @@ class MotorSincronizacionFotosTest {
 
     @Test
     fun unaFotoQueStorageRechazaQuedaEnLaBandejaYVuelveLaDelServidor() = runTest {
-        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fechaFotoServidor = "version-1"))
+        // El celular ya tenía la foto vigente del servidor antes de tomar la que se rechaza.
+        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fechaFotoServidor = "version-2"))
         almacen.archivos["finca-1/lucero.webp"] = "la del servidor".toByteArray() to "version-2"
         almacen.fallaAlSubir = FotoRechazada("403", "new row violates row-level security policy")
         celularA.animales.update(lucero(fotoUri = "content://camara/rechazada.jpg"))
@@ -177,8 +201,20 @@ class MotorSincronizacionFotosTest {
     }
 
     @Test
-    fun quitarUnaFotoAntesDeSubirlaDejaBajarLaDelServidor() = runTest {
+    fun sinFotoEnElServidorUnaFotoRechazadaSeQuita() = runTest {
         celularA.db.animalDao().insert(sincronizado("lucero"))
+        almacen.fallaAlSubir = FotoRechazada("413", "The object exceeded the maximum allowed size")
+        celularA.animales.update(lucero(fotoUri = "content://camara/rechazada.jpg"))
+
+        celularA.sincronizar()
+
+        assertEquals(null, celularA.animal("lucero").fotoUri)
+    }
+
+    @Test
+    fun quitarUnaFotoDejaBajarOtraVezLaDelServidor() = runTest {
+        // El celular ya tenía la foto vigente del servidor.
+        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fechaFotoServidor = "version-2"))
         almacen.archivos["finca-1/lucero.webp"] = "la del servidor".toByteArray() to "version-2"
         celularA.animales.update(lucero(fotoUri = "content://camara/lucero.jpg"))
         // En el servidor nadie borra (RNF-04): quitarla no la quita de los demás celulares.
@@ -225,6 +261,8 @@ class MotorSincronizacionFotosTest {
         suspend fun sincronizar() = motor.sincronizar().also { motor.sincronizarFotos() }
 
         suspend fun sincronizarSoloDatos() = motor.sincronizar()
+
+        suspend fun sincronizarSoloFotos() = motor.sincronizarFotos()
 
         suspend fun estado() = motor.observeEstado().first()
 

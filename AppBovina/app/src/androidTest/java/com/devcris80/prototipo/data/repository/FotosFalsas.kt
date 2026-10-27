@@ -3,6 +3,7 @@ package com.devcris80.prototipo.data.repository
 import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.FotoGuardada
+import kotlinx.coroutines.CompletableDeferred
 
 /**
  * El bucket de fotos, compartido por los celulares de una prueba. Cada subida le da a su archivo una versión nueva,
@@ -14,10 +15,18 @@ internal class AlmacenFotosFalso : AlmacenFotos {
     val descargas = mutableListOf<String>()
     var falla: Exception? = null
     var fallaAlSubir: Exception? = null
+
+    /** Si no es nula, cada subida avisa en [subiendo] y espera a que se complete. */
+    var pausaAlSubir: CompletableDeferred<Unit>? = null
+    val subiendo = CompletableDeferred<Unit>()
     private var versiones = 0
 
     override suspend fun subir(ruta: String, webp: ByteArray) {
         (falla ?: fallaAlSubir)?.let { throw it }
+        pausaAlSubir?.let {
+            subiendo.complete(Unit)
+            it.await()
+        }
         subidas += ruta
         archivos[ruta] = webp to "version-${++versiones}"
     }

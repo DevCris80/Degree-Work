@@ -16,7 +16,7 @@ interface SincronizacionRepository {
     /**
      * Sube las fotos de los Animales que están por subir y baja las que cambiaron en otros celulares (RF-38). Va
      * aparte de [sincronizar], después, para que las fotos nunca retrasen los datos: lo que no pasa queda para la
-     * próxima vez, sin error. Tampoco corre a la vez que [sincronizar].
+     * próxima vez, sin error. Puede correr a la vez que [sincronizar], pero no dos veces a la vez.
      */
     suspend fun sincronizarFotos()
 
