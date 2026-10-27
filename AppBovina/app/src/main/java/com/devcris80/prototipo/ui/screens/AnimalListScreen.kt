@@ -70,6 +70,7 @@ fun ListaAnimalesScreen(
     onNuevoAnimalClick: () -> Unit,
     onPesajesPendientesClick: () -> Unit,
     onIndicadoresClick: () -> Unit,
+    onRegistrarUbicacionClick: () -> Unit,
     onRechazosClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
@@ -171,6 +172,7 @@ fun ListaAnimalesScreen(
                     nombreUsuario = estado.nombreUsuario,
                     nombreFinca = estado.nombreFinca,
                     totalAnimales = estado.animales.size,
+                    onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
                     rechazosAbiertos = estado.rechazosAbiertos,
                     cambiosSinSubir = estado.cambiosSinSubir,
                 )
@@ -236,6 +238,7 @@ private fun ResumenFinca(
     nombreUsuario: String,
     nombreFinca: String,
     totalAnimales: Int,
+    onRegistrarUbicacionClick: (() -> Unit)?,
     rechazosAbiertos: Int,
     cambiosSinSubir: Int,
 ) {
@@ -293,6 +296,16 @@ private fun ResumenFinca(
                 style = MaterialTheme.typography.labelMedium,
                 color = color,
             )
+        }
+        if (onRegistrarUbicacionClick != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onRegistrarUbicacionClick) {
+                    Text(text = "Registrar ubicación de la finca")
+                }
+            }
         }
     }
 }

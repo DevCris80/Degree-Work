@@ -16,6 +16,10 @@ class RoomCuentaRepository(
 
     override suspend fun getPerfilFinca(): PerfilFinca? = perfilFincaDao.getOnce()?.toDomain()
 
+    override suspend fun guardarPerfilFinca(perfil: PerfilFinca) {
+        perfilFincaDao.guardar(perfil.toEntity(System.currentTimeMillis()))
+    }
+
     override fun observeUsuario(): Flow<Usuario?> = usuarioDao.observe().map { it?.toDomain() }
 
     override suspend fun getUsuario(): Usuario? = usuarioDao.getOnce()?.toDomain()

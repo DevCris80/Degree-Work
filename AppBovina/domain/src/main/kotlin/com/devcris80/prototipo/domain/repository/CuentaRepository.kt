@@ -13,6 +13,9 @@ interface CuentaRepository {
 
     suspend fun getPerfilFinca(): PerfilFinca?
 
+    /** Guarda (o actualiza) los datos de la finca, con `sincronizado = false` para que la subida los lleve al servidor. */
+    suspend fun guardarPerfilFinca(perfil: PerfilFinca)
+
     fun observeUsuario(): Flow<Usuario?>
 
     suspend fun getUsuario(): Usuario?

@@ -6,6 +6,7 @@ import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Registro
+import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
@@ -38,6 +39,8 @@ data class AnimalConResumen(
 data class ListaAnimalesUiState(
     val nombreFinca: String = "",
     val nombreUsuario: String = "",
+    /** Solo el Ganadero edita los datos de la finca (matriz 2.1). */
+    val puedeRegistrarUbicacion: Boolean = false,
     val animales: List<AnimalConResumen> = emptyList(),
     val filtro: Proposito? = null,
     val pesajesPendientes: Int = 0,
@@ -103,6 +106,7 @@ class ListaAnimalesViewModel(
         ListaAnimalesUiState(
             nombreFinca = perfil?.nombreFinca.orEmpty(),
             nombreUsuario = usuario?.nombre.orEmpty(),
+            puedeRegistrarUbicacion = usuario?.rol == Rol.GANADERO,
             animales = animales.filter { filtroActual == null || it.animal.proposito == filtroActual },
             filtro = filtroActual,
             pesajesPendientes = pendientes.size,

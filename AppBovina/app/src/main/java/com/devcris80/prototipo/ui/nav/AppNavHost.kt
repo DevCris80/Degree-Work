@@ -35,6 +35,7 @@ import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
 import com.devcris80.prototipo.ui.screens.ProgramarEventoScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
+import com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaScreen
 import com.devcris80.prototipo.ui.screens.ResolverConflictoScreen
 import com.devcris80.prototipo.ui.util.appViewModel
 
@@ -150,6 +151,9 @@ fun AppNavHost() {
                         }
                     },
                     onIndicadoresClick = { navController.navigate(Rutas.Indicadores.ruta) },
+                    onRegistrarUbicacionClick = {
+                        navController.navigate(Rutas.UbicacionFinca.ruta)
+                    },
                     onRechazosClick = { navController.navigate(Rutas.Rechazos.ruta) },
                 )
             }
@@ -255,6 +259,12 @@ fun AppNavHost() {
             composable(Rutas.EstadoServicio.ruta) {
                 PesosScreen(
                     onRegistrarAnimalConCodigo = { codigo -> navController.navigate(Rutas.NuevoAnimal.crear(codigo)) },
+                )
+            }
+            composable(Rutas.UbicacionFinca.ruta) {
+                RegistrarUbicacionFincaScreen(
+                    onVolver = { navController.popBackStack() },
+                    onUbicacionGuardada = { navController.popBackStack() },
                 )
             }
         }
