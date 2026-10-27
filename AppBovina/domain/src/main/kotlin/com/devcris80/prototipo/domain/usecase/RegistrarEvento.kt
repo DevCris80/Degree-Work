@@ -13,9 +13,9 @@ import java.util.UUID
  * Registra un Evento de un Animal a nombre del Usuario del dispositivo. La [fecha] puede ser pasada o
  * futura: un Evento futuro es un Evento programado.
  *
- * Cada tipo guarda solo sus campos: la vacunación, el biológico, la dosis y la vía; el parto, la cría. En un
+ * Todo Evento lleva un título (su detalle), y una vacunación, su biológico. Cada tipo guarda solo sus campos: la vacunación, el biológico, la dosis y la vía; el parto, la cría. En un
  * parto con cría, la cría queda con el Animal del Evento como madre si es hembra, o como padre si es macho,
- * en la misma transacción que el Evento.
+ * en la misma transacción que el Evento. Si la cría ya tiene otra madre o padre, no se sobrescribe: el parto no se registra.
  */
 class RegistrarEvento(
     private val animalRepository: AnimalRepository,
@@ -34,6 +34,12 @@ class RegistrarEvento(
 
         /** La cría de un parto no existe, está dada de baja o es el mismo Animal del Evento. */
         data object CriaNoValida : Resultado
+
+        /** La cría ya tiene una madre (o un padre) distinta del Animal del Evento; cambiarla le toca a quien edita la cría. */
+        data object CriaConOtroProgenitor : Resultado
+
+        /** Falta el título del Evento o, en una vacunación, el biológico. */
+        data object FaltanDatos : Resultado
     }
 
     suspend operator fun invoke(
@@ -46,6 +52,11 @@ class RegistrarEvento(
         via: String? = null,
         idCriaResultante: String? = null,
     ): Resultado = transaccion.ejecutar {
+        val titulo = detalle.trim()
+        val biologicoDeLaVacuna = biologico.takeIf { tipo == TipoEvento.VACUNACION }.limpio()
+        if (titulo.isEmpty() || (tipo == TipoEvento.VACUNACION && biologicoDeLaVacuna == null)) {
+            return@ejecutar Resultado.FaltanDatos
+        }
         val usuario = cuentaRepository.getUsuario() ?: return@ejecutar Resultado.SinUsuario
         val animal = animalRepository.findById(idAnimal)?.takeIf { it.activo }
             ?: return@ejecutar Resultado.AnimalNoDisponible
@@ -53,14 +64,20 @@ class RegistrarEvento(
             animalRepository.findById(idCria)?.takeIf { it.activo && it.idAnimal != animal.idAnimal }
                 ?: return@ejecutar Resultado.CriaNoValida
         }
+        if (cria != null) {
+            val progenitorActual = if (animal.sexo == Sexo.HEMBRA) cria.idMadre else cria.idPadre
+            if (progenitorActual != null && progenitorActual != animal.idAnimal) {
+                return@ejecutar Resultado.CriaConOtroProgenitor
+            }
+        }
         val evento = Evento(
             idEvento = UUID.randomUUID().toString(),
             idAnimal = idAnimal,
             idUsuario = usuario.idUsuario,
             tipoEvento = tipo.nombre,
             fecha = fecha,
-            detalle = detalle,
-            biologico = biologico.takeIf { tipo == TipoEvento.VACUNACION }.limpio(),
+            detalle = titulo,
+            biologico = biologicoDeLaVacuna,
             dosis = dosis.takeIf { tipo == TipoEvento.VACUNACION }.limpio(),
             via = via.takeIf { tipo == TipoEvento.VACUNACION }.limpio(),
             idCriaResultante = cria?.idAnimal,

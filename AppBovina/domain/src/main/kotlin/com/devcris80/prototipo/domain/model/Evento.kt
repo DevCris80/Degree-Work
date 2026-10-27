@@ -22,7 +22,7 @@ data class Evento(
     val idCriaResultante: String? = null,
 ) {
     /** Su fecha todavía no llega: es un Evento programado. */
-    fun estaProgramado(ahora: Long): Boolean = fecha > ahora
+    fun estaProgramado(ahora: Long): Boolean = fechaEstaProgramada(fecha, ahora)
 
     /** Biológico, dosis y vía de una vacunación, los que tenga; nulo si no tiene ninguno. */
     val resumenDeVacunacion: String?
@@ -43,3 +43,6 @@ data class Evento(
         val TILDES = Regex("\\p{M}")
     }
 }
+
+/** Una [fecha] de Evento que todavía no llega a [ahora]: el Evento está programado. */
+fun fechaEstaProgramada(fecha: Long, ahora: Long): Boolean = fecha > ahora

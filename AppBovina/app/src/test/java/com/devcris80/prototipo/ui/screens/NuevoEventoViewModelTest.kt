@@ -166,6 +166,22 @@ class NuevoEventoViewModelTest {
         assertTrue(eventoRepository.observeByAnimal("vaca-1").first().isEmpty())
     }
 
+    @Test
+    fun unaCriaQueYaTieneOtraMadreMuestraElErrorYNoSeRegistraNada() = runTest {
+        animalRepository.activos.value = listOf(vaca(), cria().copy(idMadre = "otra-vaca"))
+        animalRepository.set(cria().copy(idMadre = "otra-vaca"))
+        val viewModel = crearViewModel("vaca-1")
+        viewModel.onTipoSeleccionado(TipoEvento.PARTO)
+        viewModel.onTituloCambiado("Parto")
+        viewModel.onCriaSeleccionada("cria-1")
+
+        viewModel.onGuardar()
+
+        assertEquals(NuevoEventoError.CriaConOtroProgenitor, viewModel.estado.value.error)
+        assertFalse(viewModel.estado.value.guardando)
+        assertTrue(eventoRepository.observeByAnimal("vaca-1").first().isEmpty())
+    }
+
     private companion object {
         const val DIA = 24L * 60 * 60 * 1000
         const val AHORA = 100 * DIA

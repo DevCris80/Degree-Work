@@ -257,6 +257,9 @@ private fun EventoFormContent(
                     text = when (error) {
                         NuevoEventoError.AnimalNoDisponible -> "Este animal está dado de baja o ya no existe."
                         NuevoEventoError.CriaNoValida -> "La cría elegida ya no está disponible."
+                        NuevoEventoError.CriaConOtroProgenitor ->
+                            "Esa cría ya tiene otra madre o padre registrado. Corríjalo editando a la cría."
+                        NuevoEventoError.FaltanDatos -> "Falta el título del evento o el biológico."
                         NuevoEventoError.SinUsuario -> "No hay una sesión iniciada en este celular."
                     },
                     style = MaterialTheme.typography.bodyMedium,

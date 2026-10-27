@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.TipoEvento
+import com.devcris80.prototipo.domain.model.fechaEstaProgramada
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.usecase.RegistrarEvento
 import kotlinx.coroutines.channels.Channel
@@ -21,6 +22,8 @@ val VIAS_DE_APLICACION = listOf("Subcutánea", "Intramuscular", "Intravenosa", "
 sealed interface NuevoEventoError {
     data object AnimalNoDisponible : NuevoEventoError
     data object CriaNoValida : NuevoEventoError
+    data object CriaConOtroProgenitor : NuevoEventoError
+    data object FaltanDatos : NuevoEventoError
     data object SinUsuario : NuevoEventoError
 }
 
@@ -45,7 +48,7 @@ data class NuevoEventoUiState(
     val animal: Animal? get() = animales.firstOrNull { it.idAnimal == idAnimal }
 
     /** Un Evento programado: su fecha todavía no llega. */
-    val programado: Boolean get() = fecha > ahora
+    val programado: Boolean get() = fechaEstaProgramada(fecha, ahora)
 
     /** Los Animales que pueden ser la cría de un parto: cualquiera menos el del Evento. */
     val candidatasCria: List<Animal> get() = animales.filter { it.idAnimal != idAnimal }
@@ -116,6 +119,8 @@ class NuevoEventoViewModel(
                 RegistrarEvento.Resultado.SinUsuario -> NuevoEventoError.SinUsuario
                 RegistrarEvento.Resultado.AnimalNoDisponible -> NuevoEventoError.AnimalNoDisponible
                 RegistrarEvento.Resultado.CriaNoValida -> NuevoEventoError.CriaNoValida
+                RegistrarEvento.Resultado.CriaConOtroProgenitor -> NuevoEventoError.CriaConOtroProgenitor
+                RegistrarEvento.Resultado.FaltanDatos -> NuevoEventoError.FaltanDatos
             }
             if (error == null) {
                 _eventos.send(NuevoEventoEvento.Guardado)

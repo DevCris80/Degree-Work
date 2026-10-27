@@ -82,7 +82,7 @@ class RegistrarEventoTest {
     fun sinUsuarioEnElDispositivoNoRegistraNada() = runTest {
         animalRepository.set(vaca())
 
-        val resultado = registrarEvento("vaca-1", TipoEvento.VACUNACION, "Vacuna", fecha = 1L)
+        val resultado = registrarEvento("vaca-1", TipoEvento.VACUNACION, "Vacuna", fecha = 1L, biologico = "Aftosa")
 
         assertEquals(RegistrarEvento.Resultado.SinUsuario, resultado)
         assertTrue(eventosDe("vaca-1").isEmpty())
@@ -93,8 +93,8 @@ class RegistrarEventoTest {
         hayUsuario()
         animalRepository.set(vaca().copy(idAnimal = "vaca-baja", fechaBaja = 9L))
 
-        val inexistente = registrarEvento("no-existe", TipoEvento.VACUNACION, "Vacuna", fecha = 1L)
-        val dadoDeBaja = registrarEvento("vaca-baja", TipoEvento.VACUNACION, "Vacuna", fecha = 1L)
+        val inexistente = registrarEvento("no-existe", TipoEvento.VACUNACION, "Vacuna", fecha = 1L, biologico = "Aftosa")
+        val dadoDeBaja = registrarEvento("vaca-baja", TipoEvento.VACUNACION, "Vacuna", fecha = 1L, biologico = "Aftosa")
 
         assertEquals(RegistrarEvento.Resultado.AnimalNoDisponible, inexistente)
         assertEquals(RegistrarEvento.Resultado.AnimalNoDisponible, dadoDeBaja)
@@ -167,10 +167,64 @@ class RegistrarEventoTest {
         animalRepository.set(vaca())
         animalRepository.set(cria().copy(idMadre = "vaca-1"))
 
-        registrarEvento("vaca-1", TipoEvento.VACUNACION, "Vacuna", fecha = 1L, idCriaResultante = "cria-1")
+        registrarEvento("vaca-1", TipoEvento.VACUNACION, "Vacuna", fecha = 1L, biologico = "Aftosa", idCriaResultante = "cria-1")
         registrarEvento("vaca-1", TipoEvento.PARTO, "Parto", fecha = 2L, idCriaResultante = "cria-1")
 
         assertTrue(eventosDe("vaca-1").first { it.tipoEvento == "Vacunación" }.idCriaResultante == null)
         assertTrue(animalRepository.actualizados.isEmpty())
+    }
+
+    @Test
+    fun unaCriaQueYaTieneOtraMadreONoSeSobrescribeYNoSeRegistraElParto() = runTest {
+        hayUsuario()
+        animalRepository.set(vaca())
+        animalRepository.set(toro())
+        animalRepository.set(cria().copy(idMadre = "otra-vaca"))
+        animalRepository.set(cria().copy(idAnimal = "cria-2", idPadre = "otro-toro"))
+
+        val deUnaVaca = registrarEvento("vaca-1", TipoEvento.PARTO, "Parto", fecha = 1L, idCriaResultante = "cria-1")
+        val deUnToro = registrarEvento("toro-1", TipoEvento.PARTO, "Monta", fecha = 1L, idCriaResultante = "cria-2")
+
+        assertEquals(RegistrarEvento.Resultado.CriaConOtroProgenitor, deUnaVaca)
+        assertEquals(RegistrarEvento.Resultado.CriaConOtroProgenitor, deUnToro)
+        assertTrue(eventosDe("vaca-1").isEmpty())
+        assertTrue(eventosDe("toro-1").isEmpty())
+        assertTrue(animalRepository.actualizados.isEmpty())
+    }
+
+    @Test
+    fun unaCriaSinMadreQuedaConLaDelEventoAunqueTengaPadre() = runTest {
+        hayUsuario()
+        animalRepository.set(vaca())
+        animalRepository.set(cria().copy(idPadre = "toro-1"))
+
+        registrarEvento("vaca-1", TipoEvento.PARTO, "Parto", fecha = 1L, idCriaResultante = "cria-1")
+
+        assertEquals(listOf(cria().copy(idPadre = "toro-1", idMadre = "vaca-1")), animalRepository.actualizados)
+    }
+
+    @Test
+    fun sinTituloOSinBiologicoEnUnaVacunacionNoRegistraNada() = runTest {
+        hayUsuario()
+        animalRepository.set(vaca())
+
+        val sinTitulo = registrarEvento("vaca-1", TipoEvento.VACUNACION, "   ", fecha = 1L, biologico = "Aftosa")
+        val sinBiologico = registrarEvento("vaca-1", TipoEvento.VACUNACION, "Vacuna", fecha = 1L, biologico = "  ")
+        val partoSinTitulo = registrarEvento("vaca-1", TipoEvento.PARTO, "", fecha = 1L)
+
+        assertEquals(RegistrarEvento.Resultado.FaltanDatos, sinTitulo)
+        assertEquals(RegistrarEvento.Resultado.FaltanDatos, sinBiologico)
+        assertEquals(RegistrarEvento.Resultado.FaltanDatos, partoSinTitulo)
+        assertTrue(eventosDe("vaca-1").isEmpty())
+    }
+
+    @Test
+    fun unPartoNoPideBiologicoYElTituloSeGuardaSinEspaciosDeMas() = runTest {
+        hayUsuario()
+        animalRepository.set(vaca())
+
+        registrarEvento("vaca-1", TipoEvento.PARTO, "  Parto sin complicaciones ", fecha = 1L)
+
+        assertEquals("Parto sin complicaciones", eventosDe("vaca-1").single().detalle)
     }
 }
