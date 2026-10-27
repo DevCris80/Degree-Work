@@ -111,9 +111,14 @@ class FakeChapetaRepository : ChapetaRepository {
 class FakeCuentaRepository : CuentaRepository {
     val perfil = MutableStateFlow<PerfilFinca?>(null)
     val usuario = MutableStateFlow<Usuario?>(null)
+    val guardadas = mutableListOf<PerfilFinca>()
 
     override fun observePerfilFinca(): Flow<PerfilFinca?> = perfil
     override suspend fun getPerfilFinca(): PerfilFinca? = perfil.value
+    override suspend fun guardarPerfilFinca(perfil: PerfilFinca) {
+        guardadas.add(perfil)
+        this.perfil.value = perfil
+    }
     override fun observeUsuario(): Flow<Usuario?> = usuario
     override suspend fun getUsuario(): Usuario? = usuario.value
 }

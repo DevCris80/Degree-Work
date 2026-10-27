@@ -69,6 +69,7 @@ fun ListaAnimalesScreen(
     onNuevoAnimalClick: () -> Unit,
     onPesajesPendientesClick: () -> Unit,
     onIndicadoresClick: () -> Unit,
+    onRegistrarUbicacionClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -183,6 +184,7 @@ fun ListaAnimalesScreen(
                     nombreUsuario = estado.nombreUsuario,
                     nombreFinca = estado.nombreFinca,
                     totalAnimales = estado.animales.size,
+                    onRegistrarUbicacionClick = onRegistrarUbicacionClick,
                 )
             }
             item {
@@ -246,6 +248,7 @@ private fun ResumenFinca(
     nombreUsuario: String,
     nombreFinca: String,
     totalAnimales: Int,
+    onRegistrarUbicacionClick: () -> Unit,
 ) {
     Column(
         modifier = Modifier
@@ -293,6 +296,14 @@ private fun ResumenFinca(
                 style = MaterialTheme.typography.labelMedium,
                 color = MaterialTheme.colorScheme.primary,
             )
+        }
+        androidx.compose.foundation.layout.Row(
+            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+            horizontalArrangement = Arrangement.End,
+        ) {
+            TextButton(onClick = onRegistrarUbicacionClick) {
+                Text(text = "Registrar ubicación de la finca")
+            }
         }
     }
 }

@@ -224,6 +224,17 @@ fun PesajePendiente.toEntity(fechaModificacion: Long) = PesajePendienteEntity(
 fun PerfilFincaEntity.toDomain() = PerfilFinca(
     idPerfilFinca = idPerfilFinca,
     nombreFinca = nombreFinca,
+    latitud = latitud,
+    longitud = longitud,
+)
+
+fun PerfilFinca.toEntity(fechaModificacion: Long) = PerfilFincaEntity(
+    idPerfilFinca = idPerfilFinca,
+    nombreFinca = nombreFinca,
+    sincronizado = false,
+    fechaModificacion = fechaModificacion,
+    latitud = latitud,
+    longitud = longitud,
 )
 
 fun UsuarioEntity.toDomain() = Usuario(
@@ -259,6 +270,8 @@ fun JsonObject.aPerfilFincaEntity() = PerfilFincaEntity(
     nombreFinca = texto("nombre_finca"),
     sincronizado = true,
     fechaModificacion = fecha("fecha_modificacion"),
+    latitud = dobleONulo("latitud"),
+    longitud = dobleONulo("longitud"),
 )
 
 // El rol pasa por TEXTO_ROL para rechazar un valor que la app no conoce.
@@ -278,6 +291,8 @@ fun JsonObject.aUsuarioEntity(delDispositivo: Boolean) = UsuarioEntity(
 fun PerfilFincaEntity.aFilaDelServidor() = buildJsonObject {
     put("id_perfil_finca", idPerfilFinca)
     put("nombre_finca", nombreFinca)
+    putDoble("latitud", latitud)
+    putDoble("longitud", longitud)
     putFecha("fecha_modificacion", fechaModificacion)
 }
 
@@ -347,6 +362,8 @@ fun PesajePendienteEntity.aFilaDelServidor() = buildJsonObject {
 
 fun PerfilFincaEntity.conLaDelServidor(fila: JsonObject) = copy(
     nombreFinca = fila.texto("nombre_finca"),
+    latitud = fila.dobleONulo("latitud"),
+    longitud = fila.dobleONulo("longitud"),
     fechaModificacion = fila.fecha("fecha_modificacion"),
     sincronizado = true,
 )
@@ -477,6 +494,9 @@ internal fun JsonObject.texto(campo: String): String = getValue(campo).jsonPrimi
 
 private fun JsonObject.textoONulo(campo: String): String? = get(campo)?.takeUnless { it is JsonNull }?.jsonPrimitive?.content
 
+private fun JsonObject.dobleONulo(campo: String): Double? =
+    get(campo)?.takeUnless { it is JsonNull }?.jsonPrimitive?.content?.toDoubleOrNull()
+
 @OptIn(ExperimentalTime::class)
 private fun JsonObject.fecha(campo: String): Long = Instant.parse(texto(campo)).toEpochMilliseconds()
 
@@ -487,4 +507,8 @@ private fun JsonObject.fechaONula(campo: String): Long? =
 @OptIn(ExperimentalTime::class)
 private fun JsonObjectBuilder.putFecha(campo: String, milisegundos: Long?) {
     put(campo, milisegundos?.let { Instant.fromEpochMilliseconds(it).toString() })
+}
+
+private fun JsonObjectBuilder.putDoble(campo: String, valor: Double?) {
+    put(campo, valor)
 }

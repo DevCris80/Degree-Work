@@ -141,3 +141,14 @@ val MIGRACION_15_16: Migration = object : MigracionBovina(15, 16) {
         db.execSQL("UPDATE `animal` SET fotoPorSubir = 1 WHERE fotoUri IS NOT NULL")
     }
 }
+
+/**
+ * 16 → 17: registrar la ubicación de la finca (#93). `perfil_finca` gana `latitud` y `longitud`,
+ * ambas opcionales: si se niega el permiso de ubicación, se ingresan a mano y pueden quedar vacías.
+ */
+val MIGRACION_16_17: Migration = object : MigracionBovina(16, 17) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `perfil_finca` ADD COLUMN `latitud` REAL")
+        db.execSQL("ALTER TABLE `perfil_finca` ADD COLUMN `longitud` REAL")
+    }
+}

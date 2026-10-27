@@ -10,4 +10,6 @@ data class PerfilFincaEntity(
     val nombreFinca: String,
     val sincronizado: Boolean = false,
     val fechaModificacion: Long,
+    val latitud: Double? = null,
+    val longitud: Double? = null,
 )
