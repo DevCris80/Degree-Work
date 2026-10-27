@@ -184,7 +184,7 @@ fun ListaAnimalesScreen(
                     nombreUsuario = estado.nombreUsuario,
                     nombreFinca = estado.nombreFinca,
                     totalAnimales = estado.animales.size,
-                    onRegistrarUbicacionClick = onRegistrarUbicacionClick,
+                    onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
                 )
             }
             item {
@@ -248,7 +248,7 @@ private fun ResumenFinca(
     nombreUsuario: String,
     nombreFinca: String,
     totalAnimales: Int,
-    onRegistrarUbicacionClick: () -> Unit,
+    onRegistrarUbicacionClick: (() -> Unit)?,
 ) {
     Column(
         modifier = Modifier
@@ -297,12 +297,14 @@ private fun ResumenFinca(
                 color = MaterialTheme.colorScheme.primary,
             )
         }
-        androidx.compose.foundation.layout.Row(
-            modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-            horizontalArrangement = Arrangement.End,
-        ) {
-            TextButton(onClick = onRegistrarUbicacionClick) {
-                Text(text = "Registrar ubicación de la finca")
+        if (onRegistrarUbicacionClick != null) {
+            Row(
+                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
+                horizontalArrangement = Arrangement.End,
+            ) {
+                TextButton(onClick = onRegistrarUbicacionClick) {
+                    Text(text = "Registrar ubicación de la finca")
+                }
             }
         }
     }
