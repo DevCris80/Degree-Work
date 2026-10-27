@@ -1,4 +1,4 @@
-package com.devcris80.prototipo.data.local
+package com.devcris80.prototipo.data.archivos
 
 import android.content.Context
 import android.graphics.Bitmap
@@ -23,13 +23,27 @@ interface FotosLocales {
 
     /** Guarda la foto [webp] que bajó del servidor para el Animal [idAnimal] y devuelve su URI. */
     suspend fun guardar(idAnimal: String, webp: ByteArray): String
+
+    /** Borra la foto en [fotoUri] si es un archivo de la app. Una de otra app (la galería) no se toca. */
+    suspend fun borrar(fotoUri: String)
+
+    /**
+     * Borra los archivos de la app que no son la foto de ningún Animal ([enUso]): las fotos reemplazadas y las tomas
+     * de la cámara que no se guardaron. Solo los de más de un día: uno más reciente puede estar en un formulario abierto.
+     */
+    suspend fun limpiar(enUso: Set<String>)
 }
 
 /**
  * Las fotos en `files/fotos`, donde también escribe la cámara (`crearArchivoFotoUri`). Una foto bajada toma un
  * archivo nuevo en vez de reemplazar el anterior: con la misma URI, la pantalla no sabría que cambió.
  */
-class FotosEnArchivos(private val context: Context) : FotosLocales {
+class FotosEnArchivos(
+    private val context: Context,
+    private val clock: () -> Long = { System.currentTimeMillis() },
+) : FotosLocales {
+    private val carpeta get() = File(context.filesDir, "fotos")
+
     override suspend fun comoWebp(fotoUri: String): ByteArray? = withContext(Dispatchers.IO) {
         val uri = Uri.parse(fotoUri)
         try {
@@ -43,12 +57,30 @@ class FotosEnArchivos(private val context: Context) : FotosLocales {
     }
 
     override suspend fun guardar(idAnimal: String, webp: ByteArray): String = withContext(Dispatchers.IO) {
-        val carpeta = File(context.filesDir, "fotos").apply { mkdirs() }
-        val archivo = File(carpeta, "${idAnimal}_${System.currentTimeMillis()}.webp")
+        val carpeta = carpeta.apply { mkdirs() }
+        val archivo = File(carpeta, "${idAnimal}_${clock()}.webp")
         val temporal = File(carpeta, "${archivo.name}.tmp")
         temporal.writeBytes(webp)
         check(temporal.renameTo(archivo)) { "No se pudo guardar la foto de $idAnimal" }
+        uriDe(archivo)
+    }
+
+    override suspend fun borrar(fotoUri: String) = withContext(Dispatchers.IO) {
+        archivos().filter { uriDe(it) == fotoUri }.forEach { it.delete() }
+    }
+
+    override suspend fun limpiar(enUso: Set<String>) = withContext(Dispatchers.IO) {
+        val antes = clock() - UN_DIA
+        archivos().filter { it.lastModified() < antes && uriDe(it) !in enUso }.forEach { it.delete() }
+    }
+
+    private fun archivos(): List<File> = carpeta.listFiles()?.filter { it.isFile }.orEmpty()
+
+    private fun uriDe(archivo: File) =
         FileProvider.getUriForFile(context, "${context.packageName}.fileprovider", archivo).toString()
+
+    private companion object {
+        const val UN_DIA = 24 * 60 * 60 * 1000L
     }
 }
 

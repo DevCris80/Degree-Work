@@ -41,6 +41,9 @@ class EditarAnimalViewModel(
     private var idPerfilFinca: String? = null
     private var animalCargado: Animal? = null
 
+    // Si la persona tomó o eligió otra foto. Si no, al guardar queda la guardada (ver ActualizarAnimal).
+    private var fotoCambiada = false
+
     init {
         viewModelScope.launch {
             val animal = animalRepository.findById(idAnimal)
@@ -84,7 +87,10 @@ class EditarAnimalViewModel(
     fun onFechaNacimientoCambiada(fecha: Long) = _estado.update { it.copy(fechaNacimiento = fecha) }
     fun onFechaEstimadaCambiada(esEstimada: Boolean) = _estado.update { it.copy(fechaNacimientoEsEstimada = esEstimada) }
     fun onPropositoSeleccionado(proposito: Proposito) = _estado.update { it.copy(proposito = proposito) }
-    fun onFotoCapturada(uri: String?) = _estado.update { it.copy(fotoUri = uri) }
+    fun onFotoCapturada(uri: String?) {
+        fotoCambiada = true
+        _estado.update { it.copy(fotoUri = uri) }
+    }
     fun onPadreSeleccionado(idPadre: String?) = _estado.update { it.copy(idPadre = idPadre) }
     fun onMadreSeleccionada(idMadre: String?) = _estado.update { it.copy(idMadre = idMadre) }
 
@@ -114,7 +120,7 @@ class EditarAnimalViewModel(
                 idPadre = actual.idPadre,
                 idMadre = actual.idMadre,
             )
-            when (actualizarAnimal(animal)) {
+            when (actualizarAnimal(animal, fotoCambiada)) {
                 ActualizarAnimal.Resultado.Actualizado,
                 ActualizarAnimal.Resultado.SinCambios,
                 -> _eventos.send(EditarAnimalEvento.Guardado)

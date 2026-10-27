@@ -64,7 +64,10 @@ private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
     ResolucionPesajePendiente.DESCARTADO to "DESCARTADO",
 )
 
-// Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor.
+// Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor. La foto no tiene tabla:
+// es el archivo de un Animal en Storage.
+internal const val ENTIDAD_FOTO = "foto"
+
 private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
     EntidadSincronizada.PERFIL_FINCA to "perfil_finca",
     EntidadSincronizada.ANIMAL to "animal",
@@ -72,6 +75,7 @@ private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
     EntidadSincronizada.REGISTRO to "registro",
     EntidadSincronizada.CHAPETA to "chapeta",
     EntidadSincronizada.PESAJE_PENDIENTE to "pesaje_pendiente",
+    EntidadSincronizada.FOTO to ENTIDAD_FOTO,
 )
 private val TEXTO_ENTIDAD_CON_REVISIONES = mapOf(
     EntidadConRevisiones.ANIMAL to "animal",

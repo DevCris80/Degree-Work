@@ -116,8 +116,11 @@ class ListaAnimalesViewModel(
         sincronizacion.value = SincronizacionManual(sincronizando = true)
         viewModelScope.launch {
             val resultado = sincronizacionRepository.sincronizar()
-            // El trabajo en segundo plano espera la señal y sincroniza solo.
-            if (resultado == ResultadoSincronizacion.SinConexion) sincronizacionRepository.programar()
+            // El trabajo en segundo plano espera la señal y sincroniza solo. Con los datos al día, sube y baja las
+            // fotos: el aviso no las espera, y siguen aunque se salga de la pantalla.
+            if (resultado is ResultadoSincronizacion.Completa || resultado == ResultadoSincronizacion.SinConexion) {
+                sincronizacionRepository.programar()
+            }
             sincronizacion.value = SincronizacionManual(aviso = resultado.aviso())
         }
     }

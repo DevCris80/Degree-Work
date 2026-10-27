@@ -53,7 +53,7 @@ _Avoid_: copia, duplicado, versión perdedora
 El estado de una fila que tiene uno o más `Sibling` sin resolver. La fila se sigue consultando con su `Revisión` vigente, marcada "en conflicto". Solo lo cierra una persona al **resolverlo**, eligiendo qué queda; editar la fila sin resolverlo no lo cierra. Cualquier rol puede resolverlo.
 
 **Rechazo**:
-Un cambio local que el servidor no aceptó porque viola una regla de unicidad o de permisos (por ejemplo, un código con otra `Chapeta` activa, o un `Pesaje pendiente` ya conciliado en otro celular). No se pierde: queda a la vista hasta que una persona lo corrige.
+Un cambio local que el servidor no aceptó porque viola una regla de unicidad o de permisos (por ejemplo, un código con otra `Chapeta` activa, o un `Pesaje pendiente` ya conciliado en otro celular), o una foto de un `Animal` que el servidor no acepta y no aceptará si se reenvía. No se pierde: queda a la vista hasta que una persona lo corrige.
 _Avoid_: descartar (reservado para `Pesaje pendiente`), error, `Conflicto` (un Conflicto es una edición concurrente válida; un Rechazo viola una regla)
 
 **Dar de baja**:

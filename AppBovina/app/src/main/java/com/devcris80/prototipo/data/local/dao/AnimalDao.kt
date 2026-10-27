@@ -25,12 +25,14 @@ interface AnimalDao {
     suspend fun findById(idAnimal: String): AnimalEntity?
 
     // Editar deja la fila pendiente de sincronizar, con su revisión de partida. La baja y la finca no se tocan. Una
-    // foto nueva queda además por subir; SQLite calcula cada SET con la fila de antes.
+    // foto nueva queda además por subir; una quitada, ya no (la del servidor vuelve a bajar: allá nadie borra). SQLite
+    // calcula cada SET con la fila de antes.
     @Query(
         "UPDATE animal SET nombre = :nombre, raza = :raza, sexo = :sexo, etapa = :etapa, " +
             "fechaNacimiento = :fechaNacimiento, fechaNacimientoEsEstimada = :fechaNacimientoEsEstimada, " +
             "proposito = :proposito, idPadre = :idPadre, idMadre = :idMadre, " +
-            "fotoPorSubir = fotoPorSubir OR (:fotoUri IS NOT NULL AND fotoUri IS NOT :fotoUri), fotoUri = :fotoUri, " +
+            "fotoPorSubir = CASE WHEN :fotoUri IS NULL THEN 0 WHEN fotoUri IS NOT :fotoUri THEN 1 ELSE fotoPorSubir END, " +
+            "fotoVersion = CASE WHEN :fotoUri IS NULL THEN NULL ELSE fotoVersion END, fotoUri = :fotoUri, " +
             EDICION_LOCAL + " WHERE idAnimal = :idAnimal",
     )
     suspend fun editar(
@@ -78,13 +80,24 @@ interface AnimalDao {
 
     // Si la foto cambió mientras subía, la nueva sigue por subir.
     @Query("UPDATE animal SET fotoPorSubir = 0 WHERE idAnimal = :idAnimal AND fotoUri = :fotoUri")
-    suspend fun marcarFotoSubida(idAnimal: String, fotoUri: String)
+    suspend fun quitarFotoPorSubir(idAnimal: String, fotoUri: String)
 
-    // Nunca pisa una foto local que todavía no ha subido.
+    // Storage no aceptará nunca esta foto: el Animal queda sin ella, y sin la fecha del servidor para que la del
+    // servidor, si hay una, vuelva a bajar. Si la foto cambió mientras subía, la nueva sigue por subir.
     @Query(
-        "UPDATE animal SET fotoUri = :fotoUri, fotoVersion = :fotoVersion WHERE idAnimal = :idAnimal AND fotoPorSubir = 0",
+        "UPDATE animal SET fotoPorSubir = 0, fotoUri = NULL, fotoVersion = NULL " +
+            "WHERE idAnimal = :idAnimal AND fotoUri = :fotoUri",
     )
-    suspend fun guardarFotoDelServidor(idAnimal: String, fotoUri: String?, fotoVersion: String)
+    suspend fun descartarFotoRechazada(idAnimal: String, fotoUri: String)
+
+    // Nunca pisa una foto local que todavía no ha subido. Devuelve cuántas filas cambió: 0 si la local cambió.
+    @Query(
+        "UPDATE animal SET fotoUri = :fotoUri, fotoVersion = :fechaFotoServidor WHERE idAnimal = :idAnimal AND fotoPorSubir = 0",
+    )
+    suspend fun guardarFotoDelServidor(idAnimal: String, fotoUri: String?, fechaFotoServidor: String): Int
+
+    @Query("SELECT fotoUri FROM animal WHERE fotoUri IS NOT NULL")
+    suspend fun findFotoUris(): List<String>
 
     // Solo para un Animal que el servidor rechazó y no tiene (ADR-0004, regla 7).
     @Query("DELETE FROM animal WHERE idAnimal = :idAnimal")

@@ -2,7 +2,7 @@ package com.devcris80.prototipo
 
 import android.content.Context
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.local.FotosEnArchivos
+import com.devcris80.prototipo.data.archivos.FotosEnArchivos
 import com.devcris80.prototipo.data.remote.SesionCifrada
 import com.devcris80.prototipo.data.remote.SupabaseAlmacenFotos
 import com.devcris80.prototipo.data.remote.SupabaseServidorSincronizacion
