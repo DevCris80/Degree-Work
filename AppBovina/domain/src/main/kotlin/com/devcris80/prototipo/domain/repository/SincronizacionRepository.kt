@@ -18,7 +18,7 @@ interface SincronizacionRepository {
      */
     fun programar()
 
-    /** Cuántos cambios faltan por subir y cuándo terminó la última sincronización; se lee de Room, no de la red. */
+    /** Cuántos cambios y fotos faltan por subir y cuándo terminó la última sincronización; se lee de Room, no de la red. */
     fun observeEstado(): Flow<EstadoSincronizacion>
 }
 
@@ -38,6 +38,7 @@ sealed interface ResultadoSincronizacion {
 
 /**
  * Cuántas filas locales tienen cambios que el servidor todavía no confirmó, y cuándo terminó la última
- * sincronización completa (nula si nunca terminó una).
+ * sincronización completa (nula si nunca terminó una). [fotosSinSubir] cuenta aparte las fotos de los Animales que
+ * no han subido: viajan por separado y no detienen los datos.
  */
-data class EstadoSincronizacion(val cambiosSinSubir: Int, val ultimaSincronizacion: Long?)
+data class EstadoSincronizacion(val cambiosSinSubir: Int, val ultimaSincronizacion: Long?, val fotosSinSubir: Int = 0)

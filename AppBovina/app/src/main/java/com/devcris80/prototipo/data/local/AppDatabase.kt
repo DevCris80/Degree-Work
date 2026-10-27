@@ -42,7 +42,7 @@ import com.devcris80.prototipo.data.local.entity.UsuarioEntity
         EstadoSyncEntity::class,
         ResolucionEntity::class,
     ],
-    version = 15,
+    version = 16,
     exportSchema = true,
 )
 abstract class AppDatabase : RoomDatabase() {
@@ -84,7 +84,7 @@ abstract class AppDatabase : RoomDatabase() {
                     // La versión 10 es el primer esquema exportado: desde ahí cada cambio lleva su
                     // Migration. Una instalación anterior no tiene cómo migrarse y se recrea vacía.
                     .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-                    .addMigrations(MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15)
+                    .addMigrations(MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15, MIGRACION_15_16)
                     .addCallback(CALLBACK_INDICES_CHAPETA)
                     .build()
                     .also { instance = it }

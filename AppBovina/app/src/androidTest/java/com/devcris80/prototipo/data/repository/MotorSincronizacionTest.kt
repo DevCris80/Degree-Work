@@ -52,7 +52,15 @@ class MotorSincronizacionTest {
     private val servidor = ServidorFalso()
 
     private fun motor(tamanoLote: Int = 25) =
-        MotorSincronizacion(servidor, db, programarTrabajo = {}, clock = { 1_000 }, tamanoLote = tamanoLote)
+        MotorSincronizacion(
+            servidor,
+            db,
+            AlmacenFotosFalso(),
+            FotosLocalesFalsas(),
+            programarTrabajo = {},
+            clock = { 1_000 },
+            tamanoLote = tamanoLote,
+        )
 
     @Before
     fun crearBase() = runTest {

@@ -2,9 +2,11 @@ package com.devcris80.prototipo.data.repository
 
 import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.FotosLocales
 import com.devcris80.prototipo.data.local.entity.EstadoSyncEntity
 import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.SiblingEntity
+import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
@@ -34,6 +36,9 @@ import java.util.UUID
  * separado: si se pierde la señal, lo ya aplicado queda, el resto sigue pendiente y la descarga sigue desde el
  * cursor de la última página.
  *
+ * Al final, y por separado, sube y baja las fotos ([SincronizacionFotos]). Una foto que no pasa no cambia el
+ * resultado: los datos ya quedaron, y nunca esperan a las fotos (CU-20 1b).
+ *
  * Sus escrituras no llevan EDICION_LOCAL. Una aceptada o un sibling solo tocan la fila si no cambió mientras el
  * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización. La descarga
  * nunca pisa una fila con cambios pendientes.
@@ -44,6 +49,8 @@ import java.util.UUID
 class MotorSincronizacion(
     private val servidor: ServidorSincronizacion,
     private val database: AppDatabase,
+    almacenFotos: AlmacenFotos,
+    fotosLocales: FotosLocales,
     private val programarTrabajo: () -> Unit,
     private val clock: () -> Long = { System.currentTimeMillis() },
     private val nuevoIdRechazo: () -> String = { UUID.randomUUID().toString() },
@@ -52,12 +59,14 @@ class MotorSincronizacion(
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
+    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database)
     private val enCurso = Mutex()
 
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
         try {
             val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
             descargar()
+            sincronizarFotos()
             subida
         } catch (e: CancellationException) {
             throw e
@@ -68,10 +77,24 @@ class MotorSincronizacion(
 
     override fun programar() = programarTrabajo()
 
+    // Lo que no pasó queda por subir o por bajar, y se intenta en la próxima sincronización.
+    private suspend fun sincronizarFotos() {
+        try {
+            fotos.sincronizar()
+        } catch (e: CancellationException) {
+            throw e
+        } catch (e: Exception) {
+            return
+        }
+    }
+
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
         database.estadoSyncDao().observeCambiosSinSubir(),
         database.estadoSyncDao().observe(),
-    ) { cambiosSinSubir, estado -> EstadoSincronizacion(cambiosSinSubir, estado?.fechaUltimaSincronizacion) }
+        database.estadoSyncDao().observeFotosSinSubir(),
+    ) { cambiosSinSubir, estado, fotosSinSubir ->
+        EstadoSincronizacion(cambiosSinSubir, estado?.fechaUltimaSincronizacion, fotosSinSubir)
+    }
 
     private suspend fun <E : Any> subir(tabla: TablaSincronizada<E>): ResultadoSincronizacion.Completa {
         var conteo = ResultadoSincronizacion.Completa(0, 0, 0)

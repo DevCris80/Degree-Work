@@ -78,6 +78,7 @@ import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.theme.Prototipo1Theme
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
+import com.devcris80.prototipo.ui.util.copiarFotoElegida
 import com.devcris80.prototipo.ui.util.crearArchivoFotoUri
 import com.devcris80.prototipo.ui.util.nombreConBaja
 import kotlinx.coroutines.launch
@@ -140,7 +141,9 @@ fun RegistrarAnimalScreen(
     }
     val elegirDeGaleriaLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent(),
-    ) { uri -> if (uri != null) viewModel.onFotoCapturada(uri.toString()) }
+    ) { uri ->
+        if (uri != null) scope.launch { copiarFotoElegida(context, uri)?.let { viewModel.onFotoCapturada(it.toString()) } }
+    }
 
     RegistrarAnimalContent(
         estado = estado,
@@ -191,6 +194,7 @@ fun EditarAnimalScreen(
     val estado by viewModel.estado.collectAsState()
 
     val context = LocalContext.current
+    val scope = rememberCoroutineScope()
     val snackbarHostState = remember { SnackbarHostState() }
 
     LaunchedEffect(viewModel) {
@@ -209,7 +213,9 @@ fun EditarAnimalScreen(
     }
     val elegirDeGaleriaLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.GetContent(),
-    ) { uri -> if (uri != null) viewModel.onFotoCapturada(uri.toString()) }
+    ) { uri ->
+        if (uri != null) scope.launch { copiarFotoElegida(context, uri)?.let { viewModel.onFotoCapturada(it.toString()) } }
+    }
 
     RegistrarAnimalContent(
         estado = estado,

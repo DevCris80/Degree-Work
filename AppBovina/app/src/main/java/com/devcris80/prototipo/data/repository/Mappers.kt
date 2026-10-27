@@ -125,6 +125,8 @@ fun Animal.toEntity(fechaModificacion: Long, idVersion: String) = AnimalEntity(
     idMadre = idMadre,
     fechaModificacion = fechaModificacion,
     idVersion = idVersion,
+    // Un Animal nuevo con foto la deja por subir. Al editar, lo decide `AnimalDao.editar`.
+    fotoPorSubir = fotoUri != null,
 )
 
 fun ChapetaEntity.toDomain() = Chapeta(

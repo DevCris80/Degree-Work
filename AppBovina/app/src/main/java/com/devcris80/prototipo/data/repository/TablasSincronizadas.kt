@@ -180,10 +180,12 @@ private class TablaAnimales(
     override suspend fun rebasar(id: String, rev: Int) = dao.rebasar(id, rev)
     override fun enConflicto(fila: AnimalEntity) = FilaEnConflicto.DeAnimal(fila.toDomain())
 
-    // La foto no viaja al servidor: la del Animal local se queda.
+    // La foto no viaja en la fila: la del Animal local se queda.
     override fun resolviendo(local: AnimalEntity, elegida: AnimalEntity, idVersion: String, fechaModificacion: Long) =
         elegida.copy(
             fotoUri = local.fotoUri,
+            fotoPorSubir = local.fotoPorSubir,
+            fotoVersion = local.fotoVersion,
             fechaBaja = local.fechaBaja ?: elegida.fechaBaja,
             sincronizado = false,
             rev = local.rev,

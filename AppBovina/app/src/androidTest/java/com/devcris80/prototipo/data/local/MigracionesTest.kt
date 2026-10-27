@@ -141,6 +141,33 @@ class MigracionesTest {
     }
 
     @Test
+    fun de15a16DejaPorSubirLasFotosQueYaEstabanEnElCelular() {
+        helper.createDatabase(BASE, 15).use { db ->
+            db.execSQL("INSERT INTO perfil_finca (idPerfilFinca, nombreFinca, sincronizado, fechaModificacion) VALUES ('finca-1', 'Finca', 1, 0)")
+            db.execSQL(
+                "INSERT INTO animal (idAnimal, idPerfilFinca, nombre, raza, sexo, etapa, fechaNacimiento, " +
+                    "fechaNacimientoEsEstimada, proposito, fotoUri, sincronizado, fechaModificacion, rev, idVersion) VALUES " +
+                    "('con-foto', 'finca-1', 'Lucero', 'Brahman', 'Hembra', 'Vaca', 0, 0, 'Leche', 'content://foto', 1, 0, 1, 'v1'), " +
+                    "('sin-foto', 'finca-1', 'Mariposa', 'Gyr', 'Hembra', 'Ternera', 0, 0, 'Leche', NULL, 1, 0, 1, 'v2')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(BASE, 16, true, MIGRACION_15_16).use { db ->
+            db.query("SELECT idAnimal, fotoUri, fotoPorSubir, fotoVersion, sincronizado FROM animal ORDER BY idAnimal").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("con-foto", fila.getString(0))
+                assertEquals("content://foto", fila.getString(1))
+                assertEquals("la foto que ya estaba sube con la próxima sincronización", 1, fila.getInt(2))
+                assertTrue("el celular no sabe qué versión del servidor tiene", fila.isNull(3))
+                assertEquals("los datos del Animal no quedan pendientes", 1, fila.getInt(4))
+                assertTrue(fila.moveToNext())
+                assertEquals("sin-foto", fila.getString(0))
+                assertEquals(0, fila.getInt(2))
+            }
+        }
+    }
+
+    @Test
     fun de10a11PoneAlUnicoUsuarioComoAutorDeLosEventosYConservaSusDatos() {
         helper.createDatabase(BASE, 10).use { db ->
             insertarInstalacionDeLaVersion10(db)
@@ -165,8 +192,8 @@ class MigracionesTest {
         }
 
         helper.runMigrationsAndValidate(
-            BASE, 15, true,
-            MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15,
+            BASE, 16, true,
+            MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15, MIGRACION_15_16,
         ).use { db ->
             db.query("SELECT nombreFinca FROM perfil_finca").use { fila ->
                 assertTrue(fila.moveToNext())
