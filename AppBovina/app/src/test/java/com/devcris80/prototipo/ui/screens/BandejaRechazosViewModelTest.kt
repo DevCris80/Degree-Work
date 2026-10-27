@@ -80,6 +80,7 @@ internal fun rechazo(idRechazo: String, entidad: EntidadSincronizada, codigo: St
     mensaje = "mensaje",
     idAnimal = null,
     nombreAnimal = null,
-    codigoChapeta = null,
+    codigo = null,
+    peso = null,
     salioConSuAnimal = false,
 )

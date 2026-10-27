@@ -171,6 +171,8 @@ fun ListaAnimalesScreen(
                     nombreUsuario = estado.nombreUsuario,
                     nombreFinca = estado.nombreFinca,
                     totalAnimales = estado.animales.size,
+                    rechazosAbiertos = estado.rechazosAbiertos,
+                    cambiosSinSubir = estado.cambiosSinSubir,
                 )
             }
             item {
@@ -234,6 +236,8 @@ private fun ResumenFinca(
     nombreUsuario: String,
     nombreFinca: String,
     totalAnimales: Int,
+    rechazosAbiertos: Int,
+    cambiosSinSubir: Int,
 ) {
     Column(
         modifier = Modifier
@@ -270,16 +274,24 @@ private fun ResumenFinca(
             verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.spacedBy(6.dp),
         ) {
+            // Lo que pasa con los datos de este celular: primero lo que espera a una persona.
+            val (icono, texto, color) = when {
+                rechazosAbiertos > 0 -> Triple(Icons.Filled.Warning, "Hay cambios rechazados por revisar", MaterialTheme.colorScheme.error)
+                cambiosSinSubir == 1 -> Triple(Icons.Filled.Sync, "1 cambio guardado, por subir", MaterialTheme.colorScheme.onSurfaceVariant)
+                cambiosSinSubir > 1 ->
+                    Triple(Icons.Filled.Sync, "$cambiosSinSubir cambios guardados, por subir", MaterialTheme.colorScheme.onSurfaceVariant)
+                else -> Triple(Icons.Filled.CheckCircle, "Todos los datos sincronizados", MaterialTheme.colorScheme.primary)
+            }
             Icon(
-                imageVector = Icons.Filled.CheckCircle,
+                imageVector = icono,
                 contentDescription = null,
-                tint = MaterialTheme.colorScheme.primary,
+                tint = color,
                 modifier = Modifier.size(16.dp),
             )
             Text(
-                text = "Todos los datos sincronizados sin internet",
+                text = texto,
                 style = MaterialTheme.typography.labelMedium,
-                color = MaterialTheme.colorScheme.primary,
+                color = color,
             )
         }
     }

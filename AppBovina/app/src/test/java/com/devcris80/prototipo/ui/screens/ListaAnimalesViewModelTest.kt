@@ -12,6 +12,7 @@ import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.model.EntidadSincronizada
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
@@ -175,6 +176,18 @@ class ListaAnimalesViewModelTest {
         viewModel.onCerrarSesion()
 
         assertEquals(false, sesionRepository.guardada.value)
+    }
+
+    @Test
+    fun laListaSabeCuantosCambiosFaltanPorSubir() = runTest {
+        sincronizacionRepository.estado.value = EstadoSincronizacion(cambiosSinSubir = 3, ultimaSincronizacion = null)
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(3, estados.last().cambiosSinSubir)
+        job.cancel()
     }
 
     @Test
