@@ -62,6 +62,19 @@ class MotorSincronizacionFotosTest {
     }
 
     @Test
+    fun sincronizarLosDatosNoEsperaALasFotos() = runTest {
+        celularA.animales.insert(lucero(fotoUri = "content://camara/lucero.jpg"))
+        almacen.archivos["finca-1/otro.webp"] = "de otro celular".toByteArray() to "version-9"
+
+        celularA.sincronizarSoloDatos()
+
+        assertTrue("los datos subieron", celularA.animal("lucero").sincronizado)
+        assertEquals(emptyList<String>(), almacen.subidas)
+        assertEquals(emptyList<String>(), almacen.descargas)
+        assertEquals(1, celularA.estado().fotosSinSubir)
+    }
+
+    @Test
     fun laFotoQueEsteCelularSubioNoVuelveABajar() = runTest {
         celularA.animales.insert(lucero(fotoUri = "content://camara/lucero.jpg"))
 
@@ -154,7 +167,10 @@ class MotorSincronizacionFotosTest {
             }
         }
 
-        suspend fun sincronizar() = motor.sincronizar()
+        // Como el trabajo en segundo plano: los datos y después las fotos.
+        suspend fun sincronizar() = motor.sincronizar().also { motor.sincronizarFotos() }
+
+        suspend fun sincronizarSoloDatos() = motor.sincronizar()
 
         suspend fun estado() = motor.observeEstado().first()
 

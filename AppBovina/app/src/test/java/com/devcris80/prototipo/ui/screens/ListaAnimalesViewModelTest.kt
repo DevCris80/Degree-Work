@@ -174,7 +174,7 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun sincronizar_subeYDescargaYAvisaLosConflictosYRechazos() = runTest {
+    fun sincronizar_subeYDescargaYAvisaLosConflictosYRechazosSinEsperarALasFotos() = runTest {
         sincronizacionRepository.resultado = ResultadoSincronizacion.Completa(aceptados = 3, enConflicto = 1, rechazados = 2)
         val viewModel = crearViewModel()
         val estados = mutableListOf<ListaAnimalesUiState>()
@@ -184,7 +184,8 @@ class ListaAnimalesViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, sincronizacionRepository.sincronizaciones)
-        assertEquals(0, sincronizacionRepository.programaciones)
+        assertEquals("las fotos no se esperan aquí", 0, sincronizacionRepository.sincronizacionesDeFotos)
+        assertEquals("las sube y baja el trabajo en segundo plano", 1, sincronizacionRepository.programaciones)
         assertEquals(false, estados.last().sincronizando)
         assertEquals("Sincronizado. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
         viewModel.onAvisoMostrado()

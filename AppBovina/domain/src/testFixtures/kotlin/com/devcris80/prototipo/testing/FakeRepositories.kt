@@ -235,6 +235,7 @@ class FakeSesionRepository : SesionRepository {
 class FakeSincronizacionRepository : SincronizacionRepository {
     var resultado: ResultadoSincronizacion = ResultadoSincronizacion.Completa(0, 0, 0)
     var sincronizaciones = 0
+    var sincronizacionesDeFotos = 0
     var programaciones = 0
     val estado = MutableStateFlow(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = null))
 
@@ -245,6 +246,10 @@ class FakeSincronizacionRepository : SincronizacionRepository {
         sincronizaciones++
         espera?.await()
         return resultado
+    }
+
+    override suspend fun sincronizarFotos() {
+        sincronizacionesDeFotos++
     }
 
     override fun programar() {

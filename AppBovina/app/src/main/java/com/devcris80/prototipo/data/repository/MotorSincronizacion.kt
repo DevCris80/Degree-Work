@@ -36,8 +36,8 @@ import java.util.UUID
  * separado: si se pierde la señal, lo ya aplicado queda, el resto sigue pendiente y la descarga sigue desde el
  * cursor de la última página.
  *
- * Al final, y por separado, sube y baja las fotos ([SincronizacionFotos]). Una foto que no pasa no cambia el
- * resultado: los datos ya quedaron, y nunca esperan a las fotos (CU-20 1b).
+ * Las fotos suben y bajan aparte, con [sincronizarFotos] ([SincronizacionFotos]), después de los datos: nunca los
+ * esperan ni cambian su resultado (CU-20 1b).
  *
  * Sus escrituras no llevan EDICION_LOCAL. Una aceptada o un sibling solo tocan la fila si no cambió mientras el
  * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización. La descarga
@@ -67,7 +67,6 @@ class MotorSincronizacion(
             bloque = {
                 val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
                 descargar()
-                sincronizarFotos()
                 subida
             },
             alFallar = { if (it.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo },
@@ -76,8 +75,11 @@ class MotorSincronizacion(
 
     override fun programar() = programarTrabajo()
 
-    // Lo que no pasó queda por subir o por bajar, y se intenta en la próxima sincronización.
-    private suspend fun sincronizarFotos() = salvoCancelacion(bloque = { fotos.sincronizar() }, alFallar = {})
+    // Con el mismo candado que los datos: guardar una fila entera pisaría la foto que se acaba de bajar. Lo que no
+    // pasó queda por subir o por bajar, y se intenta la próxima vez.
+    override suspend fun sincronizarFotos() = enCurso.withLock {
+        salvoCancelacion(bloque = { fotos.sincronizar() }, alFallar = {})
+    }
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
         database.estadoSyncDao().observeCambiosSinSubir(),
