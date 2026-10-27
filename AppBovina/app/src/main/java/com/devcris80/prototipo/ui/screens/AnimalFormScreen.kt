@@ -101,6 +101,7 @@ fun RegistrarAnimalScreen(
         RegistrarAnimalViewModel(
             savedState.get<String>("codigo"),
             savedState.get<String>("aviso"),
+            savedState.get<String>("idMadre"),
             container.cuentaRepository,
             container.animalRepository,
             container.registrarAnimal,
