@@ -75,7 +75,7 @@ class ObservarIndicadoresHato(
                 .filter { it.ultimoRegistro == null || it.ultimoRegistro.timestamp < desde }
                 .map { it.animal },
             // Un Evento programado todavía no ocurrió, así que no cuenta hasta que llegue su fecha.
-            eventosPorMes = eventosPorMes(eventos.filter { it.idAnimal in idsActivos && it.fecha <= clock() }),
+            eventosPorMes = eventosPorMes(eventos.filter { it.idAnimal in idsActivos && !it.estaProgramado(clock()) }),
         )
     }
 

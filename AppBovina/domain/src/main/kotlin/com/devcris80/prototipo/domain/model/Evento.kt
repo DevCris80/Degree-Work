@@ -21,6 +21,13 @@ data class Evento(
     /** Parto: la cría que nació. */
     val idCriaResultante: String? = null,
 ) {
+    /** Su fecha todavía no llega: es un Evento programado. */
+    fun estaProgramado(ahora: Long): Boolean = fecha > ahora
+
+    /** Biológico, dosis y vía de una vacunación, los que tenga; nulo si no tiene ninguno. */
+    val resumenDeVacunacion: String?
+        get() = listOfNotNull(biologico, dosis, via).joinToString(" · ").ifEmpty { null }
+
     /** [tipoEvento] escrito sin espacios de más, como lo digitó la persona. */
     val tipoEscrito: String get() = tipoEvento.trim().replace(ESPACIOS, " ")
 
