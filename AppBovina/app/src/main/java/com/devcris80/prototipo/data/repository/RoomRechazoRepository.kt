@@ -6,7 +6,12 @@ import com.devcris80.prototipo.domain.repository.RechazoRepository
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
-class RoomRechazoRepository(private val rechazoDao: RechazoDao) : RechazoRepository {
+class RoomRechazoRepository(
+    private val rechazoDao: RechazoDao,
+    private val clock: () -> Long = { System.currentTimeMillis() },
+) : RechazoRepository {
     override fun observeAbiertos(): Flow<List<Rechazo>> =
         rechazoDao.observeAbiertos().map { rechazos -> rechazos.map { it.toDomain() } }
+
+    override suspend fun cerrar(idRechazo: String) = rechazoDao.cerrar(idRechazo, clock())
 }

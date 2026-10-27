@@ -27,6 +27,7 @@ import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
@@ -34,6 +35,7 @@ import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.time.ExperimentalTime
@@ -247,14 +249,24 @@ fun SiblingEntity.toDomain() = Sibling(
     fechaRecepcion = fechaRecepcion,
 )
 
-fun RechazoEntity.toDomain() = Rechazo(
-    idRechazo = idRechazo,
-    entidad = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad),
-    idFila = idFila,
-    contenido = contenido,
-    motivo = motivo,
-    fechaRechazo = fechaRechazo,
-)
+// El motivo empieza con el código de error (BandejaDeRechazos), y el contenido es lo que se intentó subir, con las
+// columnas del servidor: todas las filas de un Animal, y su foto, llevan `id_animal`.
+fun RechazoEntity.toDomain(): Rechazo {
+    val entidadSincronizada = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad)
+    val fila = Json.parseToJsonElement(contenido).jsonObject
+    return Rechazo(
+        idRechazo = idRechazo,
+        entidad = entidadSincronizada,
+        idFila = idFila,
+        contenido = contenido,
+        motivo = motivo,
+        fechaRechazo = fechaRechazo,
+        codigo = motivo.substringBefore(":", missingDelimiterValue = ""),
+        idAnimal = fila.textoONulo("id_animal"),
+        codigoChapeta = fila.textoONulo("codigo").takeIf { entidadSincronizada == EntidadSincronizada.CHAPETA },
+        porSuAnimal = esDeUnDependiente(motivo),
+    )
+}
 
 // Filas que llegan del servidor por PostgREST, con sus columnas en snake_case. Ya están sincronizadas.
 

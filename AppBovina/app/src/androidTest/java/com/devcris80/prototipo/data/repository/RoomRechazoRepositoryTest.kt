@@ -10,6 +10,9 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Before
 import org.junit.Test
 import org.junit.runner.RunWith
@@ -39,12 +42,65 @@ class RoomRechazoRepositoryTest {
         assertEquals(EntidadSincronizada.CHAPETA, abiertos.first().entidad)
     }
 
+    @Test
+    fun unaChapetaRechazadaTraeSuCodigoDeErrorSuAnimalYSuCodigo() = runTest {
+        db.rechazoDao().insert(
+            rechazo("rechazo-1", fechaRechazo = 10, fechaCorreccion = null).copy(
+                contenido = """{"id_chapeta":"chapeta-1","codigo":"04A31B2C","id_animal":"lucero","fecha_asociacion":"2026-10-27T10:00:00Z"}""",
+            ),
+        )
+
+        val rechazo = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first().single()
+
+        assertEquals("23505", rechazo.codigo)
+        assertEquals("lucero", rechazo.idAnimal)
+        assertEquals("04A31B2C", rechazo.codigoChapeta)
+        assertFalse(rechazo.porSuAnimal)
+    }
+
+    @Test
+    fun unRegistroQueSalioConSuAnimalLoDice() = runTest {
+        db.rechazoDao().insert(
+            RechazoEntity(
+                idRechazo = "rechazo-1",
+                entidad = "registro",
+                idFila = "registro-1",
+                contenido = """{"id_registro":"registro-1","id_animal":"lucero","peso":410.0}""",
+                motivo = "42501: Se rechazó el animal lucero. new row violates row-level security policy",
+                fechaRechazo = 10,
+            ),
+        )
+
+        val rechazo = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first().single()
+
+        assertEquals(EntidadSincronizada.REGISTRO, rechazo.entidad)
+        assertEquals("42501", rechazo.codigo)
+        assertEquals("lucero", rechazo.idAnimal)
+        assertNull(rechazo.codigoChapeta)
+        assertTrue(rechazo.porSuAnimal)
+    }
+
+    @Test
+    fun cerrarUnRechazoLoSacaDeLaBandejaYLoConserva() = runTest {
+        db.rechazoDao().insert(rechazo("rechazo-1", fechaRechazo = 10, fechaCorreccion = null))
+        val rechazos = RoomRechazoRepository(db.rechazoDao(), clock = { 50 })
+
+        rechazos.cerrar("rechazo-1")
+
+        assertEquals(emptyList<Any>(), rechazos.observeAbiertos().first())
+        db.openHelper.readableDatabase.query("SELECT idRechazo, fechaCorreccion FROM rechazo").use { fila ->
+            assertTrue(fila.moveToNext())
+            assertEquals("rechazo-1", fila.getString(0))
+            assertEquals(50L, fila.getLong(1))
+        }
+    }
+
     private fun rechazo(idRechazo: String, fechaRechazo: Long, fechaCorreccion: Long?) = RechazoEntity(
         idRechazo = idRechazo,
         entidad = "chapeta",
         idFila = "chapeta-1",
         contenido = """{"codigo":"04A31B2C"}""",
-        motivo = "Chapeta duplicada",
+        motivo = "23505: duplicate key value violates unique constraint",
         fechaRechazo = fechaRechazo,
         fechaCorreccion = fechaCorreccion,
     )
