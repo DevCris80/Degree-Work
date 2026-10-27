@@ -12,6 +12,14 @@ data class Evento(
     val fecha: Long,
     val detalle: String,
     val fechaBaja: Long? = null,
+    /** Vacunación: el biológico aplicado. */
+    val biologico: String? = null,
+    /** Vacunación: la dosis aplicada, como la escribió la persona. */
+    val dosis: String? = null,
+    /** Vacunación: la vía de aplicación. */
+    val via: String? = null,
+    /** Parto: la cría que nació. */
+    val idCriaResultante: String? = null,
 ) {
     /** [tipoEvento] escrito sin espacios de más, como lo digitó la persona. */
     val tipoEscrito: String get() = tipoEvento.trim().replace(ESPACIOS, " ")
