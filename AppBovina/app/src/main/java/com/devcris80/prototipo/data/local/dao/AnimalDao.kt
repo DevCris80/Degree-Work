@@ -25,12 +25,14 @@ interface AnimalDao {
     suspend fun findById(idAnimal: String): AnimalEntity?
 
     // Editar deja la fila pendiente de sincronizar, con su revisión de partida. La baja y la finca no se tocan. Una
-    // foto nueva queda además por subir; SQLite calcula cada SET con la fila de antes.
+    // foto nueva queda además por subir; una quitada, ya no (la del servidor vuelve a bajar: allá nadie borra). SQLite
+    // calcula cada SET con la fila de antes.
     @Query(
         "UPDATE animal SET nombre = :nombre, raza = :raza, sexo = :sexo, etapa = :etapa, " +
             "fechaNacimiento = :fechaNacimiento, fechaNacimientoEsEstimada = :fechaNacimientoEsEstimada, " +
             "proposito = :proposito, idPadre = :idPadre, idMadre = :idMadre, " +
-            "fotoPorSubir = fotoPorSubir OR (:fotoUri IS NOT NULL AND fotoUri IS NOT :fotoUri), fotoUri = :fotoUri, " +
+            "fotoPorSubir = CASE WHEN :fotoUri IS NULL THEN 0 WHEN fotoUri IS NOT :fotoUri THEN 1 ELSE fotoPorSubir END, " +
+            "fotoUri = :fotoUri, " +
             EDICION_LOCAL + " WHERE idAnimal = :idAnimal",
     )
     suspend fun editar(

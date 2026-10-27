@@ -177,6 +177,22 @@ class MotorSincronizacionFotosTest {
     }
 
     @Test
+    fun quitarUnaFotoAntesDeSubirlaDejaBajarLaDelServidor() = runTest {
+        celularA.db.animalDao().insert(sincronizado("lucero"))
+        almacen.archivos["finca-1/lucero.webp"] = "la del servidor".toByteArray() to "version-2"
+        celularA.animales.update(lucero(fotoUri = "content://camara/lucero.jpg"))
+        // En el servidor nadie borra (RNF-04): quitarla no la quita de los demás celulares.
+        celularA.animales.update(lucero(fotoUri = null))
+
+        celularA.sincronizar()
+
+        val enA = celularA.animal("lucero")
+        assertFalse(enA.fotoPorSubir)
+        assertEquals("bajada://lucero/1", enA.fotoUri)
+        assertEquals(emptyList<String>(), almacen.subidas)
+    }
+
+    @Test
     fun unaFotoQueYaNoSePuedeLeerDejaDeEstarPorSubir() = runTest {
         celularA.fotos.ilegibles += "content://galeria/lucero.jpg"
         celularA.animales.insert(lucero(fotoUri = "content://galeria/lucero.jpg"))
