@@ -35,6 +35,7 @@ import com.devcris80.prototipo.domain.usecase.ActualizarAnimal
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
+import com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazos
 import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
@@ -118,4 +119,5 @@ class AppContainer(context: Context) {
         eventoRepository,
     )
     val observarEvolucionPeso = ObservarEvolucionPeso(registroRepository)
+    val observarBandejaRechazos = ObservarBandejaRechazos(rechazoRepository, animalRepository, chapetaRepository)
 }

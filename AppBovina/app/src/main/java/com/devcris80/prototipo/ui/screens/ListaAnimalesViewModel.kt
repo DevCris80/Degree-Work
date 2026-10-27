@@ -10,6 +10,7 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
@@ -42,6 +43,8 @@ data class ListaAnimalesUiState(
     val pesajesPendientes: Int = 0,
     /** Los Animales con algún Sibling sin resolver (RN-17). */
     val animalesEnConflicto: Set<String> = emptySet(),
+    /** Los cambios que el servidor no aceptó y nadie ha corregido (RN-24). */
+    val rechazosAbiertos: Int = 0,
     val sincronizando: Boolean = false,
     /** Lo que pasó con la última sincronización, hasta que la pantalla lo muestra. */
     val avisoSincronizacion: String? = null,
@@ -63,6 +66,7 @@ class ListaAnimalesViewModel(
     private val sesionRepository: SesionRepository,
     private val sincronizacionRepository: SincronizacionRepository,
     conflictoRepository: ConflictoRepository,
+    rechazoRepository: RechazoRepository,
 ) : ViewModel() {
 
     private val filtro = MutableStateFlow<Proposito?>(null)
@@ -103,6 +107,8 @@ class ListaAnimalesViewModel(
         )
     }.combine(conflictoRepository.observeFilasEnConflicto(EntidadConRevisiones.ANIMAL)) { estado, enConflicto ->
         estado.copy(animalesEnConflicto = enConflicto)
+    }.combine(rechazoRepository.observeAbiertos()) { estado, rechazos ->
+        estado.copy(rechazosAbiertos = rechazos.size)
     }.combine(sincronizacion) { estado, sync ->
         estado.copy(sincronizando = sync.sincronizando, avisoSincronizacion = sync.aviso)
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), ListaAnimalesUiState())
