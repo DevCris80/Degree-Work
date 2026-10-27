@@ -44,6 +44,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.domain.model.Proposito
@@ -69,6 +70,7 @@ fun ListaAnimalesScreen(
     onNuevoAnimalClick: () -> Unit,
     onPesajesPendientesClick: () -> Unit,
     onIndicadoresClick: () -> Unit,
+    onRechazosClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -80,6 +82,7 @@ fun ListaAnimalesScreen(
             container.sesionRepository,
             container.sincronizacionRepository,
             container.conflictoRepository,
+            container.rechazoRepository,
         )
     }
     val estado by viewModel.estado.collectAsState()
@@ -142,40 +145,25 @@ fun ListaAnimalesScreen(
             verticalArrangement = Arrangement.spacedBy(12.dp),
             contentPadding = PaddingValues(bottom = 96.dp, top = 4.dp),
         ) {
+            // Un Rechazo espera a una persona (RN-24): va primero.
+            if (estado.rechazosAbiertos > 0) {
+                item {
+                    AvisoEnLista(
+                        texto = if (estado.rechazosAbiertos == 1) "1 cambio rechazado" else "${estado.rechazosAbiertos} cambios rechazados",
+                        onClick = onRechazosClick,
+                        fondo = MaterialTheme.colorScheme.errorContainer,
+                        color = MaterialTheme.colorScheme.onErrorContainer,
+                    )
+                }
+            }
             if (estado.pesajesPendientes > 0) {
                 item {
-                    BovinaCard(
+                    AvisoEnLista(
+                        texto = "${estado.pesajesPendientes} pesajes pendientes",
                         onClick = onPesajesPendientesClick,
-                        containerColor = MaterialTheme.colorScheme.tertiaryContainer,
-                        modifier = Modifier.fillMaxWidth(),
-                    ) {
-                        Row(
-                            modifier = Modifier.fillMaxWidth(),
-                            horizontalArrangement = Arrangement.SpaceBetween,
-                            verticalAlignment = Alignment.CenterVertically,
-                        ) {
-                            Row(
-                                horizontalArrangement = Arrangement.spacedBy(10.dp),
-                                verticalAlignment = Alignment.CenterVertically,
-                            ) {
-                                Icon(
-                                    imageVector = Icons.Filled.Warning,
-                                    contentDescription = null,
-                                    tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                                )
-                                Text(
-                                    text = "${estado.pesajesPendientes} pesajes pendientes",
-                                    style = MaterialTheme.typography.titleSmall,
-                                    color = MaterialTheme.colorScheme.onTertiaryContainer,
-                                )
-                            }
-                            Icon(
-                                imageVector = Icons.AutoMirrored.Filled.ArrowForward,
-                                contentDescription = null,
-                                tint = MaterialTheme.colorScheme.onTertiaryContainer,
-                            )
-                        }
-                    }
+                        fondo = MaterialTheme.colorScheme.tertiaryContainer,
+                        color = MaterialTheme.colorScheme.onTertiaryContainer,
+                    )
                 }
             }
             item {
@@ -396,3 +384,24 @@ private fun TarjetaAnimal(
 
 private fun diasDesde(timestamp: Long): Long =
     TimeUnit.MILLISECONDS.toDays(System.currentTimeMillis() - timestamp).coerceAtLeast(0)
+
+/** Un aviso que abre otra pantalla: algo que espera a una persona. */
+@Composable
+private fun AvisoEnLista(texto: String, onClick: () -> Unit, fondo: Color, color: Color) {
+    BovinaCard(onClick = onClick, containerColor = fondo, modifier = Modifier.fillMaxWidth()) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Row(
+                horizontalArrangement = Arrangement.spacedBy(10.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Icon(imageVector = Icons.Filled.Warning, contentDescription = null, tint = color)
+                Text(text = texto, style = MaterialTheme.typography.titleSmall, color = color)
+            }
+            Icon(imageVector = Icons.AutoMirrored.Filled.ArrowForward, contentDescription = null, tint = color)
+        }
+    }
+}

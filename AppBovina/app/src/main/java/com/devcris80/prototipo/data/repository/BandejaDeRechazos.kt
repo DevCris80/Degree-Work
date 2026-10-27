@@ -13,7 +13,10 @@ internal class BandejaDeRechazos(
     private val clock: () -> Long,
     private val nuevoIdRechazo: () -> String,
 ) {
-    /** [contenido] es lo que se intentó subir, y [motivo] empieza con el código de error del servidor. */
+    /**
+     * [contenido] es lo que se intentó subir, y [motivo] empieza con el código de error del servidor, como
+     * `"23505: <mensaje>"`: la bandeja elige con él la acción sugerida.
+     */
     suspend fun guardar(entidad: String, idFila: String, contenido: JsonObject, motivo: String) = rechazos.insert(
         RechazoEntity(
             idRechazo = nuevoIdRechazo(),
@@ -25,3 +28,12 @@ internal class BandejaDeRechazos(
         ),
     )
 }
+
+/** El motivo de una fila que sale del celular porque el servidor rechazó la [entidad] [id] de la que dependía. */
+internal fun motivoDeUnDependiente(codigo: String, entidad: String, id: String, motivo: String) =
+    "$codigo: $SE_RECHAZO $entidad $id. $motivo"
+
+/** Si [motivo] es el de una fila que salió con la fila de la que dependía ([motivoDeUnDependiente]). */
+internal fun esDeUnDependiente(motivo: String) = motivo.substringAfter(": ").startsWith(SE_RECHAZO)
+
+private const val SE_RECHAZO = "Se rechazó el"

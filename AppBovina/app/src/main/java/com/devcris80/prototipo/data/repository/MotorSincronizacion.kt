@@ -201,7 +201,7 @@ class MotorSincronizacion(
                 dependiente.entidad,
                 dependiente.idFila,
                 dependiente.fila,
-                "$codigo: Se rechazó el ${tabla.entidad} ${tabla.id(local)}. $motivo",
+                motivoDeUnDependiente(codigo, tabla.entidad, tabla.id(local), motivo),
             )
         }
     }

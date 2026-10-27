@@ -11,6 +11,7 @@ import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
+import com.devcris80.prototipo.domain.model.EntidadSincronizada
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
@@ -21,6 +22,7 @@ import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
 import com.devcris80.prototipo.testing.FakeSesionRepository
+import com.devcris80.prototipo.testing.FakeRechazoRepository
 import com.devcris80.prototipo.testing.FakeSincronizacionRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +48,7 @@ class ListaAnimalesViewModelTest {
     private val sesionRepository = FakeSesionRepository()
     private val sincronizacionRepository = FakeSincronizacionRepository()
     private val conflictoRepository = FakeConflictoRepository()
+    private val rechazoRepository = FakeRechazoRepository()
 
     private fun crearViewModel() = ListaAnimalesViewModel(
         cuentaRepository,
@@ -56,6 +59,7 @@ class ListaAnimalesViewModelTest {
         sesionRepository,
         sincronizacionRepository,
         conflictoRepository,
+        rechazoRepository,
     )
 
     @Before
@@ -171,6 +175,19 @@ class ListaAnimalesViewModelTest {
         viewModel.onCerrarSesion()
 
         assertEquals(false, sesionRepository.guardada.value)
+    }
+
+    @Test
+    fun losRechazosAbiertosSeAvisanEnLaLista() = runTest {
+        rechazoRepository.set(rechazo("rechazo-1", EntidadSincronizada.CHAPETA, "23505"))
+        rechazoRepository.set(rechazo("rechazo-2", EntidadSincronizada.EVENTO, "42501"))
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(2, estados.last().rechazosAbiertos)
+        job.cancel()
     }
 
     @Test

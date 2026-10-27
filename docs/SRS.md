@@ -323,7 +323,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-32 | Subir los cambios locales al servicio de sincronización cuando hay señal. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
 | RF-33 | Detectar ediciones concurrentes con `rev_base` y guardarlas como siblings. | S | Implementado | EQUIPO | OE2, OE3 | CU-20 |
 | RF-34 | Mostrar las filas en conflicto y permitir resolverlas. | S | Pendiente | EQUIPO | OE2, OE3 | CU-21 |
-| RF-35 | Mostrar las filas rechazadas por el servidor, con su motivo, y permitir corregirlas. | M | Pendiente | EQUIPO | OE2, OE3 | CU-22 |
+| RF-35 | Mostrar las filas rechazadas por el servidor, con su motivo, y permitir corregirlas. | M | Parcial | EQUIPO | OE2, OE3 | CU-22 |
 | RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
 | RF-38 | Subir las fotos a Supabase Storage y descargar las de otros dispositivos. | S | Implementado | EQUIPO | OE3 | CU-20 |
 | **C7. Indicadores (BI)** | | | | | | |
@@ -741,7 +741,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-35 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO |
 | Actor | Ganadero, Operario (según la acción que corrige) |
-| Prioridad / Estado | M / Pendiente |
+| Prioridad / Estado | M / Parcial: la lista avisa de los rechazos abiertos y la bandeja muestra cada uno con su motivo y la acción sugerida, y deja ver el animal o cerrar el rechazo, que se conserva (#85). "Asociar otro código" abre el detalle del animal, donde falta "Asociar chapeta" (RF-19, #94). |
 | Precondiciones | El servidor rechazó una o más filas. |
 | Flujo principal | 1. La app muestra un aviso y la bandeja de rechazados, con la entidad, el motivo y la acción sugerida.<br>2. Según el motivo:<br>• chapeta duplicada → el usuario asocia otro código al animal, o cierra el rechazo si el código sí es del otro animal;<br>• pendiente ya conciliado en otro celular → el usuario acepta la conciliación del servidor;<br>• permiso denegado → el usuario cierra el rechazo sin reenviar el cambio.<br>3. La corrección se guarda como una escritura nueva y se sincroniza; el rechazo queda cerrado. |
 | Flujos alternos y excepciones | 2a. El usuario no corrige: la fila sigue en la bandeja y no se pierde. |
@@ -1064,7 +1064,7 @@ Resumen del contrato de pesaje:
 | RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `04_subir_cambios`, `MotorSincronizacionTest`, `DisparosDeSincronizacionTest` | #81, #83 |
 | RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest` | #80, #81 |
 | RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #84 |
-| RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #85 |
+| RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Parcial | — | #85, #94 |
 | RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr | #82 |
 | RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | #90 |
 | RF-38 | CU-20 | EQUIPO | — | OE3 | S | Implementado | — | #86 |
