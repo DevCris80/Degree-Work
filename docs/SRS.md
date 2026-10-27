@@ -660,8 +660,8 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Actor | Ganadero, Operario |
 | Prioridad / Estado | RF-28: M / Implementado. RF-29: C / Implementado. |
 | Precondiciones | El animal está activo. |
-| Flujo principal | 1. En la pestaña Eventos o en el detalle de un animal, el usuario elige Registrar evento.<br>2. Elige el tipo (vacunación o parto).<br>3. Ingresa el título, la fecha y hora del evento (por defecto, ahora; puede ser pasada o futura) y el animal, que ya viene elegido si entró desde su detalle.<br>4. Si es vacunación, ingresa el biológico, la dosis y la vía; si es parto, elige la cría o registra una nueva.<br>5. El sistema guarda el evento a nombre del usuario. |
-| Flujos alternos y excepciones | 3a. Fecha futura: el evento queda programado hasta que esa fecha llega, y no cuenta en los eventos por mes de los indicadores.<br>4a. Parto con cría nueva: la app abre Registrar animal (CU-06) con la madre precargada. |
+| Flujo principal | 1. En la pestaña Eventos o en el detalle de un animal, el usuario elige Registrar evento.<br>2. Elige el tipo (vacunación o parto).<br>3. Ingresa el título, la fecha y hora del evento (por defecto, ahora; puede ser pasada o futura) y el animal, que ya viene elegido si entró desde su detalle.<br>4. Si es vacunación, ingresa el biológico (obligatorio), la dosis y la vía; si es parto, elige la cría o registra una nueva.<br>5. El sistema guarda el evento a nombre del usuario. |
+| Flujos alternos y excepciones | 3a. Fecha futura: el evento queda programado hasta que esa fecha llega, y no cuenta en los eventos por mes de los indicadores.<br>4a. Parto con cría nueva: la app abre Registrar animal (CU-06) con la madre precargada.<br>4b. La cría elegida ya tiene otra madre o padre: la app no lo sobrescribe y no registra el parto; hay que corregirlo editando a la cría. |
 | Offline / sincronización | Funciona sin señal. |
 | Postcondiciones | Evento (con los campos de su tipo) con `sincronizado = false`. En un parto con cría, la cría queda con el animal del evento como madre (si es hembra) o como padre. |
 | Entidades | Evento, Animal |
