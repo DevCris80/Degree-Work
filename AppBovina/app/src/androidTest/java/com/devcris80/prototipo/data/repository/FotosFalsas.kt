@@ -43,6 +43,11 @@ internal class AlmacenFotosFalso : AlmacenFotos {
 internal class FotosLocalesFalsas : FotosLocales {
     val guardadas = mutableMapOf<String, ByteArray>()
     val ilegibles = mutableSetOf<String>()
+    val borradas = mutableListOf<String>()
+    var enUsoAlLimpiar: Set<String>? = null
+
+    /** Si no es nulo, se llama después de guardar una foto bajada, antes de que el motor la anote en el Animal. */
+    var alGuardar: (suspend () -> Unit)? = null
 
     override suspend fun comoWebp(fotoUri: String): ByteArray? =
         if (fotoUri in ilegibles) null else guardadas[fotoUri] ?: "webp de $fotoUri".toByteArray()
@@ -50,6 +55,15 @@ internal class FotosLocalesFalsas : FotosLocales {
     override suspend fun guardar(idAnimal: String, webp: ByteArray): String {
         val fotoUri = "bajada://$idAnimal/${guardadas.size + 1}"
         guardadas[fotoUri] = webp
+        alGuardar?.invoke()
         return fotoUri
+    }
+
+    override suspend fun borrar(fotoUri: String) {
+        borradas += fotoUri
+    }
+
+    override suspend fun limpiar(enUso: Set<String>) {
+        enUsoAlLimpiar = enUso
     }
 }

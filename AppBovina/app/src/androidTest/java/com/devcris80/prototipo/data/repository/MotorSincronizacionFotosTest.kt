@@ -163,6 +163,20 @@ class MotorSincronizacionFotosTest {
     }
 
     @Test
+    fun unaFotoQueBajoMientrasLaLocalCambiabaSeBorraYQuedaLaLocal() = runTest {
+        celularA.db.animalDao().insert(sincronizado("lucero"))
+        almacen.archivos["finca-1/lucero.webp"] = "de otro celular".toByteArray() to "version-2"
+        // La persona toma otra foto mientras baja la del servidor.
+        celularA.fotos.alGuardar = { celularA.animales.update(lucero(fotoUri = "content://camara/nueva.jpg")) }
+
+        celularA.sincronizar()
+
+        assertEquals("content://camara/nueva.jpg", celularA.animal("lucero").fotoUri)
+        assertEquals("la bajada no quedó en ningún Animal", listOf("bajada://lucero/1"), celularA.fotos.borradas)
+        assertEquals(setOf("content://camara/nueva.jpg"), celularA.fotos.enUsoAlLimpiar)
+    }
+
+    @Test
     fun unaFotoQueYaNoSePuedeLeerDejaDeEstarPorSubir() = runTest {
         celularA.fotos.ilegibles += "content://galeria/lucero.jpg"
         celularA.animales.insert(lucero(fotoUri = "content://galeria/lucero.jpg"))

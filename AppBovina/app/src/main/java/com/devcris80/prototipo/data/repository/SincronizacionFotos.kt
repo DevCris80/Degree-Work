@@ -33,6 +33,7 @@ internal class SincronizacionFotos(
         val finca = database.perfilFincaDao().getOnce()?.idPerfilFinca ?: return
         val subidas = subir(finca)
         bajar(finca, subidas)
+        fotos.limpiar(animales.findFotoUris().toSet())
     }
 
     /** Devuelve el tamaño de cada foto que subió, por Animal. */
@@ -71,7 +72,9 @@ internal class SincronizacionFotos(
                 continue
             }
             val webp = intentar { almacen.descargar(ruta(finca, idAnimal)) } ?: continue
-            animales.guardarFotoDelServidor(idAnimal, fotos.guardar(idAnimal, webp), guardada.fechaModificacion)
+            val bajada = fotos.guardar(idAnimal, webp)
+            // La foto local cambió mientras bajaba: la que bajó no queda en ningún Animal.
+            if (animales.guardarFotoDelServidor(idAnimal, bajada, guardada.fechaModificacion) == 0) fotos.borrar(bajada)
         }
     }
 

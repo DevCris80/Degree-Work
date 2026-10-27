@@ -80,11 +80,14 @@ interface AnimalDao {
     @Query("UPDATE animal SET fotoPorSubir = 0 WHERE idAnimal = :idAnimal AND fotoUri = :fotoUri")
     suspend fun quitarFotoPorSubir(idAnimal: String, fotoUri: String)
 
-    // Nunca pisa una foto local que todavía no ha subido.
+    // Nunca pisa una foto local que todavía no ha subido. Devuelve cuántas filas cambió: 0 si la local cambió.
     @Query(
         "UPDATE animal SET fotoUri = :fotoUri, fotoVersion = :fechaFotoServidor WHERE idAnimal = :idAnimal AND fotoPorSubir = 0",
     )
-    suspend fun guardarFotoDelServidor(idAnimal: String, fotoUri: String?, fechaFotoServidor: String)
+    suspend fun guardarFotoDelServidor(idAnimal: String, fotoUri: String?, fechaFotoServidor: String): Int
+
+    @Query("SELECT fotoUri FROM animal WHERE fotoUri IS NOT NULL")
+    suspend fun findFotoUris(): List<String>
 
     // Solo para un Animal que el servidor rechazó y no tiene (ADR-0004, regla 7).
     @Query("DELETE FROM animal WHERE idAnimal = :idAnimal")
