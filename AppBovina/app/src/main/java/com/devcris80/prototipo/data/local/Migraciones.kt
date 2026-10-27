@@ -152,3 +152,17 @@ val MIGRACION_16_17: Migration = object : MigracionBovina(16, 17) {
         db.execSQL("ALTER TABLE `perfil_finca` ADD COLUMN `longitud` REAL")
     }
 }
+
+/**
+ * 17 → 18: registrar un evento (#128). `evento` gana los campos de cada tipo, todos opcionales: la vacunación guarda
+ * biológico, dosis y vía; el parto, la cría resultante. Los Eventos que ya estaban quedan sin ellos y no se vuelven
+ * a subir: el servidor los tiene vacíos igual.
+ */
+val MIGRACION_17_18: Migration = object : MigracionBovina(17, 18) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `evento` ADD COLUMN `biologico` TEXT")
+        db.execSQL("ALTER TABLE `evento` ADD COLUMN `dosis` TEXT")
+        db.execSQL("ALTER TABLE `evento` ADD COLUMN `via` TEXT")
+        db.execSQL("ALTER TABLE `evento` ADD COLUMN `idCriaResultante` TEXT")
+    }
+}

@@ -161,6 +161,10 @@ fun EventoEntity.toDomain() = Evento(
     fecha = fecha,
     detalle = detalle,
     fechaBaja = fechaBaja,
+    biologico = biologico,
+    dosis = dosis,
+    via = via,
+    idCriaResultante = idCriaResultante,
 )
 
 fun Evento.toEntity(fechaModificacion: Long, idVersion: String) = EventoEntity(
@@ -171,6 +175,10 @@ fun Evento.toEntity(fechaModificacion: Long, idVersion: String) = EventoEntity(
     fecha = fecha,
     detalle = detalle,
     fechaBaja = fechaBaja,
+    biologico = biologico,
+    dosis = dosis,
+    via = via,
+    idCriaResultante = idCriaResultante,
     fechaModificacion = fechaModificacion,
     idVersion = idVersion,
 )
@@ -342,6 +350,10 @@ fun EventoEntity.aFilaDelServidor() = buildJsonObject {
     put("tipo_evento", tipoEvento)
     putFecha("fecha", fecha)
     put("detalle", detalle)
+    put("biologico", biologico)
+    put("dosis", dosis)
+    put("via", via)
+    put("id_cria_resultante", idCriaResultante)
     putFecha("fecha_baja", fechaBaja)
     putFecha("fecha_modificacion", fechaModificacion)
 }
@@ -412,6 +424,10 @@ fun EventoEntity.conLaDelServidor(fila: JsonObject) = copy(
     tipoEvento = fila.texto("tipo_evento"),
     fecha = fila.fecha("fecha"),
     detalle = fila.texto("detalle"),
+    biologico = fila.textoONulo("biologico"),
+    dosis = fila.textoONulo("dosis"),
+    via = fila.textoONulo("via"),
+    idCriaResultante = fila.textoONulo("id_cria_resultante"),
     fechaBaja = fila.fechaONula("fecha_baja"),
     fechaModificacion = fila.fecha("fecha_modificacion"),
     sincronizado = true,
