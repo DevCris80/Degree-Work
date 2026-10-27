@@ -8,7 +8,7 @@
 | Autores | Cristian Steven Villamil Rodríguez, Mariana Alvarez |
 | Director | Juan Guillermo Hurtado |
 | Repositorio | `github.com/DevCris80/Degree-Work` |
-| Versión de este documento | 0.3 (borrador) |
+| Versión de este documento | 0.4 (borrador) |
 | Fecha de corte del estado | 23 de octubre de 2026 |
 
 > **Datos por completar antes de `srs-v1.0`** (marcados en el texto con ⚠):
@@ -26,6 +26,7 @@
 | 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
 | 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
 | 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), RF-39 a RF-43, indicadores (#97 y #98), y RF-27, pesaje manual (#95). Pasa a implementado RF-33 y a parcial RF-32, la subida (#81). RN-24 distingue un rechazo que el servidor tiene de uno que no (ADR-0004, regla 7). | Ciclo 2 | — |
+| 0.4 | 2026-10-27 | C. Villamil | Pasan a implementados RF-28 y RF-29 (#128, que reemplaza a #22). El evento acepta fecha pasada o futura: uno futuro queda programado y no cuenta en los indicadores hasta que llega su fecha. RF-29 se reescribe con lo que la pantalla registra: biológico, dosis y vía en la vacunación, y la cría resultante en el parto. Salen del alcance los días de retiro de leche y de carne y el peso al nacer. | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -315,8 +316,8 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-26 | Permitir conciliar los pesajes pendientes: asignarlos a un animal activo o descartarlos. | M | Implementado | EQUIPO (ADR-0003) | OE3 | CU-15 |
 | RF-27 | Permitir registrar un pesaje manual a un animal activo. | S | Implementado | CAMPO | OE3 | CU-16 |
 | **C5. Eventos** | | | | | | |
-| RF-28 | Registrar un evento con tipo, fecha real del evento y detalle. | M | Parcial | EQUIPO / NORMA (Ley 1659) | OE3 | CU-17 |
-| RF-29 | Registrar los subtipos vacunación (producto, días de retiro de leche y carne) y parto (cría resultante, peso al nacer). | C | Pendiente | EQUIPO | OE3 | CU-17 |
+| RF-28 | Registrar un evento de tipo vacunación o parto, con la fecha y hora del evento (pasada o futura) y un detalle. Un evento con fecha futura queda programado hasta que esa fecha llega. | M | Implementado | EQUIPO / NORMA (Ley 1659) | OE3 | CU-17 |
+| RF-29 | Registrar los campos de cada tipo: vacunación (biológico, dosis y vía de aplicación) y parto (cría resultante, que queda con el animal del evento como madre o padre). | C | Implementado | EQUIPO | OE3 | CU-17 |
 | RF-30 | Permitir editar eventos y pesajes, guardando cada versión como revisión. | S | Pendiente | EQUIPO | OE3 | CU-18 |
 | RF-31 | Dar de baja eventos y pesajes (baja lógica). | C | Pendiente | NORMA (Ley 1659) | OE3 | CU-19 |
 | **C6. Sincronización** | | | | | | |
@@ -657,16 +658,16 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-28, RF-29 |
 | Objetivo / Fuente | OE3 / EQUIPO, NORMA (Ley 1659) |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | RF-28: M / Parcial (hoy el tipo es texto libre y la fecha es la del momento en que se digita). RF-29: C / Pendiente. |
+| Prioridad / Estado | RF-28: M / Implementado. RF-29: C / Implementado. |
 | Precondiciones | El animal está activo. |
-| Flujo principal | 1. En el detalle, el usuario elige Registrar evento.<br>2. Elige el tipo (vacunación, tratamiento, parto, inseminación u otro).<br>3. Ingresa la fecha real del evento (por defecto, hoy) y el detalle.<br>4. Si es vacunación, ingresa producto y días de retiro de leche y de carne; si es parto, elige o registra la cría y su peso al nacer.<br>5. El sistema guarda el evento a nombre del usuario. |
-| Flujos alternos y excepciones | 3a. ⚠ Fecha futura: la app no la acepta.<br>4a. Parto con cría nueva: la app abre Registrar animal (CU-06) con la madre precargada. |
+| Flujo principal | 1. En la pestaña Eventos o en el detalle de un animal, el usuario elige Registrar evento.<br>2. Elige el tipo (vacunación o parto).<br>3. Ingresa el título, la fecha y hora del evento (por defecto, ahora; puede ser pasada o futura) y el animal, que ya viene elegido si entró desde su detalle.<br>4. Si es vacunación, ingresa el biológico, la dosis y la vía; si es parto, elige la cría o registra una nueva.<br>5. El sistema guarda el evento a nombre del usuario. |
+| Flujos alternos y excepciones | 3a. Fecha futura: el evento queda programado hasta que esa fecha llega, y no cuenta en los eventos por mes de los indicadores.<br>4a. Parto con cría nueva: la app abre Registrar animal (CU-06) con la madre precargada. |
 | Offline / sincronización | Funciona sin señal. |
-| Postcondiciones | Evento (y su detalle de subtipo) con `sincronizado = false`. |
-| Entidades | Evento, detalle de vacunación, detalle de parto, Animal |
+| Postcondiciones | Evento (con los campos de su tipo) con `sincronizado = false`. En un parto con cría, la cría queda con el animal del evento como madre (si es hembra) o como padre. |
+| Entidades | Evento, Animal |
 | Reglas | RN-14, RN-19 |
-| Criterios de aceptación | 1. **Dado** una vacuna aplicada ayer y registrada hoy, **cuando** se ingresa la fecha de ayer, **entonces** el evento queda con la fecha de ayer.<br>2. **Dado** un evento guardado, **entonces** aparece en la pestaña Eventos del animal con el nombre del usuario que lo registró. |
-| Trazas | Issues #22, #39, #44 · `EventoFormScreen` · `NuevoEventoViewModelTest` |
+| Criterios de aceptación | 1. **Dado** una vacuna aplicada ayer y registrada hoy, **cuando** se ingresa la fecha de ayer, **entonces** el evento queda con la fecha de ayer.<br>2. **Dado** un evento guardado, **entonces** aparece en la pestaña Eventos del animal con el nombre del usuario que lo registró.<br>3. **Dado** una fecha de mañana, **cuando** se guarda el evento, **entonces** aparece como programado y no cuenta en los eventos por mes.<br>4. **Dado** un parto con una cría elegida, **entonces** la cría queda con la madre del evento. |
+| Trazas | Issues #39, #44, #128 (reemplaza a #22) · `EventoFormScreen` · `NuevoEventoViewModelTest`, `RegistrarEventoTest`, `EventosViewModelTest` |
 
 **CU-18 — Editar evento o pesaje**
 
@@ -780,10 +781,10 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Lista de animales | CU-07 | Implementada |
 | Detalle de animal | CU-07, CU-09, CU-12 | Implementada |
 | Registrar animal | CU-06 | Implementada |
-| Registrar evento | CU-17 | Parcial (sin fecha ni subtipos) |
+| Registrar evento | CU-17 | Implementada |
 | Escanear | CU-10 | Implementada |
 | Pesos (servicio de pesaje y pesajes pendientes) | CU-14, CU-15 | Implementada |
-| Eventos | CU-17 | Solo visual |
+| Eventos | CU-17 | Implementada |
 | Registrar pesaje manual | CU-16 | Implementada |
 | Editar animal, evento y pesaje; asociar chapeta | CU-08, CU-11, CU-18, CU-19 | Pendientes |
 | Usuarios e invitación; datos de la finca | CU-04, CU-05, CU-23 | Pendientes |
@@ -1057,8 +1058,8 @@ Resumen del contrato de pesaje:
 | RF-25 | CU-14 | EQUIPO | — | OE3 | M | Implementado | D | #39 |
 | RF-26 | CU-15 | EQUIPO | — | OE3 | M | Implementado | P `PesajesPendientesViewModelTest` | #53, #61 |
 | RF-27 | CU-16 | CAMPO | ⚠ | OE3 | S | Implementado | P `NuevoPesajeViewModelTest` | #95 |
-| RF-28 | CU-17 | EQUIPO / NORMA | — | OE3 | M | Parcial | P `NuevoEventoViewModelTest` (sin fecha real) | #22, #39, #44 |
-| RF-29 | CU-17 | EQUIPO | — | OE3 | C | Pendiente | — | — |
+| RF-28 | CU-17 | EQUIPO / NORMA | — | OE3 | M | Implementado | P `NuevoEventoViewModelTest`, `EventosViewModelTest`, `ObservarIndicadoresHatoTest` | #39, #44, #128 |
+| RF-29 | CU-17 | EQUIPO | — | OE3 | C | Implementado | P `RegistrarEventoTest`, `MappersEventoTest`, `RoomEventoRepositoryTest`, `04_subir_cambios` | #128 (reemplaza a #22) |
 | RF-30 | CU-18 | EQUIPO | — | OE3 | S | Pendiente | — | #96 |
 | RF-31 | CU-19 | NORMA | — | OE3 | C | Pendiente | — | #96 |
 | RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `04_subir_cambios`, `MotorSincronizacionTest`, `DisparosDeSincronizacionTest` | #81, #83 |
@@ -1114,7 +1115,7 @@ Resumen del contrato de pesaje:
 | OE1 — Requisitos no funcionales documentados | ≥ 5 | 16 |
 | OE1 — Ganaderos participantes | ≥ 3 | 1 |
 | OE1 — Requisitos confirmados por ganaderos | ≥ 80 % | Pendiente. Los marcados CAMPO son 14 de 59 (24 %). |
-| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 22 implementados (51 %); 15 con prueba automatizada y 7 que dependen de una demostración por registrar |
+| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 24 implementados (56 %); 17 con prueba automatizada y 7 que dependen de una demostración por registrar |
 
 La trazabilidad de requisitos a módulos (KPI de OE2) se documenta en la arquitectura (modelo C4, Fase 3).
 
