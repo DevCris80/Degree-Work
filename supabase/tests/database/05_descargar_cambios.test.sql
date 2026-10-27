@@ -7,7 +7,7 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 -- Los datos se escriben directo en las tablas, como lo hace subir_cambios por dentro (04_subir_cambios).
 select set_config('miganado.subir_cambios', 'si', true);
-select plan(17);
+select plan(18);
 
 -- Las filas de esta prueba toman cursores mayores que este.
 create temp table inicio as select nextval('privado.cursor_descarga') as cursor;
@@ -35,9 +35,9 @@ insert into public.sibling (id_version, entidad, id_fila, id_perfil_finca, rev_b
   ('5a000000-0000-0000-0000-000000000001', 'animal', 'a0000000-0000-0000-0000-000000000001',
    '0000000a-0000-0000-0000-000000000000', 1, '{"raza": "Gyr"}', '00000000-0000-0000-0000-0000000000a2');
 -- El Evento lo registró el Operario, y es lo último que se escribe en la finca A.
-insert into public.evento (id_evento, id_animal, id_usuario, tipo_evento, fecha, detalle, fecha_modificacion) values
+insert into public.evento (id_evento, id_animal, id_usuario, tipo_evento, fecha, detalle, biologico, dosis, via, fecha_modificacion) values
   ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000002', '00000000-0000-0000-0000-0000000000a2',
-   'Vacunación', now(), 'Aftosa', now());
+   'Vacunación', now(), 'Aftosa', 'Aftosa', '2 ml', 'Subcutánea', now());
 
 -- Una página desde `desde`, con un límite.
 create function pg_temp.pagina(desde bigint, limite int default 100) returns jsonb
@@ -62,6 +62,10 @@ select ok(
 select ok(
   pg_temp.pagina((select cursor from inicio)) -> 'cambios' -> 3 @> '{"entidad": "animal", "fila": {"nombre": "Lucero", "rev": 1}}',
   'cada cambio trae la fila completa');
+select ok(
+  pg_temp.pagina((select cursor from inicio)) -> 'cambios' -> 7
+  @> '{"entidad": "evento", "fila": {"biologico": "Aftosa", "dosis": "2 ml", "via": "Subcutánea", "id_cria_resultante": null}}',
+  'un Evento llega con los campos de su tipo');
 select ok(
   not (pg_temp.pagina((select cursor from inicio)) -> 'cambios' -> 3 -> 'fila') ? 'cursor_descarga',
   'la fila no repite el cursor');

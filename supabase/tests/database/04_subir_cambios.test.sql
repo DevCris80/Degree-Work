@@ -4,7 +4,7 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(32);
+select plan(34);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
@@ -184,6 +184,26 @@ select ok(
     '{fila,id_pesaje_pendiente}', '"d0000000-0000-0000-0000-000000000002"'), '{fila,id_lectura}', '"lectura-2"'))
   @> '{"resultado": "rechazada", "codigo": "23503", "fila": null}',
   'un Pesaje pendiente asignado sin su Registro se rechaza en su propio cambio');
+
+-- Los campos de cada tipo de Evento (RF-29)
+select ok(
+  pg_temp.subir(jsonb_build_object('entidad', 'evento', 'id_version', '1e000000-0000-0000-0000-000000000002',
+    'rev_base', null, 'fila', jsonb_build_object('id_evento', 'e0000000-0000-0000-0000-000000000002',
+      'id_animal', 'a0000000-0000-0000-0000-000000000003', 'id_usuario', '00000000-0000-0000-0000-0000000000a1',
+      'id_perfil_finca', null, 'tipo_evento', 'Parto', 'fecha', '2026-10-23T09:00:00Z', 'detalle', 'Sin complicaciones',
+      'id_cria_resultante', 'a0000000-0000-0000-0000-000000000001', 'fecha_baja', null,
+      'fecha_modificacion', '2026-10-23T10:00:00Z')))
+  @> '{"resultado": "aceptada", "rev": 1, "fila": {"id_cria_resultante": "a0000000-0000-0000-0000-000000000001", "biologico": null}}',
+  'un parto sube con su cría resultante');
+select ok(
+  pg_temp.subir(jsonb_build_object('entidad', 'evento', 'id_version', '1e000000-0000-0000-0000-000000000003',
+    'rev_base', 1, 'fila', jsonb_build_object('id_evento', 'e0000000-0000-0000-0000-000000000001',
+      'id_animal', 'a0000000-0000-0000-0000-000000000003', 'id_usuario', '00000000-0000-0000-0000-0000000000a1',
+      'id_perfil_finca', null, 'tipo_evento', 'Vacunación', 'fecha', '2026-10-23T09:00:00Z', 'detalle', 'Aftosa',
+      'biologico', 'Aftosa', 'dosis', '2 ml', 'via', 'Subcutánea', 'fecha_baja', null,
+      'fecha_modificacion', '2026-10-23T11:00:00Z')))
+  @> '{"resultado": "aceptada", "rev": 2, "fila": {"biologico": "Aftosa", "dosis": "2 ml", "via": "Subcutánea"}}',
+  'editar una vacunación guarda el biológico, la dosis y la vía como la revisión siguiente');
 
 select ok(
   pg_temp.subir('{"entidad": "usuario", "fila": {}}') @> '{"resultado": "rechazada", "codigo": "22023"}',
