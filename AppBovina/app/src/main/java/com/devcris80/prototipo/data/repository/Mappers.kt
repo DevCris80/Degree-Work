@@ -33,6 +33,7 @@ import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.int
 import kotlinx.serialization.json.jsonObject
@@ -249,6 +250,8 @@ fun SiblingEntity.toDomain() = Sibling(
     fechaRecepcion = fechaRecepcion,
 )
 
+private val CON_CODIGO = setOf(EntidadSincronizada.CHAPETA, EntidadSincronizada.PESAJE_PENDIENTE)
+
 // El motivo empieza con el código de error (BandejaDeRechazos), y el contenido es lo que se intentó subir, con las
 // columnas del servidor: todas las filas de un Animal, y su foto, llevan `id_animal`. Un contenido que no se puede
 // leer no deja al Rechazo fuera de la bandeja: sale sin esos datos.
@@ -266,7 +269,8 @@ fun RechazoEntity.toDomain(): Rechazo {
         mensaje = motivo.substringAfter(": "),
         idAnimal = fila?.textoONulo("id_animal"),
         nombreAnimal = fila?.textoONulo("nombre").takeIf { entidadSincronizada == EntidadSincronizada.ANIMAL },
-        codigoChapeta = fila?.textoONulo("codigo").takeIf { entidadSincronizada == EntidadSincronizada.CHAPETA },
+        codigo = fila?.textoONulo("codigo").takeIf { entidadSincronizada in CON_CODIGO },
+        peso = fila?.get("peso")?.jsonPrimitive?.doubleOrNull,
         salioConSuAnimal = esDeUnDependiente(motivo),
     )
 }

@@ -149,13 +149,15 @@ private fun Rechazo.titulo(nombreAnimal: String?): String {
     return when (entidad) {
         EntidadSincronizada.PERFIL_FINCA -> "Datos de la finca"
         EntidadSincronizada.ANIMAL -> nombreAnimal?.let { "Animal $it" } ?: "Un animal"
-        EntidadSincronizada.CHAPETA -> "Chapeta ${codigoChapeta.orEmpty()}$deAnimal"
+        EntidadSincronizada.CHAPETA -> "Chapeta ${codigo.orEmpty()}$deAnimal"
         EntidadSincronizada.EVENTO -> "Evento$deAnimal"
-        EntidadSincronizada.REGISTRO -> "Pesaje$deAnimal"
-        EntidadSincronizada.PESAJE_PENDIENTE -> "Pesaje pendiente"
+        EntidadSincronizada.REGISTRO -> "Pesaje${deKilos()}$deAnimal"
+        EntidadSincronizada.PESAJE_PENDIENTE -> "Pesaje pendiente${deKilos()}" + codigo?.let { ", código $it" }.orEmpty()
         EntidadSincronizada.FOTO -> "Foto$deAnimal"
     }
 }
+
+private fun Rechazo.deKilos(): String = peso?.let { " de ${it.toString().removeSuffix(".0")} kg" }.orEmpty()
 
 private fun MotivoRechazo.texto(): String = when (this) {
     is MotivoRechazo.CodigoEnOtroAnimal -> nombreOtroAnimal
@@ -192,7 +194,8 @@ private fun BandejaRechazosPreview() {
         mensaje = "duplicate key value",
         idAnimal = "lucero",
         nombreAnimal = null,
-        codigoChapeta = "04A31B2C",
+        codigo = "04A31B2C",
+        peso = null,
         salioConSuAnimal = false,
     )
     Prototipo1Theme {
@@ -207,7 +210,7 @@ private fun BandejaRechazosPreview() {
                         AccionSugerida.ASOCIAR_OTRO_CODIGO,
                     ),
                     RechazoEnBandeja(
-                        chapeta.copy(idRechazo = "rechazo-2", entidad = EntidadSincronizada.PESAJE_PENDIENTE, idAnimal = null),
+                        chapeta.copy(idRechazo = "rechazo-2", entidad = EntidadSincronizada.PESAJE_PENDIENTE, idAnimal = null, codigo = "0BADC0DE", peso = 380.0),
                         null,
                         animalEnElCelular = false,
                         MotivoRechazo.YaConciliado,

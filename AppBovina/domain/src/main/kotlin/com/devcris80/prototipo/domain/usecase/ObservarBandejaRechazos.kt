@@ -61,7 +61,7 @@ class ObservarBandejaRechazos(
     private fun Rechazo.motivo(nombres: Map<String, String>, chapetas: List<Chapeta>): MotivoRechazo = when {
         salioConSuAnimal -> MotivoRechazo.SeRechazoSuAnimal
         entidad == EntidadSincronizada.CHAPETA && codigoError == UNICIDAD -> {
-            val activa = chapetas.firstOrNull { it.codigo == codigoChapeta }
+            val activa = chapetas.firstOrNull { it.codigo == codigo }
             if (activa != null && activa.idAnimal == idAnimal) {
                 MotivoRechazo.CodigoYaEsDeEsteAnimal
             } else {

@@ -55,7 +55,7 @@ class RoomRechazoRepositoryTest {
         assertEquals("23505", rechazo.codigoError)
         assertEquals("duplicate key value violates unique constraint", rechazo.mensaje)
         assertEquals("lucero", rechazo.idAnimal)
-        assertEquals("04A31B2C", rechazo.codigoChapeta)
+        assertEquals("04A31B2C", rechazo.codigo)
         assertFalse(rechazo.salioConSuAnimal)
     }
 
@@ -77,7 +77,7 @@ class RoomRechazoRepositoryTest {
         assertEquals(EntidadSincronizada.REGISTRO, rechazo.entidad)
         assertEquals("42501", rechazo.codigoError)
         assertEquals("lucero", rechazo.idAnimal)
-        assertNull(rechazo.codigoChapeta)
+        assertNull(rechazo.codigo)
         assertTrue(rechazo.salioConSuAnimal)
     }
 
@@ -100,6 +100,25 @@ class RoomRechazoRepositoryTest {
         assertEquals("Lucero", abiertos[0].nombreAnimal)
         assertEquals("rechazo-2", abiertos[1].idRechazo)
         assertNull(abiertos[1].idAnimal)
+    }
+
+    @Test
+    fun unPesajePendienteRechazadoTraeSuPesoYSuCodigo() = runTest {
+        db.rechazoDao().insert(
+            RechazoEntity(
+                idRechazo = "rechazo-1",
+                entidad = "pesaje_pendiente",
+                idFila = "pendiente-1",
+                contenido = """{"id_pesaje_pendiente":"pendiente-1","codigo":"0BADC0DE","peso":380.5}""",
+                motivo = "55000: el pesaje pendiente ya está conciliado",
+                fechaRechazo = 10,
+            ),
+        )
+
+        val rechazo = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first().single()
+
+        assertEquals("0BADC0DE", rechazo.codigo)
+        assertEquals(380.5, checkNotNull(rechazo.peso), 0.0)
     }
 
     @Test

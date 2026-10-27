@@ -30,9 +30,9 @@ class ObservarBandejaRechazosTest {
 
     private fun rechazo(
         entidad: EntidadSincronizada,
-        codigo: String,
+        codigoError: String,
         idAnimal: String? = null,
-        codigoChapeta: String? = null,
+        codigo: String? = null,
         salioConSuAnimal: Boolean = false,
         idRechazo: String = "rechazo-1",
         idFila: String = "fila-1",
@@ -42,13 +42,14 @@ class ObservarBandejaRechazosTest {
         entidad = entidad,
         idFila = idFila,
         contenido = "{}",
-        motivo = "$codigo: mensaje del servidor",
+        motivo = "$codigoError: mensaje del servidor",
         fechaRechazo = 1L,
-        codigoError = codigo,
+        codigoError = codigoError,
         mensaje = "mensaje del servidor",
         idAnimal = idAnimal,
         nombreAnimal = nombreAnimal,
-        codigoChapeta = codigoChapeta,
+        codigo = codigo,
+        peso = null,
         salioConSuAnimal = salioConSuAnimal,
     )
 
@@ -59,7 +60,7 @@ class ObservarBandejaRechazosTest {
         animales.activos.value = listOf(animal("lucero", "Lucero"), animal("tormenta", "Tormenta"))
         // La del otro celular, que bajó después del rechazo.
         chapetas.set(Chapeta("chapeta-otro", "04A31B2C", "tormenta", fechaAsociacion = 5L))
-        rechazos.set(rechazo(EntidadSincronizada.CHAPETA, "23505", idAnimal = "lucero", codigoChapeta = "04A31B2C"))
+        rechazos.set(rechazo(EntidadSincronizada.CHAPETA, "23505", idAnimal = "lucero", codigo = "04A31B2C"))
 
         val enBandeja = unico()
 
@@ -72,7 +73,7 @@ class ObservarBandejaRechazosTest {
     fun siElCodigoQuedoEnEsteMismoAnimalSoloQuedaAceptarlo() = runTest {
         animales.activos.value = listOf(animal("lucero", "Lucero"))
         chapetas.set(Chapeta("chapeta-otro", "04A31B2C", "lucero", fechaAsociacion = 5L))
-        rechazos.set(rechazo(EntidadSincronizada.CHAPETA, "23505", idAnimal = "lucero", codigoChapeta = "04A31B2C"))
+        rechazos.set(rechazo(EntidadSincronizada.CHAPETA, "23505", idAnimal = "lucero", codigo = "04A31B2C"))
 
         val enBandeja = unico()
 

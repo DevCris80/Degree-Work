@@ -22,8 +22,10 @@ data class Rechazo(
     val idAnimal: String?,
     /** El nombre del Animal rechazado, tal como se intentó subir: puede que ya no esté en el celular. */
     val nombreAnimal: String?,
-    /** El código de la Chapeta rechazada. */
-    val codigoChapeta: String?,
+    /** El código de la Chapeta rechazada, o el que leyó el Pesaje pendiente. */
+    val codigo: String?,
+    /** El peso del Pesaje pendiente o del Registro rechazado, en kg. */
+    val peso: Double?,
     /** Salió del celular porque el servidor rechazó la fila de la que dependía (ADR-0004, regla 7). */
     val salioConSuAnimal: Boolean,
 )
