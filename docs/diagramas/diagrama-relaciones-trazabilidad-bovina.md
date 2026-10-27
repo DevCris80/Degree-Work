@@ -1,6 +1,6 @@
 # Diagrama de relaciones — Sistema de trazabilidad bovina
 
-Esquema Room de la app: lo que hay hoy en `main` más lo ya decidido (parentesco, revisiones y sincronización, ADR-0004 y ADR-0005). Lo marcado **pendiente por completar** espera la rama de eventos.
+Esquema Room de la app: lo que hay hoy en `main` más lo ya decidido (revisiones y sincronización, ADR-0004 y ADR-0005). Lo marcado **pendiente** todavía no está en `main`.
 
 ```mermaid
 erDiagram
@@ -14,9 +14,7 @@ erDiagram
     ANIMAL ||--o{ REGISTRO : tiene
     ANIMAL ||--o{ CHAPETA : tiene
     ANIMAL |o--o{ ANIMAL : es_padre_madre_de
-    EVENTO ||--o| EVENTO_VACUNACION : detalle
-    EVENTO ||--o| EVENTO_PARTO : detalle
-    EVENTO_PARTO }o--|| ANIMAL : cria_resultante
+    EVENTO }o--o| ANIMAL : cria_resultante
 
     USUARIO {
         string idUsuario PK
@@ -58,22 +56,19 @@ erDiagram
         string idEvento PK
         string idAnimal FK
         string idUsuario FK
-        string tipoEvento "valores pendientes por completar"
-        long fecha
-        string detalle
+        string tipoEvento "Vacunación o Parto; un evento anterior puede traer otro texto"
+        long fecha "pasada o futura; futura = programado"
+        string detalle "el título del evento"
+        string biologico "vacunación"
+        string dosis "vacunación"
+        string via "vacunación"
+        string idCriaResultante "parto; sin FK"
         long fechaBaja
         boolean sincronizado
         long fechaModificacion
         long rev
         long revBase
         string idVersion
-    }
-    EVENTO_VACUNACION {
-        string idEvento PK "pendiente por completar"
-    }
-    EVENTO_PARTO {
-        string idEvento PK "pendiente por completar"
-        string idCriaResultante FK
     }
     REGISTRO {
         string idRegistro PK
@@ -143,7 +138,7 @@ erDiagram
 - `ANIMAL.fechaBaja`, `EVENTO.fechaBaja`, `REGISTRO.fechaBaja`: baja lógica (nunca se borra), por exigencia de trazabilidad de la Ley 1659. `CHAPETA.fechaDesasociacion` hace lo mismo para la Chapeta: está activa mientras es nula, y un mismo `codigo` tiene como máximo una Chapeta activa (índice único parcial).
 - `REGISTRO.idLectura` y `PESAJE_PENDIENTE.idLectura` son únicos: un pesaje del ESP32 se guarda una sola vez (ADR-0003). En `PESAJE_PENDIENTE`, `resolucion`, `idUsuarioResolucion` y `fechaResolucion` son nulas mientras está sin resolver y se llenan juntas al conciliar.
 - `PERFIL_FINCA` no lleva FK hacia `USUARIO`: la dirección es `USUARIO → PERFIL_FINCA` y `ANIMAL → PERFIL_FINCA`.
-- `EVENTO` es tabla base; `EVENTO_VACUNACION` y `EVENTO_PARTO` son detalles 1:1 (FK = PK compartida con `EVENTO`). Sus campos y los valores de `tipoEvento` quedan pendientes por completar hasta que llegue la rama de eventos.
+- `EVENTO` lleva los campos de su tipo en la misma fila (#128): `biologico`, `dosis` y `via` en una vacunación, `idCriaResultante` en un parto, nulos en los demás. Así viajan con su `rev`. `idCriaResultante` no es una FK, porque el evento puede subir antes que su cría; al registrar un parto con cría, la cría queda con el animal del evento como madre o padre. Un evento con `fecha` posterior a ahora está programado y no cuenta en los indicadores hasta que esa fecha llega.
 
 ### Revisiones y sincronización (ADR-0004, ADR-0005)
 

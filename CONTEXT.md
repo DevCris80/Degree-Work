@@ -12,8 +12,12 @@ El identificador físico colocado en un `Animal`, identificado por su `codigo` (
 _Avoid_: chip, etiqueta, id_chip ("chip" sobrevive solo en el contrato con el ESP32: el campo `id_chip` y el motivo `CHIP_NO_ASOCIADO`)
 
 **Evento**:
-Un suceso clínico o de manejo asociado a un `Animal` (vacunación, tratamiento, parto, inseminación), con fecha y detalle.
+Un suceso clínico o de manejo asociado a un `Animal`, de tipo vacunación o parto, con fecha y hora, y un detalle. La vacunación guarda biológico, dosis y vía; el parto, la cría resultante, que queda con el `Animal` del Evento como madre o padre. La fecha puede ser pasada o futura.
 _Avoid_: Registro (reservado exclusivamente para pesajes)
+
+**Evento programado**:
+Un `Evento` cuya fecha todavía no llega. Se muestra como "Programado" y no cuenta en los indicadores hasta que esa fecha llega; no tiene un estado propio, solo la comparación de su fecha con ahora.
+_Avoid_: pendiente (reservado para `Pesaje pendiente`), agendado
 
 **Pesaje**:
 La medición (código y peso) que reporta el ESP32 cada vez que un bovino pasa por la báscula. Todo Pesaje válido se conserva: termina como `Registro` o como `Pesaje pendiente`.

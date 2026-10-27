@@ -15,6 +15,7 @@ import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import kotlinx.serialization.json.JsonArray
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonPrimitive
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 import org.junit.After
@@ -86,6 +87,33 @@ class MotorSincronizacionDescargaTest {
         val estado = db.estadoSyncDao().observe().first()!!
         assertEquals(12L, estado.cursorDescarga)
         assertEquals(9_000L, estado.fechaUltimaSincronizacion)
+    }
+
+    @Test
+    fun losCamposDeCadaTipoDeEventoLlegaConElEvento() = runTest {
+        servidor.filas += CambioDelServidor("animal", 11, filaAnimal("animal-1", rev = 1, nombre = "Lucero"))
+        servidor.filas += CambioDelServidor(
+            "evento",
+            12,
+            JsonObject(
+                filaEvento("evento-1", idAnimal = "animal-1") +
+                    mapOf("biologico" to JsonPrimitive("Aftosa"), "dosis" to JsonPrimitive("2 ml"), "via" to JsonPrimitive("Subcutánea")),
+            ),
+        )
+        servidor.filas += CambioDelServidor(
+            "evento",
+            13,
+            JsonObject(filaEvento("evento-2", idAnimal = "animal-1") + mapOf("id_cria_resultante" to JsonPrimitive("cria-1"))),
+        )
+
+        motor().sincronizar()
+
+        val vacunacion = db.eventoDao().findById("evento-1")!!
+        assertEquals("Aftosa", vacunacion.biologico)
+        assertEquals("2 ml", vacunacion.dosis)
+        assertEquals("Subcutánea", vacunacion.via)
+        assertNull(vacunacion.idCriaResultante)
+        assertEquals("cria-1", db.eventoDao().findById("evento-2")!!.idCriaResultante)
     }
 
     @Test

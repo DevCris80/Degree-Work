@@ -68,6 +68,7 @@ data class OfertaPesajesPendientes(
 class RegistrarAnimalViewModel(
     codigoPrecargado: String?,
     avisoAnterior: String?,
+    idMadrePrecargada: String?,
     private val cuentaRepository: CuentaRepository,
     animalRepository: AnimalRepository,
     private val registrarAnimal: RegistrarAnimal,
@@ -78,6 +79,7 @@ class RegistrarAnimalViewModel(
             codigo = codigoPrecargado.orEmpty(),
             codigoSoloLectura = codigoPrecargado != null,
             aviso = avisoAnterior,
+            idMadre = idMadrePrecargada,
         ),
     )
     val estado: StateFlow<RegistrarAnimalUiState> = _estado.asStateFlow()

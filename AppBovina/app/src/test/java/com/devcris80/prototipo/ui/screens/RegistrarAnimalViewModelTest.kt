@@ -41,10 +41,15 @@ class RegistrarAnimalViewModelTest {
     private val registroRepository = FakeRegistroRepository()
     private val pesajePendienteRepository = FakePesajePendienteRepository()
 
-    private fun crearViewModel(codigoPrecargado: String? = null, avisoAnterior: String? = null) =
+    private fun crearViewModel(
+        codigoPrecargado: String? = null,
+        avisoAnterior: String? = null,
+        idMadrePrecargada: String? = null,
+    ) =
         RegistrarAnimalViewModel(
             codigoPrecargado,
             avisoAnterior,
+            idMadrePrecargada,
             cuentaRepository,
             animalRepository,
             RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, FakeTransaccion()),
@@ -164,6 +169,20 @@ class RegistrarAnimalViewModelTest {
         assertEquals("04A1B2C3", estado.codigo)
         assertTrue(estado.codigoSoloLectura)
         assertEquals("Este tag estuvo asociado a Canela", estado.aviso)
+    }
+
+    @Test
+    fun madrePrecargada_quedaElegidaYSeGuardaEnLaCria() = runTest {
+        val vaca = progenitor("Lola", Sexo.HEMBRA, Etapa.VACA)
+        animalRepository.activos.value = listOf(vaca)
+        val viewModel = crearViewModel(idMadrePrecargada = vaca.idAnimal)
+        assertEquals(vaca.idAnimal, viewModel.estado.value.idMadre)
+        llenarFormularioValido(viewModel)
+
+        viewModel.onGuardar()
+
+        assertEquals(RegistrarAnimalEvento.Guardado, viewModel.eventos.first())
+        assertEquals(vaca.idAnimal, animalRepository.insertados.single().idMadre)
     }
 
     @Test

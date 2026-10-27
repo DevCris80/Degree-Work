@@ -46,6 +46,9 @@ class IndicadoresViewModelTest {
     private val eventoRepository = FakeEventoRepository()
     private val sincronizacionRepository = FakeSincronizacionRepository()
 
+    /** El reloj de los indicadores; los Eventos son de calendario y un Evento futuro no cuenta. */
+    private var reloj = AHORA
+
     private fun crearViewModel() = IndicadoresViewModel(
         ObservarIndicadoresHato(
             animalRepository,
@@ -53,7 +56,7 @@ class IndicadoresViewModelTest {
             registroRepository,
             pesajePendienteRepository,
             eventoRepository,
-            clock = { AHORA },
+            clock = { reloj },
         ),
         ObservarEvolucionPeso(registroRepository),
         animalRepository,
@@ -299,6 +302,7 @@ class IndicadoresViewModelTest {
 
     @Test
     fun cuentaLosEventosPorMesYPorTipo_sinLosDadosDeBajaNiLosDeAnimalesDadosDeBaja() = runTest {
+        reloj = fecha(2026, 11, 1)
         val vaca = animal(Etapa.VACA, Proposito.LECHE)
         val dadoDeBaja = animal(Etapa.TORO, Proposito.CARNE).copy(fechaBaja = fecha(2026, 10, 1))
         animalRepository.activos.value = listOf(vaca)

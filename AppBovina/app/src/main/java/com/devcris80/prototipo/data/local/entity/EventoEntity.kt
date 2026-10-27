@@ -32,6 +32,11 @@ data class EventoEntity(
     val fecha: Long,
     val detalle: String,
     val fechaBaja: Long? = null,
+    // Los campos de cada tipo (vacunación y parto). Sin FK a la cría: el Evento puede subir antes que ella.
+    val biologico: String? = null,
+    val dosis: String? = null,
+    val via: String? = null,
+    val idCriaResultante: String? = null,
     val sincronizado: Boolean = false,
     val fechaModificacion: Long,
     // Revisiones: ver AnimalEntity.

@@ -92,6 +92,7 @@ fun DetalleAnimalScreen(
     val listaRegistros = estado.registros
     val chapeta = estado.chapetaActiva
     val formatoFecha = remember(animal.idAnimal) { SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault()) }
+    val ahora = remember(animal.idAnimal) { System.currentTimeMillis() }
     var tabSeleccionada by remember { mutableIntStateOf(0) }
     var confirmarBaja by remember { mutableStateOf(false) }
     var confirmarLiberacion by remember { mutableStateOf(false) }
@@ -321,8 +322,10 @@ fun DetalleAnimalScreen(
                         icono = Icons.Filled.EventAvailable,
                         destacada = false,
                         titulo = evento.tipoEvento,
-                        subtitulo = evento.detalle,
-                        valor = formatoFecha.format(Date(evento.fecha)),
+                        subtitulo = listOfNotNull(evento.detalle.ifBlank { null }, evento.resumenDeVacunacion)
+                            .joinToString(" · "),
+                        valor = formatoFecha.format(Date(evento.fecha)) +
+                            if (evento.estaProgramado(ahora)) " · Programado" else "",
                         valorSecundario = null,
                         enConflicto = evento.idEvento in estado.eventosEnConflicto,
                         onClick = { onResolverConflictoClick(EntidadConRevisiones.EVENTO, evento.idEvento) },

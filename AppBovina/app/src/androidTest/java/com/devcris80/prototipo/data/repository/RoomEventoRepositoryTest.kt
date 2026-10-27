@@ -52,4 +52,24 @@ class RoomEventoRepositoryTest {
 
         assertEquals(listOf("evento-3", "evento-1"), repositorio.observeActivos().first().map { it.idEvento })
     }
+
+    @Test
+    fun losCamposDeCadaTipoSeGuardanYSeLeen() = runTest {
+        repositorio.insert(
+            Evento(
+                "evento-1", "activo", "usuario-1", "Vacunación", fecha = 1L, detalle = "Ciclo I",
+                biologico = "Aftosa", dosis = "2 ml", via = "Subcutánea",
+            ),
+        )
+        repositorio.insert(
+            Evento("evento-2", "activo", "usuario-1", "Parto", fecha = 2L, detalle = "Parto", idCriaResultante = "cria-1"),
+        )
+
+        val eventos = repositorio.observeByAnimal("activo").first().associateBy { it.idEvento }
+
+        assertEquals("Aftosa", eventos.getValue("evento-1").biologico)
+        assertEquals("2 ml", eventos.getValue("evento-1").dosis)
+        assertEquals("Subcutánea", eventos.getValue("evento-1").via)
+        assertEquals("cria-1", eventos.getValue("evento-2").idCriaResultante)
+    }
 }

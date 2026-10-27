@@ -210,15 +210,47 @@ class MigracionesTest {
     }
 
     @Test
+    fun de17a18AgregaLosCamposDeCadaTipoVaciosYConservaElEvento() {
+        helper.createDatabase(BASE, 17).use { db ->
+            db.execSQL(
+                "INSERT INTO evento (idEvento, idAnimal, idUsuario, tipoEvento, fecha, detalle, sincronizado, " +
+                    "fechaModificacion, rev, revBase, idVersion) " +
+                    "VALUES ('evento-1', 'animal-1', 'usuario-1', 'Vacunación', 3, 'Aftosa', 1, 7, 2, NULL, 'v1')",
+            )
+        }
+
+        helper.runMigrationsAndValidate(BASE, 18, true, MIGRACION_17_18).use { db ->
+            db.query("SELECT detalle, sincronizado, rev, biologico, dosis, via, idCriaResultante FROM evento").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Aftosa", fila.getString(0))
+                assertEquals("el evento no queda pendiente de subir", 1, fila.getInt(1))
+                assertEquals(2, fila.getInt(2))
+                assertTrue("el evento existente no tiene biológico", fila.isNull(3))
+                assertTrue(fila.isNull(4))
+                assertTrue(fila.isNull(5))
+                assertTrue(fila.isNull(6))
+            }
+            db.execSQL("UPDATE evento SET biologico = 'Aftosa', dosis = '2 ml', via = 'Subcutánea', idCriaResultante = 'cria-1'")
+            db.query("SELECT biologico, dosis, via, idCriaResultante FROM evento").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("Aftosa", fila.getString(0))
+                assertEquals("2 ml", fila.getString(1))
+                assertEquals("Subcutánea", fila.getString(2))
+                assertEquals("cria-1", fila.getString(3))
+            }
+        }
+    }
+
+    @Test
     fun unaInstalacionEnLaVersion10LlegaALaActualSinPerderNingunDato() {
         helper.createDatabase(BASE, 10).use { db ->
             insertarInstalacionDeLaVersion10(db)
         }
 
         helper.runMigrationsAndValidate(
-            BASE, 17, true,
+            BASE, 18, true,
             MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15, MIGRACION_15_16,
-            MIGRACION_16_17,
+            MIGRACION_16_17, MIGRACION_17_18,
         ).use { db ->
             db.query("SELECT nombreFinca FROM perfil_finca").use { fila ->
                 assertTrue(fila.moveToNext())

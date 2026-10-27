@@ -49,6 +49,16 @@ class ObservarIndicadoresHatoTest {
     private fun evento(id: String, idAnimal: String, tipo: String, fecha: Long) =
         Evento(id, idAnimal, "usuario-1", tipo, fecha, "detalle")
 
+    /** Los indicadores con el reloj en [reloj], para los Eventos, cuyas fechas son de calendario. */
+    private fun indicadoresConRelojEn(reloj: Long) = ObservarIndicadoresHato(
+        animalRepository,
+        chapetaRepository,
+        registroRepository,
+        pesajePendienteRepository,
+        eventoRepository,
+        clock = { reloj },
+    )
+
     @Test
     fun cuentaElInventarioPorPropositoYEtapaSoloConLosAnimalesActivos() = runTest {
         animalRepository.activos.value = listOf(
@@ -124,13 +134,32 @@ class ObservarIndicadoresHatoTest {
         // El evento de un Animal que no está activo no cuenta.
         eventoRepository.set("baja", listOf(evento("e5", "baja", "Vacunación", fecha(2026, 10))))
 
-        val indicadores = observarIndicadoresHato().first()
+        val indicadores = indicadoresConRelojEn(fecha(2026, 11, 1)).invoke().first()
 
         assertEquals(
             listOf(
                 EventosDelMes(AnioMes(2026, 10), mapOf("Vacunación" to 3)),
                 EventosDelMes(AnioMes(2026, 9), mapOf("BVD" to 1)),
             ),
+            indicadores.eventosPorMes,
+        )
+    }
+
+    @Test
+    fun noCuentaLosEventosProgramadosParaDespuesDeAhora() = runTest {
+        animalRepository.activos.value = listOf(animal("a1"))
+        eventoRepository.set(
+            "a1",
+            listOf(
+                evento("e1", "a1", "Vacunación", fecha(2026, 10)),
+                evento("e2", "a1", "Vacunación", fecha(2026, 12)),
+            ),
+        )
+
+        val indicadores = indicadoresConRelojEn(fecha(2026, 11, 1)).invoke().first()
+
+        assertEquals(
+            listOf(EventosDelMes(AnioMes(2026, 10), mapOf("Vacunación" to 1))),
             indicadores.eventosPorMes,
         )
     }

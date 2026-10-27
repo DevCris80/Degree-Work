@@ -22,6 +22,8 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.collectAsState
+import androidx.compose.runtime.getValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
@@ -32,41 +34,39 @@ import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.theme.Prototipo1Theme
+import com.devcris80.prototipo.ui.util.appViewModel
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
-/** Evento ya registrado, tal como lo muestra la lista. */
-data class EventoItemUi(
-    val tipo: String,
-    val detalle: String,
-    val fecha: String,
-)
-
-/**
- * Lista de eventos registrados. Por ahora es solo la capa visual: la pantalla todavía no tiene
- * ViewModel ni fuente de datos, así que la app la muestra vacía.
- */
+/** Lista de los Eventos de la finca, los programados primero. */
 @Composable
 fun EventosScreen(
-    onProgramarClick: () -> Unit,
+    onRegistrarClick: () -> Unit,
 ) {
-    EventosContent(eventos = emptyList(), onProgramarClick = onProgramarClick)
+    val viewModel = appViewModel { container ->
+        EventosViewModel(container.eventoRepository, container.animalRepository)
+    }
+    val estado by viewModel.estado.collectAsState()
+    EventosContent(eventos = estado.eventos, onRegistrarClick = onRegistrarClick)
 }
 
 @Composable
 private fun EventosContent(
     eventos: List<EventoItemUi>,
-    onProgramarClick: () -> Unit,
+    onRegistrarClick: () -> Unit,
 ) {
     Scaffold(
         topBar = { BovinaTopBar(titulo = "Eventos", mostrarLogo = true) },
         floatingActionButton = {
             ExtendedFloatingActionButton(
-                onClick = onProgramarClick,
+                onClick = onRegistrarClick,
                 shape = CircleShape,
                 containerColor = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
             ) {
                 Icon(Icons.Filled.Add, contentDescription = null)
-                Text(text = "  Programar evento", style = MaterialTheme.typography.labelLarge)
+                Text(text = "  Registrar evento", style = MaterialTheme.typography.labelLarge)
             }
         },
     ) { innerPadding ->
@@ -92,11 +92,13 @@ private fun EventosContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = BovinaScreenGutter),
             ) {
-                items(eventos) { evento -> TarjetaEvento(evento) }
+                items(eventos, key = { it.idEvento }) { evento -> TarjetaEvento(evento) }
             }
         }
     }
 }
+
+private val formatoFechaHora = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
 @Composable
 private fun TarjetaEvento(evento: EventoItemUi) {
@@ -122,12 +124,12 @@ private fun TarjetaEvento(evento: EventoItemUi) {
             Column(modifier = Modifier.weight(1f)) {
                 Text(text = evento.tipo, style = MaterialTheme.typography.titleMedium)
                 Text(
-                    text = evento.detalle,
+                    text = "${evento.nombreAnimal} · ${evento.detalle}",
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.onSurfaceVariant,
                 )
                 Text(
-                    text = evento.fecha,
+                    text = formatoFechaHora.format(Date(evento.fecha)) + if (evento.programado) " · Programado" else "",
                     style = MaterialTheme.typography.labelMedium,
                     color = MaterialTheme.colorScheme.primary,
                     modifier = Modifier.padding(top = 4.dp),
@@ -143,10 +145,10 @@ private fun EventosConDatosPreview() {
     Prototipo1Theme {
         EventosContent(
             eventos = listOf(
-                EventoItemUi("vacuna", "Aftosa, dosis de refuerzo", "10/05/2026 08:30"),
-                EventoItemUi("tratamiento", "Desparasitación", "02/05/2026 16:10"),
+                EventoItemUi("e1", "Vacunación", "Aftosa, refuerzo", "Lola", 1_800_000_000_000L, programado = true),
+                EventoItemUi("e2", "Parto", "Sin complicaciones", "Mariposa", 1_700_000_000_000L, programado = false),
             ),
-            onProgramarClick = {},
+            onRegistrarClick = {},
         )
     }
 }
@@ -154,5 +156,5 @@ private fun EventosConDatosPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun EventosVacioPreview() {
-    Prototipo1Theme { EventosContent(eventos = emptyList(), onProgramarClick = {}) }
+    Prototipo1Theme { EventosContent(eventos = emptyList(), onRegistrarClick = {}) }
 }

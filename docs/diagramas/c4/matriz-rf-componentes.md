@@ -47,8 +47,8 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-25 | Iniciar y detener el servicio de pesaje | Implementado | UI-04, DAT-02 | App |
 | RF-26 | Conciliar pesajes pendientes | Implementado | UI-04, DOM-03, DAT-01 | App |
 | RF-27 | Pesaje manual | Implementado | UI-04, DOM-03, DAT-01 | App |
-| RF-28 | Registrar evento con fecha real | Parcial | UI-05, DAT-01 | App |
-| RF-29 | Subtipos vacunación y parto | Pendiente | UI-05, DOM-04, DAT-01 | App |
+| RF-28 | Registrar evento con fecha pasada o futura | Implementado | UI-05, DOM-04, DAT-01 | App |
+| RF-29 | Campos de vacunación y parto | Implementado | UI-05, DOM-04, DAT-01 | App |
 | RF-30 | Editar eventos y pesajes como revisiones | Pendiente | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
 | RF-31 | Baja lógica de eventos y pesajes | Pendiente | UI-02, DOM-04, DAT-01 | App |
 | RF-32 | Subir cambios locales | Parcial | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
@@ -79,7 +79,7 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | DOM-01 | Cuenta y permisos | App | Parcial | RF-01, RF-04, RF-06 |
 | DOM-02 | Animales y chapetas | App | Parcial | RF-08, RF-11, RF-12, RF-13, RF-15, RF-16, RF-17, RF-18, RF-19 |
 | DOM-03 | Pesajes | App | Implementado | RF-21, RF-22, RF-23, RF-24, RF-26, RF-27 |
-| DOM-04 | Eventos y revisiones | App | Planificado | RF-29, RF-30, RF-31 |
+| DOM-04 | Eventos y revisiones | App | Parcial | RF-28, RF-29, RF-30, RF-31 |
 | DOM-05 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-01 | Repositorios locales | App | Parcial | RF-08, RF-09, RF-10, RF-11, RF-12, RF-13, RF-14, RF-17, RF-18, RF-19, RF-22, RF-23, RF-26, RF-27, RF-28, RF-29, RF-30, RF-31, RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-02 | Servidor de pesajes | App | Implementado | RF-20, RF-21, RF-25 |
