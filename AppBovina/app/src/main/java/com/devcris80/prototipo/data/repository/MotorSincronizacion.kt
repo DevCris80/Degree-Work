@@ -2,17 +2,17 @@ package com.devcris80.prototipo.data.repository
 
 import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.local.FotosLocales
+import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.local.entity.EstadoSyncEntity
 import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
+import com.devcris80.prototipo.data.remote.salvoCancelacion
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.sync.Mutex
@@ -63,30 +63,21 @@ class MotorSincronizacion(
     private val enCurso = Mutex()
 
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
-        try {
-            val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
-            descargar()
-            sincronizarFotos()
-            subida
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            if (e.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo
-        }
+        salvoCancelacion(
+            bloque = {
+                val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
+                descargar()
+                sincronizarFotos()
+                subida
+            },
+            alFallar = { if (it.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo },
+        )
     }
 
     override fun programar() = programarTrabajo()
 
     // Lo que no pasó queda por subir o por bajar, y se intenta en la próxima sincronización.
-    private suspend fun sincronizarFotos() {
-        try {
-            fotos.sincronizar()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return
-        }
-    }
+    private suspend fun sincronizarFotos() = salvoCancelacion(bloque = { fotos.sincronizar() }, alFallar = {})
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
         database.estadoSyncDao().observeCambiosSinSubir(),

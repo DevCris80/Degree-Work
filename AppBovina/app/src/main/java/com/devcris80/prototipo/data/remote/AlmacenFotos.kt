@@ -7,8 +7,8 @@ import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.longOrNull
 import kotlin.time.ExperimentalTime
 
-/** Un archivo del bucket de fotos: [nombre] es `<idAnimal>.webp`, y [version], su `updated_at`. */
-data class FotoGuardada(val nombre: String, val version: String, val tamano: Long?)
+/** Un archivo del bucket de fotos: [nombre] es `<idAnimal>.webp`, y [fechaModificacion], su `updated_at`. */
+data class FotoGuardada(val nombre: String, val fechaModificacion: String, val tamano: Long?)
 
 /** El bucket `fotos` de Storage (supabase/README.md): una carpeta por finca y un archivo por Animal. */
 interface AlmacenFotos {

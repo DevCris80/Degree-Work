@@ -1,4 +1,4 @@
-package com.devcris80.prototipo.data.local
+package com.devcris80.prototipo.data.archivos
 
 import android.content.Context
 import android.graphics.Bitmap

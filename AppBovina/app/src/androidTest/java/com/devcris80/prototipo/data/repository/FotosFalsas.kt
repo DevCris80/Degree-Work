@@ -1,6 +1,6 @@
 package com.devcris80.prototipo.data.repository
 
-import com.devcris80.prototipo.data.local.FotosLocales
+import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.FotoGuardada
 

@@ -1,10 +1,10 @@
 package com.devcris80.prototipo.data.repository
 
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.local.FotosLocales
+import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
-import kotlinx.coroutines.CancellationException
+import com.devcris80.prototipo.data.remote.salvoCancelacion
 
 /**
  * Sube las fotos por subir y baja las que cambiaron en otros celulares de la finca (RF-38, CU-20 pasos 6 y 8). Cada
@@ -35,11 +35,11 @@ internal class SincronizacionFotos(
             val webp = fotos.comoWebp(fotoUri)
             // Si ya no se puede leer, tampoco se podrá en la próxima. La pantalla la muestra vacía.
             if (webp == null) {
-                animales.marcarFotoSubida(animal.idAnimal, fotoUri)
+                animales.quitarFotoPorSubir(animal.idAnimal, fotoUri)
                 continue
             }
             intentar { almacen.subir(ruta(finca, animal.idAnimal), webp) } ?: continue
-            animales.marcarFotoSubida(animal.idAnimal, fotoUri)
+            animales.quitarFotoPorSubir(animal.idAnimal, fotoUri)
             subidas[animal.idAnimal] = webp.size
         }
         return subidas
@@ -49,27 +49,21 @@ internal class SincronizacionFotos(
         for (guardada in almacen.listar(finca)) {
             val idAnimal = guardada.nombre.removeSuffix(".webp")
             val local = animales.findById(idAnimal) ?: continue
-            if (local.fotoPorSubir || local.fotoVersion == guardada.version) continue
+            if (local.fotoPorSubir || local.fechaFotoServidor == guardada.fechaModificacion) continue
             // La que este celular acaba de subir: Storage no dice qué versión le dio al subirla, así que la reconoce
             // por su tamaño en vez de volver a bajarla.
             if (subidas[idAnimal]?.toLong() == guardada.tamano) {
-                animales.guardarFotoDelServidor(idAnimal, local.fotoUri, guardada.version)
+                animales.guardarFotoDelServidor(idAnimal, local.fotoUri, guardada.fechaModificacion)
                 continue
             }
             val webp = intentar { almacen.descargar(ruta(finca, idAnimal)) } ?: continue
-            animales.guardarFotoDelServidor(idAnimal, fotos.guardar(idAnimal, webp), guardada.version)
+            animales.guardarFotoDelServidor(idAnimal, fotos.guardar(idAnimal, webp), guardada.fechaModificacion)
         }
     }
 
     /** Lo que devuelve [llamada], o nulo si el servidor la rechazó. Sin señal, lanza: tampoco pasaría la siguiente. */
-    private suspend fun <T : Any> intentar(llamada: suspend () -> T): T? = try {
-        llamada()
-    } catch (e: CancellationException) {
-        throw e
-    } catch (e: Exception) {
-        if (e.esFaltaDeConexion()) throw e
-        null
-    }
+    private suspend fun <T : Any> intentar(llamada: suspend () -> T): T? =
+        salvoCancelacion(bloque = { llamada() }, alFallar = { if (it.esFaltaDeConexion()) throw it else null })
 
     private fun ruta(finca: String, idAnimal: String) = "$finca/$idAnimal.webp"
 }

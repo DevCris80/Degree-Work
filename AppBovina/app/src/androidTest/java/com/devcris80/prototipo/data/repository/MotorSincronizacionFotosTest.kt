@@ -72,26 +72,26 @@ class MotorSincronizacionFotosTest {
         assertEquals(emptyList<String>(), almacen.descargas)
         val enA = celularA.animal("lucero")
         assertEquals("content://camara/lucero.jpg", enA.fotoUri)
-        assertEquals("version-1", enA.fotoVersion)
+        assertEquals("version-1", enA.fechaFotoServidor)
         assertFalse(enA.fotoPorSubir)
     }
 
     @Test
     fun unaFotoCambiadaEnOtroCelularReemplazaLaDeEste() = runTest {
-        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fotoVersion = "version-1"))
+        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fechaFotoServidor = "version-1"))
         almacen.archivos["finca-1/lucero.webp"] = "la nueva".toByteArray() to "version-2"
 
         celularA.sincronizar()
 
         val enA = celularA.animal("lucero")
         assertEquals("bajada://lucero/1", enA.fotoUri)
-        assertEquals("version-2", enA.fotoVersion)
+        assertEquals("version-2", enA.fechaFotoServidor)
         assertEquals(emptyList<String>(), almacen.subidas)
     }
 
     @Test
     fun unaFotoEditadaQueNoSubioNoLaPisaLaDelServidor() = runTest {
-        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fotoVersion = "version-1"))
+        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fechaFotoServidor = "version-1"))
         almacen.archivos["finca-1/lucero.webp"] = "la de otro celular".toByteArray() to "version-2"
         almacen.fallaAlSubir = IllegalStateException("Storage respondió 503")
         celularA.animales.update(lucero(fotoUri = "content://camara/nueva.jpg"))
