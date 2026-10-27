@@ -13,4 +13,8 @@ interface RechazoDao {
 
     @Query("SELECT * FROM rechazo WHERE fechaCorreccion IS NULL ORDER BY fechaRechazo DESC")
     fun observeAbiertos(): Flow<List<RechazoEntity>>
+
+    // Se conserva cerrado (RN-24): una corrección es una escritura nueva.
+    @Query("UPDATE rechazo SET fechaCorreccion = :fecha WHERE idRechazo = :idRechazo AND fechaCorreccion IS NULL")
+    suspend fun cerrar(idRechazo: String, fecha: Long)
 }

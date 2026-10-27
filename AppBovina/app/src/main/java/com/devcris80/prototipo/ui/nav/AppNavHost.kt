@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.devcris80.prototipo.ui.components.BovinaBottomBar
 import com.devcris80.prototipo.ui.components.DestinoBarra
+import com.devcris80.prototipo.ui.screens.BandejaRechazosScreen
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EditarAnimalScreen
@@ -153,6 +154,13 @@ fun AppNavHost() {
                     onRegistrarUbicacionClick = {
                         navController.navigate(Rutas.UbicacionFinca.ruta)
                     },
+                    onRechazosClick = { navController.navigate(Rutas.Rechazos.ruta) },
+                )
+            }
+            composable(Rutas.Rechazos.ruta) {
+                BandejaRechazosScreen(
+                    onVolver = { navController.popBackStack() },
+                    onVerAnimal = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                 )
             }
             composable(Rutas.Indicadores.ruta) {

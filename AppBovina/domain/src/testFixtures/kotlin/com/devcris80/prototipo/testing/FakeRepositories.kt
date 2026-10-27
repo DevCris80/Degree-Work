@@ -8,6 +8,7 @@ import com.devcris80.prototipo.domain.model.EntidadConRevisiones
 import com.devcris80.prototipo.domain.model.Evento
 import com.devcris80.prototipo.domain.model.PerfilFinca
 import com.devcris80.prototipo.domain.model.PesajePendiente
+import com.devcris80.prototipo.domain.model.Rechazo
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
@@ -19,6 +20,7 @@ import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
+import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
@@ -240,6 +242,7 @@ class FakeSesionRepository : SesionRepository {
 class FakeSincronizacionRepository : SincronizacionRepository {
     var resultado: ResultadoSincronizacion = ResultadoSincronizacion.Completa(0, 0, 0)
     var sincronizaciones = 0
+    var sincronizacionesDeFotos = 0
     var programaciones = 0
     val estado = MutableStateFlow(EstadoSincronizacion(cambiosSinSubir = 0, ultimaSincronizacion = null))
 
@@ -250,6 +253,10 @@ class FakeSincronizacionRepository : SincronizacionRepository {
         sincronizaciones++
         espera?.await()
         return resultado
+    }
+
+    override suspend fun sincronizarFotos() {
+        sincronizacionesDeFotos++
     }
 
     override fun programar() {
@@ -303,5 +310,22 @@ class FakeConflictoRepository : ConflictoRepository {
             conflicto.takeIf { quedan.isNotEmpty() }?.copy(siblings = quedan)
         }
         return true
+    }
+}
+
+/** Rechazos en memoria. `cerrados` guarda los que se cerraron, que salen de los abiertos como en Room. */
+class FakeRechazoRepository : RechazoRepository {
+    private val abiertos = MutableStateFlow<List<Rechazo>>(emptyList())
+    val cerrados = mutableListOf<String>()
+
+    fun set(rechazo: Rechazo) {
+        abiertos.value = abiertos.value.filterNot { it.idRechazo == rechazo.idRechazo } + rechazo
+    }
+
+    override fun observeAbiertos(): Flow<List<Rechazo>> = abiertos
+
+    override suspend fun cerrar(idRechazo: String) {
+        cerrados += idRechazo
+        abiertos.value = abiertos.value.filterNot { it.idRechazo == idRechazo }
     }
 }

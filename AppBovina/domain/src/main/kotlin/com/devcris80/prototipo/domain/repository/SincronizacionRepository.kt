@@ -8,9 +8,17 @@ interface SincronizacionRepository {
      * Sube por lotes los cambios locales pendientes y aplica la respuesta fila por fila: una aceptada queda
      * sincronizada, un sibling deja la fila en Conflicto y un Rechazo pasa a la bandeja (ADR-0004). Después
      * descarga por páginas lo que los demás celulares de la finca subieron, sin pisar los cambios pendientes.
-     * Nunca corren dos a la vez: si ya hay una en curso, espera a que termine.
+     * Nunca corren dos a la vez: si ya hay una en curso, espera a que termine. Las fotos no van aquí: ver
+     * [sincronizarFotos].
      */
     suspend fun sincronizar(): ResultadoSincronizacion
+
+    /**
+     * Sube las fotos de los Animales que están por subir y baja las que cambiaron en otros celulares (RF-38). Va
+     * aparte de [sincronizar], después, para que las fotos nunca retrasen los datos: lo que no pasa queda para la
+     * próxima vez, sin error. Puede correr a la vez que [sincronizar], pero no dos veces a la vez.
+     */
+    suspend fun sincronizarFotos()
 
     /**
      * Deja la sincronización pendiente para que corra sola, en segundo plano, cuando haya señal. Si ya hay una

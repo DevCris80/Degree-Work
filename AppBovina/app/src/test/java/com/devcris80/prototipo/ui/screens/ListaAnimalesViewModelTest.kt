@@ -11,6 +11,8 @@ import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Usuario
+import com.devcris80.prototipo.domain.model.EntidadSincronizada
+import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.testing.FakeAnimalRepository
@@ -21,6 +23,7 @@ import com.devcris80.prototipo.testing.FakeCuentaRepository
 import com.devcris80.prototipo.testing.FakePesajePendienteRepository
 import com.devcris80.prototipo.testing.FakeRegistroRepository
 import com.devcris80.prototipo.testing.FakeSesionRepository
+import com.devcris80.prototipo.testing.FakeRechazoRepository
 import com.devcris80.prototipo.testing.FakeSincronizacionRepository
 import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.Dispatchers
@@ -46,6 +49,7 @@ class ListaAnimalesViewModelTest {
     private val sesionRepository = FakeSesionRepository()
     private val sincronizacionRepository = FakeSincronizacionRepository()
     private val conflictoRepository = FakeConflictoRepository()
+    private val rechazoRepository = FakeRechazoRepository()
 
     private fun crearViewModel() = ListaAnimalesViewModel(
         cuentaRepository,
@@ -56,6 +60,7 @@ class ListaAnimalesViewModelTest {
         sesionRepository,
         sincronizacionRepository,
         conflictoRepository,
+        rechazoRepository,
     )
 
     @Before
@@ -191,7 +196,32 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
-    fun sincronizar_subeYDescargaYAvisaLosConflictosYRechazos() = runTest {
+    fun laListaSabeCuantosCambiosFaltanPorSubir() = runTest {
+        sincronizacionRepository.estado.value = EstadoSincronizacion(cambiosSinSubir = 3, ultimaSincronizacion = null)
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(3, estados.last().cambiosSinSubir)
+        job.cancel()
+    }
+
+    @Test
+    fun losRechazosAbiertosSeAvisanEnLaLista() = runTest {
+        rechazoRepository.set(rechazo("rechazo-1", EntidadSincronizada.CHAPETA, "23505"))
+        rechazoRepository.set(rechazo("rechazo-2", EntidadSincronizada.EVENTO, "42501"))
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+        advanceUntilIdle()
+
+        assertEquals(2, estados.last().rechazosAbiertos)
+        job.cancel()
+    }
+
+    @Test
+    fun sincronizar_subeYDescargaYAvisaLosConflictosYRechazosSinEsperarALasFotos() = runTest {
         sincronizacionRepository.resultado = ResultadoSincronizacion.Completa(aceptados = 3, enConflicto = 1, rechazados = 2)
         val viewModel = crearViewModel()
         val estados = mutableListOf<ListaAnimalesUiState>()
@@ -201,7 +231,8 @@ class ListaAnimalesViewModelTest {
         advanceUntilIdle()
 
         assertEquals(1, sincronizacionRepository.sincronizaciones)
-        assertEquals(0, sincronizacionRepository.programaciones)
+        assertEquals("las fotos no se esperan aquí", 0, sincronizacionRepository.sincronizacionesDeFotos)
+        assertEquals("las sube y baja el trabajo en segundo plano", 1, sincronizacionRepository.programaciones)
         assertEquals(false, estados.last().sincronizando)
         assertEquals("Sincronizado. 1 en conflicto. 2 rechazados.", estados.last().avisoSincronizacion)
         viewModel.onAvisoMostrado()

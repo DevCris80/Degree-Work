@@ -27,13 +27,16 @@ import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
 import com.devcris80.prototipo.domain.model.Usuario
+import kotlinx.serialization.json.Json
 import kotlinx.serialization.json.JsonNull
 import kotlinx.serialization.json.JsonObject
 import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.boolean
 import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.doubleOrNull
 import kotlinx.serialization.json.float
 import kotlinx.serialization.json.int
+import kotlinx.serialization.json.jsonObject
 import kotlinx.serialization.json.jsonPrimitive
 import kotlinx.serialization.json.put
 import kotlin.time.ExperimentalTime
@@ -64,7 +67,10 @@ private val TEXTO_RESOLUCION_PESAJE_PENDIENTE = mapOf(
     ResolucionPesajePendiente.DESCARTADO to "DESCARTADO",
 )
 
-// Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor.
+// Las entidades de Siblings y Rechazos se guardan con el nombre de su tabla en el servidor. La foto no tiene tabla:
+// es el archivo de un Animal en Storage.
+internal const val ENTIDAD_FOTO = "foto"
+
 private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
     EntidadSincronizada.PERFIL_FINCA to "perfil_finca",
     EntidadSincronizada.ANIMAL to "animal",
@@ -72,6 +78,7 @@ private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
     EntidadSincronizada.REGISTRO to "registro",
     EntidadSincronizada.CHAPETA to "chapeta",
     EntidadSincronizada.PESAJE_PENDIENTE to "pesaje_pendiente",
+    EntidadSincronizada.FOTO to ENTIDAD_FOTO,
 )
 private val TEXTO_ENTIDAD_CON_REVISIONES = mapOf(
     EntidadConRevisiones.ANIMAL to "animal",
@@ -254,14 +261,30 @@ fun SiblingEntity.toDomain() = Sibling(
     fechaRecepcion = fechaRecepcion,
 )
 
-fun RechazoEntity.toDomain() = Rechazo(
-    idRechazo = idRechazo,
-    entidad = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad),
-    idFila = idFila,
-    contenido = contenido,
-    motivo = motivo,
-    fechaRechazo = fechaRechazo,
-)
+private val CON_CODIGO = setOf(EntidadSincronizada.CHAPETA, EntidadSincronizada.PESAJE_PENDIENTE)
+
+// El motivo empieza con el código de error (BandejaDeRechazos), y el contenido es lo que se intentó subir, con las
+// columnas del servidor: todas las filas de un Animal, y su foto, llevan `id_animal`. Un contenido que no se puede
+// leer no deja al Rechazo fuera de la bandeja: sale sin esos datos.
+fun RechazoEntity.toDomain(): Rechazo {
+    val entidadSincronizada = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad)
+    val fila = runCatching { Json.parseToJsonElement(contenido).jsonObject }.getOrNull()
+    return Rechazo(
+        idRechazo = idRechazo,
+        entidad = entidadSincronizada,
+        idFila = idFila,
+        contenido = contenido,
+        motivo = motivo,
+        fechaRechazo = fechaRechazo,
+        codigoError = motivo.substringBefore(":", missingDelimiterValue = ""),
+        mensaje = motivo.substringAfter(": "),
+        idAnimal = fila?.textoONulo("id_animal"),
+        nombreAnimal = fila?.textoONulo("nombre").takeIf { entidadSincronizada == EntidadSincronizada.ANIMAL },
+        codigo = fila?.textoONulo("codigo").takeIf { entidadSincronizada in CON_CODIGO },
+        peso = fila?.get("peso")?.jsonPrimitive?.doubleOrNull,
+        salioConSuAnimal = esDeUnDependiente(motivo),
+    )
+}
 
 // Filas que llegan del servidor por PostgREST, con sus columnas en snake_case. Ya están sincronizadas.
 

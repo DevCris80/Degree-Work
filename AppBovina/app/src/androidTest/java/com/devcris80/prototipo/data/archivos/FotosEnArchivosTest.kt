@@ -1,4 +1,4 @@
-package com.devcris80.prototipo.data.local
+package com.devcris80.prototipo.data.archivos
 
 import android.graphics.Bitmap
 import android.graphics.BitmapFactory
@@ -9,8 +9,10 @@ import androidx.test.ext.junit.runners.AndroidJUnit4
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertArrayEquals
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 import org.junit.runner.RunWith
 import java.io.File
@@ -59,6 +61,37 @@ class FotosEnArchivosTest {
         assertNotNull(guardada)
         assertArrayEquals(bajada, guardada)
     }
+
+    @Test
+    fun limpiarBorraLasFotosQueNingunAnimalUsaDespuesDeUnDia() = runTest {
+        val enUso = fotos.guardar("en-uso", byteArrayOf(1))
+        val huerfana = fotos.guardar("huerfana", byteArrayOf(2))
+        // Una recién tomada todavía puede estar en un formulario abierto, sin guardar.
+        val reciente = fotos.guardar("reciente", byteArrayOf(3))
+        val haceDosDias = System.currentTimeMillis() - 2 * 24 * 60 * 60 * 1000L
+        archivo(enUso).setLastModified(haceDosDias)
+        archivo(huerfana).setLastModified(haceDosDias)
+
+        fotos.limpiar(enUso = setOf(enUso))
+
+        assertTrue(archivo(enUso).exists())
+        assertFalse(archivo(huerfana).exists())
+        assertTrue(archivo(reciente).exists())
+    }
+
+    @Test
+    fun borrarSoloBorraLasFotosDeLaApp() = runTest {
+        val bajada = fotos.guardar("animal-1", byteArrayOf(1))
+        val deOtraApp = File(context.cacheDir, "galeria.jpg").apply { writeBytes(byteArrayOf(1)) }
+
+        fotos.borrar(bajada)
+        fotos.borrar(Uri.fromFile(deOtraApp).toString())
+
+        assertFalse(archivo(bajada).exists())
+        assertTrue(deOtraApp.exists())
+    }
+
+    private fun archivo(fotoUri: String) = File(File(context.filesDir, "fotos"), checkNotNull(Uri.parse(fotoUri).lastPathSegment))
 
     private fun jpeg(ancho: Int, alto: Int, orientacion: Int = ExifInterface.ORIENTATION_NORMAL): String {
         val archivo = File.createTempFile("foto_", ".jpg", context.cacheDir)

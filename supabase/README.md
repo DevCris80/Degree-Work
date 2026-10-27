@@ -146,5 +146,6 @@ Las fotos viven en el bucket privado `fotos` de Storage, una por Animal, en `<id
 - Solo cabe la foto de un Animal que ya está en el servidor y es de la finca del usuario; los dos roles la suben. Otra ruta se rechaza con `statusCode` `403` (`AccessDenied`), y una foto de otra finca no se ve: bajarla da `404`.
 - La API de Storage rechaza con `415` un archivo que no es `image/webp`, y uno de más de 2 MiB. El celular sube WebP con el lado mayor de 1280 px como máximo y calidad 75 (RNF-10).
 - Storage responde sus errores con HTTP 400 y el código en el `statusCode` del cuerpo.
+- El celular reconoce estos rechazos por el `message` del cuerpo, porque supabase-kt no le pasa el `statusCode`: "new row violates row-level security policy" (403), "The object exceeded the maximum allowed size" (413) y "mime type … is not supported" (415). Reenviar la misma foto no los cambia, así que la foto queda en la bandeja como un Rechazo de entidad `foto` y no se reintenta. Un `404` (`Bucket not found`) o una sesión vencida sí se reintentan.
 - Para saber qué fotos cambiaron, el celular lista la carpeta de su finca y compara el `updated_at` de cada archivo con el de la foto que tiene.
 - Nadie borra (RNF-04): no hay política de DELETE, así que ni la API de Storage borra una foto.

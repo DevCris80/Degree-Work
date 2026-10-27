@@ -185,7 +185,7 @@ private class TablaAnimales(
         elegida.copy(
             fotoUri = local.fotoUri,
             fotoPorSubir = local.fotoPorSubir,
-            fotoVersion = local.fotoVersion,
+            fechaFotoServidor = local.fechaFotoServidor,
             fechaBaja = local.fechaBaja ?: elegida.fechaBaja,
             sincronizado = false,
             rev = local.rev,

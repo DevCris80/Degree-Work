@@ -20,16 +20,16 @@ class SincronizacionWorker(context: Context, params: WorkerParameters) : Corouti
         if (!container.sesionRepository.observeSesionGuardada().first()) return Result.success()
         val sincronizacion = container.sincronizacionRepository
         // Mientras este trabajo corre no se encola otro: lo que se escribió en ese tiempo sube en otra pasada.
-        repeat(PASADAS) {
+        for (pasada in 1..PASADAS) {
             when (sincronizacion.sincronizar()) {
-                is ResultadoSincronizacion.Completa -> {
-                    val estado = sincronizacion.observeEstado().first()
-                    if (estado.cambiosSinSubir == 0) return if (estado.fotosSinSubir == 0) Result.success() else reintentar()
-                }
+                is ResultadoSincronizacion.Completa ->
+                    if (sincronizacion.observeEstado().first().cambiosSinSubir == 0) break
                 ResultadoSincronizacion.SinConexion, ResultadoSincronizacion.NoSePudo -> return reintentar()
             }
         }
-        return Result.success()
+        // Las fotos, después de los datos y aparte: una que no pasa no los detiene.
+        sincronizacion.sincronizarFotos()
+        return if (sincronizacion.observeEstado().first().fotosSinSubir == 0) Result.success() else reintentar()
     }
 
     private fun reintentar() = if (runAttemptCount + 1 < INTENTOS) Result.retry() else Result.failure()

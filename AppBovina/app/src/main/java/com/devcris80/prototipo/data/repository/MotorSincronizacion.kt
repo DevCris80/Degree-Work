@@ -2,17 +2,16 @@ package com.devcris80.prototipo.data.repository
 
 import androidx.room.withTransaction
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.local.FotosLocales
+import com.devcris80.prototipo.data.archivos.FotosLocales
 import com.devcris80.prototipo.data.local.entity.EstadoSyncEntity
-import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.SiblingEntity
 import com.devcris80.prototipo.data.remote.AlmacenFotos
 import com.devcris80.prototipo.data.remote.ServidorSincronizacion
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
+import com.devcris80.prototipo.data.remote.salvoCancelacion
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
-import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
 import kotlinx.coroutines.sync.Mutex
@@ -36,8 +35,8 @@ import java.util.UUID
  * separado: si se pierde la señal, lo ya aplicado queda, el resto sigue pendiente y la descarga sigue desde el
  * cursor de la última página.
  *
- * Al final, y por separado, sube y baja las fotos ([SincronizacionFotos]). Una foto que no pasa no cambia el
- * resultado: los datos ya quedaron, y nunca esperan a las fotos (CU-20 1b).
+ * Las fotos suben y bajan aparte, con [sincronizarFotos] ([SincronizacionFotos]), después de los datos: nunca los
+ * esperan ni cambian su resultado (CU-20 1b).
  *
  * Sus escrituras no llevan EDICION_LOCAL. Una aceptada o un sibling solo tocan la fila si no cambió mientras el
  * lote viajaba: si cambió, la escritura nueva queda pendiente y sube en la próxima sincronización. La descarga
@@ -59,33 +58,29 @@ class MotorSincronizacion(
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
-    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database)
+    private val bandeja = BandejaDeRechazos(database.rechazoDao(), clock, nuevoIdRechazo)
+    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, bandeja)
     private val enCurso = Mutex()
+    private val fotosEnCurso = Mutex()
 
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
-        try {
-            val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
-            descargar()
-            sincronizarFotos()
-            subida
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            if (e.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo
-        }
+        salvoCancelacion(
+            bloque = {
+                val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
+                descargar()
+                subida
+            },
+            alFallar = { if (it.esFaltaDeConexion()) ResultadoSincronizacion.SinConexion else ResultadoSincronizacion.NoSePudo },
+        )
     }
 
     override fun programar() = programarTrabajo()
 
-    // Lo que no pasó queda por subir o por bajar, y se intenta en la próxima sincronización.
-    private suspend fun sincronizarFotos() {
-        try {
-            fotos.sincronizar()
-        } catch (e: CancellationException) {
-            throw e
-        } catch (e: Exception) {
-            return
-        }
+    // Con su propio candado, para que una foto lenta no haga esperar a los datos. Puede correr a la vez que ellos: cada
+    // escritura de una foto es una sola sentencia, y los datos leen y guardan una fila entera dentro de una transacción.
+    // Lo que no pasó queda por subir o por bajar, y se intenta la próxima vez.
+    override suspend fun sincronizarFotos() = fotosEnCurso.withLock {
+        salvoCancelacion(bloque = { fotos.sincronizar() }, alFallar = {})
     }
 
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
@@ -193,7 +188,7 @@ class MotorSincronizacion(
         motivo: String,
         delServidor: JsonObject?,
     ) {
-        guardarRechazo(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
+        bandeja.guardar(tabla.entidad, tabla.id(local), tabla.aFila(local), "$codigo: $motivo")
         if (delServidor != null) {
             // Por ejemplo, una Chapeta cuya liberación se rechazó vuelve a quedar activa.
             val vigente = tabla.conLaDelServidor(local, delServidor)
@@ -202,11 +197,11 @@ class MotorSincronizacion(
             return
         }
         for (dependiente in tabla.sacar(local)) {
-            guardarRechazo(
+            bandeja.guardar(
                 dependiente.entidad,
                 dependiente.idFila,
                 dependiente.fila,
-                "$codigo: Se rechazó el ${tabla.entidad} ${tabla.id(local)}. $motivo",
+                motivoDeUnDependiente(codigo, tabla.entidad, tabla.id(local), motivo),
             )
         }
     }
@@ -287,19 +282,6 @@ class MotorSincronizacion(
     private suspend fun guardarUsuario(fila: JsonObject) {
         val local = database.usuarioDao().findById(fila.texto("id_usuario"))
         database.usuarioDao().guardar(fila.aUsuarioEntity(delDispositivo = local?.delDispositivo ?: false))
-    }
-
-    private suspend fun guardarRechazo(entidad: String, idFila: String, fila: JsonObject, motivo: String) {
-        database.rechazoDao().insert(
-            RechazoEntity(
-                idRechazo = nuevoIdRechazo(),
-                entidad = entidad,
-                idFila = idFila,
-                contenido = fila.toString(),
-                motivo = motivo,
-                fechaRechazo = clock(),
-            ),
-        )
     }
 
     private companion object {

@@ -12,6 +12,9 @@ import com.devcris80.prototipo.domain.repository.Transaccion
  *
  * Si trae padre o madre, deben existir y ser macho y hembra, igual que al registrarlo. Un Animal que ya es
  * padre o madre de otros no cambia de sexo: limpiar esas referencias borraría datos de otros Animales.
+ *
+ * Si la persona no cambió la foto ([fotoCambiada] falso), queda la guardada: la sincronización pudo bajar una más
+ * nueva mientras el formulario estaba abierto, y guardar no la vuelve a la de antes.
  */
 class ActualizarAnimal(
     private val animalRepository: AnimalRepository,
@@ -28,10 +31,14 @@ class ActualizarAnimal(
         data object SexoConCrias : Resultado
     }
 
-    suspend operator fun invoke(animal: Animal): Resultado = transaccion.ejecutar {
+    suspend operator fun invoke(animal: Animal, fotoCambiada: Boolean = true): Resultado = transaccion.ejecutar {
         val guardado = animalRepository.findById(animal.idAnimal)
         if (guardado == null || !guardado.activo) return@ejecutar Resultado.NoEditable
-        val nuevo = animal.copy(idPerfilFinca = guardado.idPerfilFinca, fechaBaja = null)
+        val nuevo = animal.copy(
+            idPerfilFinca = guardado.idPerfilFinca,
+            fechaBaja = null,
+            fotoUri = if (fotoCambiada) animal.fotoUri else guardado.fotoUri,
+        )
         if (nuevo == guardado) return@ejecutar Resultado.SinCambios
         if (nuevo.sexo != guardado.sexo && animalRepository.tieneCrias(guardado.idAnimal)) {
             return@ejecutar Resultado.SexoConCrias
