@@ -1,9 +1,11 @@
 package com.devcris80.prototipo.ui.screens
 
 import android.Manifest
+import android.annotation.SuppressLint
 import android.content.Context
 import android.location.Location
 import android.location.LocationManager
+import android.os.CancellationSignal
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -13,8 +15,9 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.Save
 import androidx.compose.material3.Button
@@ -23,6 +26,7 @@ import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
+import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
@@ -31,14 +35,21 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
+import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardType
 import androidx.compose.ui.unit.dp
+import androidx.core.content.ContextCompat
+import androidx.core.location.LocationManagerCompat
 import com.devcris80.prototipo.ui.util.appViewModel
+import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlinx.coroutines.withTimeoutOrNull
+import kotlin.coroutines.resume
+
+private const val ESPERA_GPS_MS = 20_000L
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,29 +58,30 @@ fun RegistrarUbicacionFincaScreen(
     onUbicacionGuardada: () -> Unit,
 ) {
     val context = LocalContext.current
+    val alcance = rememberCoroutineScope()
     val viewModel = appViewModel { container ->
         RegistrarUbicacionFincaViewModel(container.cuentaRepository)
     }
     val estado by viewModel.estado.collectAsState()
 
-    fun obtenerUltimaUbicacion(ctx: Context) {
-        val manager = ctx.getSystemService(Context.LOCATION_SERVICE) as LocationManager
-        val ubicacion = manager.getLastKnownLocation(LocationManager.GPS_PROVIDER)
-            ?: manager.getLastKnownLocation(LocationManager.NETWORK_PROVIDER)
-        if (ubicacion != null) {
-            viewModel.onUbicacionDelGps(ubicacion.latitude, ubicacion.longitude)
+    fun buscarUbicacion() {
+        viewModel.onBuscandoUbicacion()
+        alcance.launch {
+            val posicion = posicionActual(context)
+            if (posicion != null) {
+                viewModel.onUbicacionDelGps(posicion.latitude, posicion.longitude)
+            } else {
+                viewModel.onUbicacionNoDisponible()
+            }
         }
     }
 
+    // Desde Android 12 el usuario puede conceder solo la ubicación aproximada: con cualquiera de las dos sirve.
     val solicitarUbicacion = rememberLauncherForActivityResult(
-        ActivityResultContracts.RequestPermission()
-    ) { concedido ->
-        if (concedido) {
-            obtenerUltimaUbicacion(context)
-        }
+        ActivityResultContracts.RequestMultiplePermissions(),
+    ) { permisos ->
+        if (permisos.values.any { it }) buscarUbicacion() else viewModel.onPermisoNegado()
     }
-
-    var permisoSolicitado by remember { mutableStateOf(false) }
 
     LaunchedEffect(estado.guardado) {
         if (estado.guardado) onUbicacionGuardada()
@@ -81,7 +93,7 @@ fun RegistrarUbicacionFincaScreen(
                 title = { Text("Ubicación de la finca") },
                 navigationIcon = {
                     IconButton(onClick = onVolver) {
-                        Icon(Icons.Filled.Save, contentDescription = "Volver")
+                        Icon(Icons.AutoMirrored.Filled.ArrowBack, contentDescription = "Volver")
                     }
                 },
             )
@@ -105,24 +117,31 @@ fun RegistrarUbicacionFincaScreen(
                     .padding(top = 24.dp),
                 horizontalAlignment = Alignment.CenterHorizontally,
             ) {
-                IconButton(
-                    onClick = {
-                        permisoSolicitado = true
-                        solicitarUbicacion.launch(Manifest.permission.ACCESS_FINE_LOCATION)
-                    },
-                    enabled = !estado.cargando,
-                ) {
-                    Icon(
-                        imageVector = Icons.Default.LocationOn,
-                        contentDescription = "Usar GPS",
-                    )
-                }
-                if (permisoSolicitado) {
+                if (estado.buscandoUbicacion) {
+                    CircularProgressIndicator(modifier = Modifier.size(24.dp))
                     Text(
-                        text = "Si el GPS no responde, ingresa las coordenadas a mano.",
+                        text = "Buscando la posición del GPS…",
                         style = MaterialTheme.typography.labelSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        modifier = Modifier.padding(top = 8.dp),
                     )
+                } else {
+                    IconButton(
+                        onClick = {
+                            solicitarUbicacion.launch(
+                                arrayOf(
+                                    Manifest.permission.ACCESS_FINE_LOCATION,
+                                    Manifest.permission.ACCESS_COARSE_LOCATION,
+                                ),
+                            )
+                        },
+                        enabled = !estado.cargando,
+                    ) {
+                        Icon(
+                            imageVector = Icons.Default.LocationOn,
+                            contentDescription = "Usar GPS",
+                        )
+                    }
                 }
             }
 
@@ -130,16 +149,20 @@ fun RegistrarUbicacionFincaScreen(
                 modifier = Modifier.fillMaxWidth().padding(top = 16.dp),
                 horizontalArrangement = Arrangement.spacedBy(8.dp),
             ) {
-                androidx.compose.material3.OutlinedTextField(
+                OutlinedTextField(
                     value = estado.latitud,
                     onValueChange = { viewModel.onLatitudCambiada(it) },
                     label = { Text("Latitud") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
-                androidx.compose.material3.OutlinedTextField(
+                OutlinedTextField(
                     value = estado.longitud,
                     onValueChange = { viewModel.onLongitudCambiada(it) },
                     label = { Text("Longitud") },
+                    keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Decimal),
+                    singleLine = true,
                     modifier = Modifier.weight(1f),
                 )
             }
@@ -162,7 +185,7 @@ fun RegistrarUbicacionFincaScreen(
                 }
                 Button(
                     onClick = { viewModel.onGuardarUbicacion() },
-                    enabled = !estado.cargando,
+                    enabled = !estado.cargando && !estado.buscandoUbicacion,
                 ) {
                     if (estado.cargando) {
                         CircularProgressIndicator(modifier = Modifier.size(20.dp))
@@ -172,6 +195,31 @@ fun RegistrarUbicacionFincaScreen(
                     }
                 }
             }
+        }
+    }
+}
+
+/**
+ * Pide una posición nueva al GPS, que funciona sin señal de datos; si el GPS está apagado, a la red. La
+ * última posición en caché puede ser vieja o no existir, así que no se usa. Devuelve null si no hay
+ * proveedor activo o no responde en [ESPERA_GPS_MS].
+ */
+@SuppressLint("MissingPermission") // Solo se llama con el permiso ya concedido.
+private suspend fun posicionActual(context: Context): Location? {
+    val manager = context.getSystemService(Context.LOCATION_SERVICE) as LocationManager
+    val proveedor = listOf(LocationManager.GPS_PROVIDER, LocationManager.NETWORK_PROVIDER)
+        .firstOrNull { manager.isProviderEnabled(it) }
+        ?: return null
+    return withTimeoutOrNull(ESPERA_GPS_MS) {
+        suspendCancellableCoroutine { continuacion ->
+            val senal = CancellationSignal()
+            continuacion.invokeOnCancellation { senal.cancel() }
+            LocationManagerCompat.getCurrentLocation(
+                manager,
+                proveedor,
+                senal,
+                ContextCompat.getMainExecutor(context),
+            ) { continuacion.resume(it) }
         }
     }
 }
