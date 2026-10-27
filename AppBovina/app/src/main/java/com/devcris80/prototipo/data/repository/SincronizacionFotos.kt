@@ -1,10 +1,15 @@
 package com.devcris80.prototipo.data.repository
 
-import com.devcris80.prototipo.data.local.AppDatabase
+import androidx.room.withTransaction
 import com.devcris80.prototipo.data.archivos.FotosLocales
+import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.remote.AlmacenFotos
+import com.devcris80.prototipo.data.remote.FotoRechazada
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
 import com.devcris80.prototipo.data.remote.salvoCancelacion
+import kotlinx.serialization.json.buildJsonObject
+import kotlinx.serialization.json.put
 
 /**
  * Sube las fotos por subir y baja las que cambiaron en otros celulares de la finca (RF-38, CU-20 pasos 6 y 8). Cada
@@ -12,12 +17,15 @@ import com.devcris80.prototipo.data.remote.salvoCancelacion
  * gana la última que sube.
  *
  * Una foto que falla queda para la próxima sincronización y las demás siguen; sin señal, se deja todo para la próxima
- * (lanza la excepción). Una foto local por subir nunca se reemplaza por la del servidor.
+ * (lanza la excepción). Una foto local por subir nunca se reemplaza por la del servidor. Una que Storage no aceptará
+ * nunca ([FotoRechazada]) queda en la bandeja como Rechazo, igual que una fila.
  */
 internal class SincronizacionFotos(
     private val almacen: AlmacenFotos,
     private val fotos: FotosLocales,
     private val database: AppDatabase,
+    private val clock: () -> Long,
+    private val nuevoIdRechazo: () -> String,
 ) {
     private val animales = database.animalDao()
 
@@ -38,7 +46,13 @@ internal class SincronizacionFotos(
                 animales.quitarFotoPorSubir(animal.idAnimal, fotoUri)
                 continue
             }
-            intentar { almacen.subir(ruta(finca, animal.idAnimal), webp) } ?: continue
+            val subida = try {
+                intentar { almacen.subir(ruta(finca, animal.idAnimal), webp) }
+            } catch (rechazo: FotoRechazada) {
+                rechazar(animal.idAnimal, fotoUri, rechazo)
+                continue
+            }
+            subida ?: continue
             animales.quitarFotoPorSubir(animal.idAnimal, fotoUri)
             subidas[animal.idAnimal] = webp.size
         }
@@ -61,9 +75,35 @@ internal class SincronizacionFotos(
         }
     }
 
-    /** Lo que devuelve [llamada], o nulo si el servidor la rechazó. Sin señal, lanza: tampoco pasaría la siguiente. */
-    private suspend fun <T : Any> intentar(llamada: suspend () -> T): T? =
-        salvoCancelacion(bloque = { llamada() }, alFallar = { if (it.esFaltaDeConexion()) throw it else null })
+    /**
+     * Como una fila que el servidor rechazó (RN-24): queda en la bandeja y no se reintenta. Al dejar de estar por subir,
+     * la foto del servidor, si hay una, baja en este mismo paso, como la fila vuelve a la versión del servidor.
+     */
+    private suspend fun rechazar(idAnimal: String, fotoUri: String, rechazo: FotoRechazada) = database.withTransaction {
+        database.rechazoDao().insert(
+            RechazoEntity(
+                idRechazo = nuevoIdRechazo(),
+                entidad = "foto",
+                idFila = idAnimal,
+                contenido = buildJsonObject {
+                    put("id_animal", idAnimal)
+                    put("foto_uri", fotoUri)
+                }.toString(),
+                motivo = "${rechazo.codigo}: ${rechazo.motivo}",
+                fechaRechazo = clock(),
+            ),
+        )
+        animales.quitarFotoPorSubir(idAnimal, fotoUri)
+    }
+
+    /**
+     * Lo que devuelve [llamada], o nulo si falló y puede pasar en otro intento. Sin señal, lanza: tampoco pasaría la
+     * siguiente. Una [FotoRechazada] también sigue: no pasará nunca.
+     */
+    private suspend fun <T : Any> intentar(llamada: suspend () -> T): T? = salvoCancelacion(
+        bloque = { llamada() },
+        alFallar = { if (it.esFaltaDeConexion() || it is FotoRechazada) throw it else null },
+    )
 
     private fun ruta(finca: String, idAnimal: String) = "$finca/$idAnimal.webp"
 }

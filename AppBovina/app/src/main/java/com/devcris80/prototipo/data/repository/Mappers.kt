@@ -72,6 +72,7 @@ private val TEXTO_ENTIDAD_SINCRONIZADA = mapOf(
     EntidadSincronizada.REGISTRO to "registro",
     EntidadSincronizada.CHAPETA to "chapeta",
     EntidadSincronizada.PESAJE_PENDIENTE to "pesaje_pendiente",
+    EntidadSincronizada.FOTO to "foto",
 )
 private val TEXTO_ENTIDAD_CON_REVISIONES = mapOf(
     EntidadConRevisiones.ANIMAL to "animal",

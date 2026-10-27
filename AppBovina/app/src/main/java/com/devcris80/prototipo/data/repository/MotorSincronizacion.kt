@@ -59,7 +59,7 @@ class MotorSincronizacion(
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
-    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database)
+    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, clock, nuevoIdRechazo)
     private val enCurso = Mutex()
 
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {

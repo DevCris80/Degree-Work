@@ -7,7 +7,9 @@ import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.local.entity.AnimalEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
+import com.devcris80.prototipo.data.remote.FotoRechazada
 import com.devcris80.prototipo.domain.model.Animal
+import com.devcris80.prototipo.domain.model.EntidadSincronizada
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
@@ -136,6 +138,28 @@ class MotorSincronizacionFotosTest {
         celularA.sincronizar()
 
         assertEquals(0, celularA.estado().fotosSinSubir)
+    }
+
+    @Test
+    fun unaFotoQueStorageRechazaQuedaEnLaBandejaYVuelveLaDelServidor() = runTest {
+        celularA.db.animalDao().insert(sincronizado("lucero").copy(fotoUri = "bajada://lucero/vieja", fechaFotoServidor = "version-1"))
+        almacen.archivos["finca-1/lucero.webp"] = "la del servidor".toByteArray() to "version-2"
+        almacen.fallaAlSubir = FotoRechazada("403", "new row violates row-level security policy")
+        celularA.animales.update(lucero(fotoUri = "content://camara/rechazada.jpg"))
+
+        celularA.sincronizar()
+        almacen.fallaAlSubir = null
+        celularA.sincronizar()
+
+        assertEquals("no se reintenta", emptyList<String>(), almacen.subidas)
+        val enA = celularA.animal("lucero")
+        assertFalse(enA.fotoPorSubir)
+        assertEquals("la foto local vuelve a la del servidor", "bajada://lucero/1", enA.fotoUri)
+        val rechazo = RoomRechazoRepository(celularA.db.rechazoDao()).observeAbiertos().first().single()
+        assertEquals(EntidadSincronizada.FOTO, rechazo.entidad)
+        assertEquals("lucero", rechazo.idFila)
+        assertEquals("403: new row violates row-level security policy", rechazo.motivo)
+        assertTrue("content://camara/rechazada.jpg" in rechazo.contenido)
     }
 
     @Test
