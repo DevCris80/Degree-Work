@@ -2,9 +2,10 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.devcris80.prototipo.domain.model.Evento
-import com.devcris80.prototipo.domain.repository.CuentaRepository
-import com.devcris80.prototipo.domain.repository.EventoRepository
+import com.devcris80.prototipo.domain.model.Animal
+import com.devcris80.prototipo.domain.model.TipoEvento
+import com.devcris80.prototipo.domain.repository.AnimalRepository
+import com.devcris80.prototipo.domain.usecase.RegistrarEvento
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -13,13 +14,45 @@ import kotlinx.coroutines.flow.asStateFlow
 import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
-import java.util.UUID
+
+/** Las vías de aplicación que ofrece el formulario; lo que se guarda es el texto. */
+val VIAS_DE_APLICACION = listOf("Subcutánea", "Intramuscular", "Intravenosa", "Oral", "Tópica")
+
+sealed interface NuevoEventoError {
+    data object AnimalNoDisponible : NuevoEventoError
+    data object CriaNoValida : NuevoEventoError
+    data object SinUsuario : NuevoEventoError
+}
 
 data class NuevoEventoUiState(
-    val tipoEvento: String = "",
-    val detalle: String = "",
+    val tipo: TipoEvento = TipoEvento.VACUNACION,
+    /** Título del Evento: se guarda como su detalle. */
+    val titulo: String = "",
+    /** Fecha y hora del Evento; pasada o futura. */
+    val fecha: Long,
+    /** El momento en que se abrió el formulario, para saber si [fecha] todavía no llega. */
+    val ahora: Long,
+    val idAnimal: String? = null,
+    val animales: List<Animal> = emptyList(),
+    val biologico: String = "",
+    val dosis: String = "",
+    val via: String? = null,
+    val idCria: String? = null,
+    val error: NuevoEventoError? = null,
+    /** Verdadero desde que se pide guardar hasta que falla: evita guardar dos veces con un doble toque. */
+    val guardando: Boolean = false,
 ) {
-    val puedeGuardar: Boolean get() = tipoEvento.isNotBlank() && detalle.isNotBlank()
+    val animal: Animal? get() = animales.firstOrNull { it.idAnimal == idAnimal }
+
+    /** Un Evento programado: su fecha todavía no llega. */
+    val programado: Boolean get() = fecha > ahora
+
+    /** Los Animales que pueden ser la cría de un parto: cualquiera menos el del Evento. */
+    val candidatasCria: List<Animal> get() = animales.filter { it.idAnimal != idAnimal }
+
+    val puedeGuardar: Boolean
+        get() = !guardando && idAnimal != null && titulo.isNotBlank() &&
+            (tipo != TipoEvento.VACUNACION || biologico.isNotBlank())
 }
 
 sealed interface NuevoEventoEvento {
@@ -27,40 +60,68 @@ sealed interface NuevoEventoEvento {
 }
 
 /**
- * Estado del formulario de un Evento nuevo, que queda a nombre del Usuario del dispositivo.
- * Sin caso de uso: no hay regla de negocio (ver #22).
+ * Estado del formulario Registrar evento. Desde el Detalle de un Animal ([idAnimalInicial]) el Animal ya viene
+ * elegido; desde la pestaña Eventos se elige aquí. La fecha empieza en ahora y puede ser pasada o futura.
  */
 class NuevoEventoViewModel(
-    private val idAnimal: String,
-    private val eventoRepository: EventoRepository,
-    private val cuentaRepository: CuentaRepository,
-    private val clock: () -> Long = { System.currentTimeMillis() },
+    idAnimalInicial: String?,
+    animalRepository: AnimalRepository,
+    private val registrarEvento: RegistrarEvento,
+    clock: () -> Long = { System.currentTimeMillis() },
 ) : ViewModel() {
-    private val _estado = MutableStateFlow(NuevoEventoUiState())
+    private val _estado = MutableStateFlow(
+        clock().let { ahora -> NuevoEventoUiState(fecha = ahora, ahora = ahora, idAnimal = idAnimalInicial) },
+    )
     val estado: StateFlow<NuevoEventoUiState> = _estado.asStateFlow()
 
     private val _eventos = Channel<NuevoEventoEvento>(Channel.BUFFERED)
     val eventos: Flow<NuevoEventoEvento> = _eventos.receiveAsFlow()
 
-    fun onTipoEventoCambiado(valor: String) = _estado.update { it.copy(tipoEvento = valor) }
-    fun onDetalleCambiado(valor: String) = _estado.update { it.copy(detalle = valor) }
+    init {
+        viewModelScope.launch {
+            animalRepository.observeActivos().collect { animales ->
+                _estado.update { it.copy(animales = animales) }
+            }
+        }
+    }
+
+    fun onTipoSeleccionado(tipo: TipoEvento) = _estado.update { it.copy(tipo = tipo, error = null) }
+    fun onTituloCambiado(valor: String) = _estado.update { it.copy(titulo = valor, error = null) }
+    fun onFechaCambiada(fecha: Long) = _estado.update { it.copy(fecha = fecha, error = null) }
+    fun onAnimalSeleccionado(idAnimal: String) =
+        _estado.update { it.copy(idAnimal = idAnimal, idCria = it.idCria.takeIf { cria -> cria != idAnimal }, error = null) }
+    fun onBiologicoCambiado(valor: String) = _estado.update { it.copy(biologico = valor) }
+    fun onDosisCambiada(valor: String) = _estado.update { it.copy(dosis = valor) }
+    fun onViaSeleccionada(via: String) = _estado.update { it.copy(via = via) }
+    fun onCriaSeleccionada(idAnimal: String?) = _estado.update { it.copy(idCria = idAnimal, error = null) }
 
     fun onGuardar() {
         val actual = _estado.value
-        if (!actual.puedeGuardar) return
+        val idAnimal = actual.idAnimal
+        if (!actual.puedeGuardar || idAnimal == null) return
+        _estado.update { it.copy(guardando = true) }
         viewModelScope.launch {
-            val idUsuario = cuentaRepository.getUsuario()?.idUsuario ?: return@launch
-            eventoRepository.insert(
-                Evento(
-                    idEvento = UUID.randomUUID().toString(),
-                    idAnimal = idAnimal,
-                    idUsuario = idUsuario,
-                    tipoEvento = actual.tipoEvento,
-                    fecha = clock(),
-                    detalle = actual.detalle,
-                ),
+            val resultado = registrarEvento(
+                idAnimal = idAnimal,
+                tipo = actual.tipo,
+                detalle = actual.titulo.trim(),
+                fecha = actual.fecha,
+                biologico = actual.biologico,
+                dosis = actual.dosis,
+                via = actual.via,
+                idCriaResultante = actual.idCria,
             )
-            _eventos.send(NuevoEventoEvento.Guardado)
+            val error = when (resultado) {
+                is RegistrarEvento.Resultado.Registrado -> null
+                RegistrarEvento.Resultado.SinUsuario -> NuevoEventoError.SinUsuario
+                RegistrarEvento.Resultado.AnimalNoDisponible -> NuevoEventoError.AnimalNoDisponible
+                RegistrarEvento.Resultado.CriaNoValida -> NuevoEventoError.CriaNoValida
+            }
+            if (error == null) {
+                _eventos.send(NuevoEventoEvento.Guardado)
+            } else {
+                _estado.update { it.copy(error = error, guardando = false) }
+            }
         }
     }
 }

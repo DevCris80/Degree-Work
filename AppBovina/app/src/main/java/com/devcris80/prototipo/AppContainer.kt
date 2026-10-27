@@ -40,6 +40,7 @@ import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
+import com.devcris80.prototipo.domain.usecase.RegistrarEvento
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
 import com.devcris80.prototipo.domain.usecase.RegistrarPesajeManual
 import com.devcris80.prototipo.domain.usecase.ResolverConflicto
@@ -96,6 +97,7 @@ class AppContainer(context: Context) {
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val actualizarAnimal = ActualizarAnimal(animalRepository, transaccion)
+    val registrarEvento = RegistrarEvento(animalRepository, eventoRepository, cuentaRepository, transaccion)
     val resolverConflicto = ResolverConflicto(conflictoRepository)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository, cuentaRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository, cuentaRepository)

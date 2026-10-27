@@ -7,11 +7,12 @@ sealed class Rutas(val ruta: String) {
     data object CrearCuenta : Rutas("crear-cuenta")
     data object Login : Rutas("login")
     data object ListaAnimales : Rutas("animales")
-    data object NuevoAnimal : Rutas("animales/nuevo?codigo={codigo}&aviso={aviso}") {
-        fun crear(codigo: String? = null, aviso: String? = null): String {
+    data object NuevoAnimal : Rutas("animales/nuevo?codigo={codigo}&aviso={aviso}&idMadre={idMadre}") {
+        fun crear(codigo: String? = null, aviso: String? = null, idMadre: String? = null): String {
             val params = listOfNotNull(
                 codigo?.let { "codigo=${Uri.encode(it)}" },
                 aviso?.let { "aviso=${Uri.encode(it)}" },
+                idMadre?.let { "idMadre=${Uri.encode(it)}" },
             )
             return if (params.isEmpty()) "animales/nuevo" else "animales/nuevo?${params.joinToString("&")}"
         }
@@ -22,8 +23,9 @@ sealed class Rutas(val ruta: String) {
     data object EditarAnimal : Rutas("animales/{idAnimal}/editar") {
         fun crear(idAnimal: String) = "animales/$idAnimal/editar"
     }
-    data object NuevoEvento : Rutas("animales/{idAnimal}/evento") {
-        fun crear(idAnimal: String) = "animales/$idAnimal/evento"
+    data object NuevoEvento : Rutas("eventos/nuevo?idAnimal={idAnimal}") {
+        fun crear(idAnimal: String? = null) =
+            if (idAnimal == null) "eventos/nuevo" else "eventos/nuevo?idAnimal=${Uri.encode(idAnimal)}"
     }
     data object NuevoPesaje : Rutas("animales/{idAnimal}/pesaje") {
         fun crear(idAnimal: String) = "animales/$idAnimal/pesaje"
@@ -35,7 +37,6 @@ sealed class Rutas(val ruta: String) {
     data object Rechazos : Rutas("rechazos")
     data object Escanear : Rutas("escanear")
     data object Eventos : Rutas("eventos")
-    data object ProgramarEvento : Rutas("eventos/programar")
     data object EstadoServicio : Rutas("servicio")
     data object UbicacionFinca : Rutas("ubicacion-finca")
 }

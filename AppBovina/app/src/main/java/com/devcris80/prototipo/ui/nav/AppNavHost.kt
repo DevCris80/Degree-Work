@@ -33,7 +33,6 @@ import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
 import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
-import com.devcris80.prototipo.ui.screens.ProgramarEventoScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen
 import com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaScreen
 import com.devcris80.prototipo.ui.screens.ResolverConflictoScreen
@@ -179,6 +178,7 @@ fun AppNavHost() {
                 arguments = listOf(
                     navArgument("codigo") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("aviso") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("idMadre") { type = NavType.StringType; nullable = true; defaultValue = null },
                 ),
             ) {
                 RegistrarAnimalScreen(
@@ -225,10 +225,14 @@ fun AppNavHost() {
             }
             composable(
                 route = Rutas.NuevoEvento.ruta,
-                arguments = listOf(navArgument("idAnimal") { type = NavType.StringType }),
+                arguments = listOf(
+                    navArgument("idAnimal") { type = NavType.StringType; nullable = true; defaultValue = null },
+                ),
             ) {
                 EventoFormScreen(
                     onGuardado = { navController.popBackStack() },
+                    onVolver = { navController.popBackStack() },
+                    onRegistrarCria = { idMadre -> navController.navigate(Rutas.NuevoAnimal.crear(idMadre = idMadre)) },
                 )
             }
             composable(
@@ -248,12 +252,7 @@ fun AppNavHost() {
             }
             composable(Rutas.Eventos.ruta) {
                 EventosScreen(
-                    onProgramarClick = { navController.navigate(Rutas.ProgramarEvento.ruta) },
-                )
-            }
-            composable(Rutas.ProgramarEvento.ruta) {
-                ProgramarEventoScreen(
-                    onVolver = { navController.popBackStack() },
+                    onRegistrarClick = { navController.navigate(Rutas.NuevoEvento.crear()) },
                 )
             }
             composable(Rutas.EstadoServicio.ruta) {
