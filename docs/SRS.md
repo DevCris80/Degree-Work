@@ -325,7 +325,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF-34 | Mostrar las filas en conflicto y permitir resolverlas. | S | Pendiente | EQUIPO | OE2, OE3 | CU-21 |
 | RF-35 | Mostrar las filas rechazadas por el servidor, con su motivo, y permitir corregirlas. | M | Pendiente | EQUIPO | OE2, OE3 | CU-22 |
 | RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
-| RF-38 | Subir las fotos a Supabase Storage y descargar las de otros dispositivos. | S | Pendiente | EQUIPO | OE3 | CU-20 |
+| RF-38 | Subir las fotos a Supabase Storage y descargar las de otros dispositivos. | S | Implementado | EQUIPO | OE3 | CU-20 |
 | **C7. Indicadores (BI)** | | | | | | |
 | RF-39 | Mostrar el inventario activo por propósito, sexo y etapa. | S | Implementado | EQUIPO | OE3 | CU-24 |
 | RF-40 | Mostrar la evolución de peso por animal y la ganancia diaria de peso promedio. | S | Implementado | EQUIPO | OE3 | CU-24 |
@@ -707,10 +707,10 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-32, RF-33, RF-36, RF-38 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, ADR-0005) |
 | Actor | Sistema (en nombre del usuario con sesión) |
-| Prioridad / Estado | RF-32: M / Parcial: la sincronización corre al abrir la app, al iniciar sesión, dos minutos después de la última escritura local y con "Sincronizar ahora", como un único trabajo de WorkManager que espera la señal y reintenta con espera creciente (#83); falta probar los disparadores en un dispositivo y correr las pruebas nuevas de `MotorSincronizacionTest`. RF-36: M / Parcial: la descarga (paso 7) corre después de la subida, con el mismo botón; falta correr `MotorSincronizacionDescargaTest` en un dispositivo. RF-33: S / Implementado. RF-38: S / Pendiente. |
+| Prioridad / Estado | RF-32: M / Parcial: la sincronización corre al abrir la app, al iniciar sesión, dos minutos después de la última escritura local y con "Sincronizar ahora", como un único trabajo de WorkManager que espera la señal y reintenta con espera creciente (#83); falta probar los disparadores en un dispositivo y correr las pruebas nuevas de `MotorSincronizacionTest`. RF-36: M / Parcial: la descarga (paso 7) corre después de la subida, con el mismo botón; falta correr `MotorSincronizacionDescargaTest` en un dispositivo. RF-33: S / Implementado. RF-38: S / Implementado: las fotos suben y bajan al final, después de la descarga de datos, y una foto que no pasa se reintenta en segundo plano (#86). |
 | Precondiciones | Sesión válida y señal. |
 | Disparador | Se abre la app, el usuario elige "Sincronizar ahora" o se guarda un cambio local. Cada disparo encola un único trabajo, que corre cuando hay señal. |
-| Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular sube a Storage las fotos pendientes.<br>7. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>8. El celular descarga las fotos nuevas y registra la fecha de la última sincronización. |
+| Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>7. El celular sube a Storage las fotos pendientes, convertidas a WebP (RNF-10), y descarga las que cambiaron en otros celulares de la finca. Una foto que falla queda para la próxima sincronización y no cambia el resultado de los datos.<br>8. El celular registra la fecha de la última sincronización. |
 | Flujos alternos y excepciones | 1a. Se pierde la señal a mitad: los lotes ya confirmados quedan sincronizados; las filas sin confirmar siguen con `sincronizado = false` y se reenvían. Reenviarlas no duplica nada (UUID de la fila, `id_version` de la edición). Una descarga cortada se retoma desde el último cursor guardado.<br>1b. Señal débil: lotes pequeños, tiempos de espera cortos y reintentos con espera creciente; las fotos van al final y por separado, así que nunca retrasan los datos.<br>2a. Sesión rechazada: la app pide iniciar sesión.<br>4a. Violación de unicidad o de permisos: la fila se rechaza (CU-22). |
 | Offline / sincronización | Requiere señal (LIM-02). |
 | Postcondiciones | Servidor y celular con los mismos datos aceptados; conflictos y rechazos visibles. |
@@ -808,7 +808,7 @@ Criterios transversales de la interfaz: RNF-16.
 |---|---|---|---|
 | Supabase Auth | Crear cuenta, iniciar sesión, renovar sesión, recuperar contraseña | La app lo llama directamente. Los tokens se guardan en el almacenamiento seguro del dispositivo (RNF-11). | Pendiente |
 | Supabase PostgREST y Postgres | Base de datos central y sincronización | **Subida:** la función `subir_cambios` recibe un lote de filas (las editables con `rev_base` e `id_version`) y responde por fila: aceptada con su `rev`, sibling con la revisión vigente, o rechazada con motivo. **Descarga:** la función `descargar_cambios` recibe el último cursor y un límite, y devuelve una página de filas posteriores (con margen de solapamiento), los siblings sin resolver y el nuevo cursor. PostgREST exige `Authorization: Bearer <JWT del usuario>` y las funciones corren como ese usuario (`SECURITY INVOKER`). Políticas RLS por finca y rol en todas las tablas; índice único parcial para RN-01 e índice único para RN-21; secuencia global para el cursor; tablas de revisiones y siblings para Animal, Evento y Registro. Contrato en ADR-0004 y ADR-0005. | Pendiente |
-| Supabase Storage | Fotos de animales | Archivos WebP con acceso restringido por finca mediante políticas. | Pendiente |
+| Supabase Storage | Fotos de animales | Archivos WebP con acceso restringido por finca mediante políticas. | Implementado |
 
 #### 3.2.4 Interfaz de comunicaciones
 
@@ -864,7 +864,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO |
 | Verificación | I: dimensiones y formato de 10 fotos subidas. |
 | RF afectados | RF-08, RF-38 |
-| Prioridad / Estado | S / Pendiente |
+| Prioridad / Estado | S / Implementado: la conversión tiene pruebas en el celular (#86); falta la inspección de 10 fotos subidas al proyecto real. |
 
 #### 3.3.2 Fiabilidad y disponibilidad sin conexión
 
@@ -1067,7 +1067,7 @@ Resumen del contrato de pesaje:
 | RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Pendiente | — | #85 |
 | RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr | #82 |
 | RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | #90 |
-| RF-38 | CU-20 | EQUIPO | — | OE3 | S | Pendiente | — | #86 |
+| RF-38 | CU-20 | EQUIPO | — | OE3 | S | Implementado | — | #86 |
 | RF-39 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
 | RF-40 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #43, #98 |
 | RF-41 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
@@ -1087,7 +1087,7 @@ Resumen del contrato de pesaje:
 | RNF-07 | Mantenibilidad | EQUIPO | — | OE3 | M | Parcial | P (44 pruebas de ViewModel) |
 | RNF-08 | Fiabilidad | EQUIPO | — | OG | M | Pendiente | — |
 | RNF-09 | Rendimiento | EQUIPO | — | OE2 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr |
-| RNF-10 | Rendimiento | EQUIPO | — | OE3 | S | Pendiente | — |
+| RNF-10 | Rendimiento | EQUIPO | — | OE3 | S | Implementado | — |
 | RNF-11 | Seguridad | EQUIPO | — | OE3 | M | Pendiente | — |
 | RNF-12 | Seguridad | EQUIPO | — | OE3 | M | Pendiente | — |
 | RNF-13 | Privacidad | NORMA | — | OE3 | M | Pendiente | — |
