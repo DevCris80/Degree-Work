@@ -138,3 +138,13 @@ El celular llama `POST /rest/v1/rpc/descargar_cambios` con `{"desde": <cursor>, 
 - El margen de solapamiento lo resta el celular a su cursor guardado al empezar cada descarga, no en cada página: dos transacciones pueden confirmar en orden distinto al de sus cursores.
 
 Un `limite` menor que 1 da `22023`.
+
+## Fotos de los Animales
+
+Las fotos viven en el bucket privado `fotos` de Storage, una por Animal, en `<id_perfil_finca>/<id_animal>.webp`: cada celular calcula la ruta sin preguntarle al servidor, y cambiar la foto reemplaza el archivo (`x-upsert: true`). No viajan en `subir_cambios` ni en `descargar_cambios` (RF-38).
+
+- Solo cabe la foto de un Animal que ya está en el servidor y es de la finca del usuario; los dos roles la suben. Otra ruta se rechaza con `statusCode` `403` (`AccessDenied`), y una foto de otra finca no se ve: bajarla da `404`.
+- La API de Storage rechaza con `415` un archivo que no es `image/webp`, y uno de más de 2 MiB. El celular sube WebP con el lado mayor de 1280 px como máximo y calidad 75 (RNF-10).
+- Storage responde sus errores con HTTP 400 y el código en el `statusCode` del cuerpo.
+- Para saber qué fotos cambiaron, el celular lista la carpeta de su finca y compara el `updated_at` de cada archivo con el de la foto que tiene.
+- Nadie borra (RNF-04): no hay política de DELETE, así que ni la API de Storage borra una foto.
