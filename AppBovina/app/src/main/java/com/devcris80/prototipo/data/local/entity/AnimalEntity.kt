@@ -54,4 +54,9 @@ data class AnimalEntity(
     val rev: Int? = null,
     val revBase: Int? = null,
     @ColumnInfo(defaultValue = "") val idVersion: String,
+    // La foto sube a Storage y baja de él aparte de la fila (#86). `fotoPorSubir` dice que la foto local cambió y
+    // todavía no ha subido; `fotoVersion`, el `updated_at` del archivo del servidor que tiene el celular, nulo si
+    // no ha bajado ninguno. Las escribe solo la sincronización de fotos, salvo que una edición cambie la foto.
+    @ColumnInfo(defaultValue = "0") val fotoPorSubir: Boolean = false,
+    val fotoVersion: String? = null,
 )

@@ -129,3 +129,15 @@ val MIGRACION_14_15: Migration = object : MigracionBovina(14, 15) {
         db.execSQL("CREATE INDEX IF NOT EXISTS `index_resolucion_entidad_idFila` ON `resolucion` (`entidad`, `idFila`)")
     }
 }
+
+/**
+ * 15 → 16: las fotos suben a Storage y bajan de él (#86), aparte de la fila. Las que ya estaban en el celular quedan
+ * por subir; el celular todavía no tiene ninguna del servidor.
+ */
+val MIGRACION_15_16: Migration = object : MigracionBovina(15, 16) {
+    override fun migrar(db: SupportSQLiteDatabase) {
+        db.execSQL("ALTER TABLE `animal` ADD COLUMN `fotoPorSubir` INTEGER NOT NULL DEFAULT 0")
+        db.execSQL("ALTER TABLE `animal` ADD COLUMN `fotoVersion` TEXT")
+        db.execSQL("UPDATE `animal` SET fotoPorSubir = 1 WHERE fotoUri IS NOT NULL")
+    }
+}
