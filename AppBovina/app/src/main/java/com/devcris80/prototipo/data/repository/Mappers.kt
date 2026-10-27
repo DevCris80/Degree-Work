@@ -250,10 +250,11 @@ fun SiblingEntity.toDomain() = Sibling(
 )
 
 // El motivo empieza con el código de error (BandejaDeRechazos), y el contenido es lo que se intentó subir, con las
-// columnas del servidor: todas las filas de un Animal, y su foto, llevan `id_animal`.
+// columnas del servidor: todas las filas de un Animal, y su foto, llevan `id_animal`. Un contenido que no se puede
+// leer no deja al Rechazo fuera de la bandeja: sale sin esos datos.
 fun RechazoEntity.toDomain(): Rechazo {
     val entidadSincronizada = TEXTO_ENTIDAD_SINCRONIZADA.desdeTexto(entidad)
-    val fila = Json.parseToJsonElement(contenido).jsonObject
+    val fila = runCatching { Json.parseToJsonElement(contenido).jsonObject }.getOrNull()
     return Rechazo(
         idRechazo = idRechazo,
         entidad = entidadSincronizada,
@@ -261,10 +262,12 @@ fun RechazoEntity.toDomain(): Rechazo {
         contenido = contenido,
         motivo = motivo,
         fechaRechazo = fechaRechazo,
-        codigo = motivo.substringBefore(":", missingDelimiterValue = ""),
-        idAnimal = fila.textoONulo("id_animal"),
-        codigoChapeta = fila.textoONulo("codigo").takeIf { entidadSincronizada == EntidadSincronizada.CHAPETA },
-        porSuAnimal = esDeUnDependiente(motivo),
+        codigoError = motivo.substringBefore(":", missingDelimiterValue = ""),
+        mensaje = motivo.substringAfter(": "),
+        idAnimal = fila?.textoONulo("id_animal"),
+        nombreAnimal = fila?.textoONulo("nombre").takeIf { entidadSincronizada == EntidadSincronizada.ANIMAL },
+        codigoChapeta = fila?.textoONulo("codigo").takeIf { entidadSincronizada == EntidadSincronizada.CHAPETA },
+        salioConSuAnimal = esDeUnDependiente(motivo),
     )
 }
 

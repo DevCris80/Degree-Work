@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class ObservarBandejaRechazosTest {
@@ -32,18 +33,23 @@ class ObservarBandejaRechazosTest {
         codigo: String,
         idAnimal: String? = null,
         codigoChapeta: String? = null,
-        porSuAnimal: Boolean = false,
+        salioConSuAnimal: Boolean = false,
+        idRechazo: String = "rechazo-1",
+        idFila: String = "fila-1",
+        nombreAnimal: String? = null,
     ) = Rechazo(
-        idRechazo = "rechazo-1",
+        idRechazo = idRechazo,
         entidad = entidad,
-        idFila = "fila-1",
+        idFila = idFila,
         contenido = "{}",
         motivo = "$codigo: mensaje del servidor",
         fechaRechazo = 1L,
-        codigo = codigo,
+        codigoError = codigo,
+        mensaje = "mensaje del servidor",
         idAnimal = idAnimal,
+        nombreAnimal = nombreAnimal,
         codigoChapeta = codigoChapeta,
-        porSuAnimal = porSuAnimal,
+        salioConSuAnimal = salioConSuAnimal,
     )
 
     private suspend fun unico() = observarBandeja().first().single()
@@ -60,6 +66,53 @@ class ObservarBandejaRechazosTest {
         assertEquals("Lucero", enBandeja.nombreAnimal)
         assertEquals(MotivoRechazo.CodigoEnOtroAnimal(nombreOtroAnimal = "Tormenta"), enBandeja.motivo)
         assertEquals(AccionSugerida.ASOCIAR_OTRO_CODIGO, enBandeja.accion)
+    }
+
+    @Test
+    fun siElCodigoQuedoEnEsteMismoAnimalSoloQuedaAceptarlo() = runTest {
+        animales.activos.value = listOf(animal("lucero", "Lucero"))
+        chapetas.set(Chapeta("chapeta-otro", "04A31B2C", "lucero", fechaAsociacion = 5L))
+        rechazos.set(rechazo(EntidadSincronizada.CHAPETA, "23505", idAnimal = "lucero", codigoChapeta = "04A31B2C"))
+
+        val enBandeja = unico()
+
+        assertEquals(MotivoRechazo.CodigoYaEsDeEsteAnimal, enBandeja.motivo)
+        assertEquals(AccionSugerida.ACEPTAR_LA_DEL_SERVIDOR, enBandeja.accion)
+    }
+
+    @Test
+    fun elRegistroDeUnPesajeQueOtroCelularYaConcilioSeAceptaComoQuedoEnElServidor() = runTest {
+        // Su lectura ya tiene un Registro en la finca (RN-09, RN-21).
+        rechazos.set(rechazo(EntidadSincronizada.REGISTRO, "23505", idAnimal = "lucero"))
+
+        val enBandeja = unico()
+
+        assertEquals(MotivoRechazo.YaConciliado, enBandeja.motivo)
+        assertEquals(AccionSugerida.ACEPTAR_LA_DEL_SERVIDOR, enBandeja.accion)
+    }
+
+    @Test
+    fun unAnimalRechazadoQueSalioDelCelularConservaSuNombreEnSusFilas() = runTest {
+        rechazos.set(rechazo(EntidadSincronizada.ANIMAL, "42501", idAnimal = "lucero", idFila = "lucero", nombreAnimal = "Lucero"))
+        rechazos.set(
+            rechazo(EntidadSincronizada.REGISTRO, "42501", idAnimal = "lucero", salioConSuAnimal = true, idRechazo = "rechazo-2"),
+        )
+
+        val bandeja = observarBandeja().first()
+
+        assertEquals(listOf("Lucero", "Lucero"), bandeja.map { it.nombreAnimal })
+        assertEquals("no se puede abrir su detalle", listOf(false, false), bandeja.map { it.animalEnElCelular })
+    }
+
+    @Test
+    fun unAnimalDadoDeBajaConservaSuNombre() = runTest {
+        animales.set(animal("lucero", "Lucero").copy(fechaBaja = 9L))
+        rechazos.set(rechazo(EntidadSincronizada.EVENTO, "42501", idAnimal = "lucero"))
+
+        val enBandeja = unico()
+
+        assertEquals("Lucero", enBandeja.nombreAnimal)
+        assertTrue(enBandeja.animalEnElCelular)
     }
 
     @Test
@@ -86,7 +139,7 @@ class ObservarBandejaRechazosTest {
 
     @Test
     fun unaFilaQueSalioConSuAnimalLoDice() = runTest {
-        rechazos.set(rechazo(EntidadSincronizada.REGISTRO, "42501", idAnimal = "lucero", porSuAnimal = true))
+        rechazos.set(rechazo(EntidadSincronizada.REGISTRO, "42501", idAnimal = "lucero", salioConSuAnimal = true))
 
         val enBandeja = unico()
 

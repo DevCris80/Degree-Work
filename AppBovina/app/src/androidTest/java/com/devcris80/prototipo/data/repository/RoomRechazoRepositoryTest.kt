@@ -52,10 +52,11 @@ class RoomRechazoRepositoryTest {
 
         val rechazo = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first().single()
 
-        assertEquals("23505", rechazo.codigo)
+        assertEquals("23505", rechazo.codigoError)
+        assertEquals("duplicate key value violates unique constraint", rechazo.mensaje)
         assertEquals("lucero", rechazo.idAnimal)
         assertEquals("04A31B2C", rechazo.codigoChapeta)
-        assertFalse(rechazo.porSuAnimal)
+        assertFalse(rechazo.salioConSuAnimal)
     }
 
     @Test
@@ -74,10 +75,31 @@ class RoomRechazoRepositoryTest {
         val rechazo = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first().single()
 
         assertEquals(EntidadSincronizada.REGISTRO, rechazo.entidad)
-        assertEquals("42501", rechazo.codigo)
+        assertEquals("42501", rechazo.codigoError)
         assertEquals("lucero", rechazo.idAnimal)
         assertNull(rechazo.codigoChapeta)
-        assertTrue(rechazo.porSuAnimal)
+        assertTrue(rechazo.salioConSuAnimal)
+    }
+
+    @Test
+    fun unAnimalRechazadoGuardaSuNombreYUnContenidoIlegibleNoLoSacaDeLaBandeja() = runTest {
+        db.rechazoDao().insert(
+            RechazoEntity(
+                idRechazo = "rechazo-1",
+                entidad = "animal",
+                idFila = "lucero",
+                contenido = """{"id_animal":"lucero","nombre":"Lucero"}""",
+                motivo = "42501: new row violates row-level security policy",
+                fechaRechazo = 20,
+            ),
+        )
+        db.rechazoDao().insert(rechazo("rechazo-2", fechaRechazo = 10, fechaCorreccion = null).copy(contenido = "no es json"))
+
+        val abiertos = RoomRechazoRepository(db.rechazoDao()).observeAbiertos().first()
+
+        assertEquals("Lucero", abiertos[0].nombreAnimal)
+        assertEquals("rechazo-2", abiertos[1].idRechazo)
+        assertNull(abiertos[1].idAnimal)
     }
 
     @Test

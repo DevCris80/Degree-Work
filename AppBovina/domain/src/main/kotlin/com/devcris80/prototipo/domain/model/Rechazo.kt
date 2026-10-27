@@ -15,14 +15,17 @@ data class Rechazo(
     val contenido: String,
     val motivo: String,
     val fechaRechazo: Long,
-    /** El código de error con que empieza el motivo (supabase/README.md). */
-    val codigo: String,
+    /** El código de error con que empieza el motivo (supabase/README.md), y lo que dijo el servidor después. */
+    val codigoError: String,
+    val mensaje: String,
     /** El Animal de lo rechazado: el propio, el de su Chapeta, Evento o Registro, o el de su foto. */
     val idAnimal: String?,
+    /** El nombre del Animal rechazado, tal como se intentó subir: puede que ya no esté en el celular. */
+    val nombreAnimal: String?,
     /** El código de la Chapeta rechazada. */
     val codigoChapeta: String?,
-    /** Salió del celular porque el servidor rechazó su Animal (ADR-0004, regla 7). */
-    val porSuAnimal: Boolean,
+    /** Salió del celular porque el servidor rechazó la fila de la que dependía (ADR-0004, regla 7). */
+    val salioConSuAnimal: Boolean,
 )
 
 /** Por qué el servidor no aceptó el cambio, en los términos en que se le explica a la persona. */
@@ -30,13 +33,16 @@ sealed interface MotivoRechazo {
     /** El código ya tiene una Chapeta activa en la finca (RN-01, E-07); nulo si ese Animal no está en el celular. */
     data class CodigoEnOtroAnimal(val nombreOtroAnimal: String?) : MotivoRechazo
 
-    /** El Pesaje pendiente ya se concilió en otro celular. */
+    /** El código ya quedó asociado a este mismo Animal, desde otro celular. */
+    data object CodigoYaEsDeEsteAnimal : MotivoRechazo
+
+    /** El pesaje ya se concilió en otro celular: su Pesaje pendiente o su Registro. */
     data object YaConciliado : MotivoRechazo
 
     /** El rol o la finca del usuario no permiten el cambio. */
     data object SinPermiso : MotivoRechazo
 
-    /** El servidor rechazó el Animal del que dependía. */
+    /** El servidor rechazó el Animal del que dependía: el suyo, o el padre o la madre de una cría. */
     data object SeRechazoSuAnimal : MotivoRechazo
 
     /** Storage no acepta el archivo de la foto. */
@@ -57,10 +63,14 @@ enum class AccionSugerida {
     CERRAR,
 }
 
-/** Un Rechazo abierto como lo muestra la bandeja. [nombreAnimal] es nulo si su Animal ya no está en el celular. */
+/**
+ * Un Rechazo abierto como lo muestra la bandeja. [nombreAnimal] es nulo si no se sabe; [animalEnElCelular] dice si se
+ * puede abrir su detalle.
+ */
 data class RechazoEnBandeja(
     val rechazo: Rechazo,
     val nombreAnimal: String?,
+    val animalEnElCelular: Boolean,
     val motivo: MotivoRechazo,
     val accion: AccionSugerida,
 )

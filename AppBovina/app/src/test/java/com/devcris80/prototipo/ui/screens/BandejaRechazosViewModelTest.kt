@@ -76,8 +76,10 @@ internal fun rechazo(idRechazo: String, entidad: EntidadSincronizada, codigo: St
     contenido = "{}",
     motivo = "$codigo: mensaje",
     fechaRechazo = 1L,
-    codigo = codigo,
+    codigoError = codigo,
+    mensaje = "mensaje",
     idAnimal = null,
+    nombreAnimal = null,
     codigoChapeta = null,
-    porSuAnimal = false,
+    salioConSuAnimal = false,
 )

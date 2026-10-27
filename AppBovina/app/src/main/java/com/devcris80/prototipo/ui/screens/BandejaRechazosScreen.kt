@@ -128,7 +128,7 @@ private fun TarjetaRechazo(
             )
             // Corregirlo en el Animal es una escritura nueva; el Rechazo se cierra aparte.
             val idAnimal = rechazo.idAnimal
-            if (idAnimal != null && enBandeja.nombreAnimal != null) {
+            if (idAnimal != null && enBandeja.animalEnElCelular) {
                 BovinaSecondaryButton(
                     texto = if (enBandeja.accion == AccionSugerida.ASOCIAR_OTRO_CODIGO) "Asociar otro código" else "Ver animal",
                     onClick = { onVerAnimal(idAnimal) },
@@ -161,10 +161,11 @@ private fun MotivoRechazo.texto(): String = when (this) {
     is MotivoRechazo.CodigoEnOtroAnimal -> nombreOtroAnimal
         ?.let { "Este código ya está asociado a $it, desde otro celular." }
         ?: "Este código ya está asociado a otro animal de la finca."
+    MotivoRechazo.CodigoYaEsDeEsteAnimal -> "Este código ya quedó asociado a este animal, desde otro celular."
     MotivoRechazo.YaConciliado ->
         "Este pesaje ya se concilió en otro celular. Aquí quedó como lo dejó el servidor."
     MotivoRechazo.SinPermiso -> "Su rol o su finca no permiten este cambio."
-    MotivoRechazo.SeRechazoSuAnimal -> "Se rechazó el animal al que pertenece, y salió con él."
+    MotivoRechazo.SeRechazoSuAnimal -> "Se rechazó el animal del que dependía, y salió del celular con él."
     MotivoRechazo.FotoNoAceptada -> "El servidor no aceptó el archivo de la foto."
     is MotivoRechazo.Otro -> "El servidor no aceptó el cambio: $mensaje"
 }
@@ -187,19 +188,28 @@ private fun BandejaRechazosPreview() {
         contenido = "{}",
         motivo = "23505: duplicate key value",
         fechaRechazo = 0L,
-        codigo = "23505",
+        codigoError = "23505",
+        mensaje = "duplicate key value",
         idAnimal = "lucero",
+        nombreAnimal = null,
         codigoChapeta = "04A31B2C",
-        porSuAnimal = false,
+        salioConSuAnimal = false,
     )
     Prototipo1Theme {
         BandejaRechazosContent(
             estado = BandejaRechazosUiState(
                 rechazos = listOf(
-                    RechazoEnBandeja(chapeta, "Lucero", MotivoRechazo.CodigoEnOtroAnimal("Tormenta"), AccionSugerida.ASOCIAR_OTRO_CODIGO),
+                    RechazoEnBandeja(
+                        chapeta,
+                        "Lucero",
+                        animalEnElCelular = true,
+                        MotivoRechazo.CodigoEnOtroAnimal("Tormenta"),
+                        AccionSugerida.ASOCIAR_OTRO_CODIGO,
+                    ),
                     RechazoEnBandeja(
                         chapeta.copy(idRechazo = "rechazo-2", entidad = EntidadSincronizada.PESAJE_PENDIENTE, idAnimal = null),
                         null,
+                        animalEnElCelular = false,
                         MotivoRechazo.YaConciliado,
                         AccionSugerida.ACEPTAR_LA_DEL_SERVIDOR,
                     ),
