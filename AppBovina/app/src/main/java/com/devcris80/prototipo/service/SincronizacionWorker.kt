@@ -10,7 +10,8 @@ import kotlinx.coroutines.flow.first
 /**
  * El trabajo que sincroniza en segundo plano (CU-20). WorkManager no lo arranca sin red. Con señal débil o un error
  * del servidor reintenta con espera creciente (1b), unas pocas veces: mientras espera un reintento sigue programado y
- * no deja programar otro, así que después de [INTENTOS] se rinde y el próximo disparo lo vuelve a programar.
+ * no deja programar otro, así que después de [INTENTOS] se rinde y el próximo disparo lo vuelve a programar. Una foto
+ * que no subió también se reintenta así, aunque los datos ya hayan quedado.
  */
 class SincronizacionWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
     override suspend fun doWork(): Result {
@@ -21,14 +22,17 @@ class SincronizacionWorker(context: Context, params: WorkerParameters) : Corouti
         // Mientras este trabajo corre no se encola otro: lo que se escribió en ese tiempo sube en otra pasada.
         repeat(PASADAS) {
             when (sincronizacion.sincronizar()) {
-                is ResultadoSincronizacion.Completa ->
-                    if (sincronizacion.observeEstado().first().cambiosSinSubir == 0) return Result.success()
-                ResultadoSincronizacion.SinConexion, ResultadoSincronizacion.NoSePudo ->
-                    return if (runAttemptCount + 1 < INTENTOS) Result.retry() else Result.failure()
+                is ResultadoSincronizacion.Completa -> {
+                    val estado = sincronizacion.observeEstado().first()
+                    if (estado.cambiosSinSubir == 0) return if (estado.fotosSinSubir == 0) Result.success() else reintentar()
+                }
+                ResultadoSincronizacion.SinConexion, ResultadoSincronizacion.NoSePudo -> return reintentar()
             }
         }
         return Result.success()
     }
+
+    private fun reintentar() = if (runAttemptCount + 1 < INTENTOS) Result.retry() else Result.failure()
 
     private companion object {
         const val PASADAS = 3

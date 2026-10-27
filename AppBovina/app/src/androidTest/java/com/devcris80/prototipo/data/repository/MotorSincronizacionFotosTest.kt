@@ -12,6 +12,7 @@ import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.runBlocking
 import kotlinx.coroutines.test.runTest
 import org.junit.After
@@ -114,6 +115,14 @@ class MotorSincronizacionFotosTest {
         val enA = celularA.animal("lucero")
         assertTrue(enA.sincronizado)
         assertTrue("la foto sube en la próxima sincronización", enA.fotoPorSubir)
+        val estado = celularA.estado()
+        assertEquals("no quedan datos por subir", 0, estado.cambiosSinSubir)
+        assertEquals("pero sí la foto, que el trabajo en segundo plano reintenta", 1, estado.fotosSinSubir)
+
+        almacen.falla = null
+        celularA.sincronizar()
+
+        assertEquals(0, celularA.estado().fotosSinSubir)
     }
 
     @Test
@@ -146,6 +155,8 @@ class MotorSincronizacionFotosTest {
         }
 
         suspend fun sincronizar() = motor.sincronizar()
+
+        suspend fun estado() = motor.observeEstado().first()
 
         suspend fun animal(idAnimal: String) = checkNotNull(db.animalDao().findById(idAnimal))
     }

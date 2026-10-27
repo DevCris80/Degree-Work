@@ -91,7 +91,10 @@ class MotorSincronizacion(
     override fun observeEstado(): Flow<EstadoSincronizacion> = combine(
         database.estadoSyncDao().observeCambiosSinSubir(),
         database.estadoSyncDao().observe(),
-    ) { cambiosSinSubir, estado -> EstadoSincronizacion(cambiosSinSubir, estado?.fechaUltimaSincronizacion) }
+        database.estadoSyncDao().observeFotosSinSubir(),
+    ) { cambiosSinSubir, estado, fotosSinSubir ->
+        EstadoSincronizacion(cambiosSinSubir, estado?.fechaUltimaSincronizacion, fotosSinSubir)
+    }
 
     private suspend fun <E : Any> subir(tabla: TablaSincronizada<E>): ResultadoSincronizacion.Completa {
         var conteo = ResultadoSincronizacion.Completa(0, 0, 0)

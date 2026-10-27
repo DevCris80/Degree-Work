@@ -19,5 +19,8 @@ fun crearClienteSupabase(sesion: SesionCifrada): SupabaseClient =
             sessionManager = sesion
         }
         install(Postgrest)
-        install(Storage)
+        install(Storage) {
+            // Storage no usa el tiempo de arriba sino este, por llamada: una foto tarda más en subir que un lote.
+            transferTimeout = 120.seconds
+        }
     }

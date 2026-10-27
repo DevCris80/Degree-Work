@@ -28,4 +28,8 @@ interface EstadoSyncDao {
             " + (SELECT COUNT(*) FROM pesaje_pendiente WHERE sincronizado = 0)",
     )
     fun observeCambiosSinSubir(): Flow<Int>
+
+    /** Las fotos de los Animales que no han subido. No cuentan en [observeCambiosSinSubir]: suben aparte. */
+    @Query("SELECT COUNT(*) FROM animal WHERE fotoPorSubir = 1 AND fotoUri IS NOT NULL")
+    fun observeFotosSinSubir(): Flow<Int>
 }
