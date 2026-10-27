@@ -121,6 +121,23 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
+    fun soloElGanaderoPuedeRegistrarLaUbicacionDeLaFinca() = runTest {
+        suspend fun puede(usuario: Usuario?): Boolean {
+            cuentaRepository.usuario.value = usuario
+            val viewModel = crearViewModel()
+            val estados = mutableListOf<ListaAnimalesUiState>()
+            val job = launch { viewModel.estado.collect { estados.add(it) } }
+            advanceUntilIdle()
+            job.cancel()
+            return estados.last().puedeRegistrarUbicacion
+        }
+
+        assertEquals(true, puede(Usuario("u1", "perfil_local", "Ana", Rol.GANADERO)))
+        assertEquals(false, puede(Usuario("u2", "perfil_local", "Beto", Rol.OPERARIO)))
+        assertEquals("sin Usuario no hay permiso", false, puede(null))
+    }
+
+    @Test
     fun onFiltroSeleccionado_filtraLosAnimalesPorProposito() = runTest {
         val leche = animal("Manchas", Proposito.LECHE)
         val carne = animal("Toro", Proposito.CARNE)

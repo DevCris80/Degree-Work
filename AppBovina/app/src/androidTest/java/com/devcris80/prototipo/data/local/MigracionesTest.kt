@@ -186,14 +186,39 @@ class MigracionesTest {
     }
 
     @Test
+    fun de16a17AgregaLaUbicacionVaciaYConservaLaFinca() {
+        helper.createDatabase(BASE, 16).use { db ->
+            db.execSQL("INSERT INTO perfil_finca (idPerfilFinca, nombreFinca, sincronizado, fechaModificacion) VALUES ('finca-1', 'La Esperanza', 1, 7)")
+        }
+
+        helper.runMigrationsAndValidate(BASE, 17, true, MIGRACION_16_17).use { db ->
+            db.query("SELECT nombreFinca, sincronizado, fechaModificacion, latitud, longitud FROM perfil_finca").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals("La Esperanza", fila.getString(0))
+                assertEquals("la finca no queda pendiente de subir", 1, fila.getInt(1))
+                assertEquals(7L, fila.getLong(2))
+                assertTrue("la finca existente no tiene ubicación", fila.isNull(3))
+                assertTrue(fila.isNull(4))
+            }
+            db.execSQL("UPDATE perfil_finca SET latitud = 4.6097, longitud = -74.0817")
+            db.query("SELECT latitud, longitud FROM perfil_finca").use { fila ->
+                assertTrue(fila.moveToNext())
+                assertEquals(4.6097, fila.getDouble(0), 0.0)
+                assertEquals(-74.0817, fila.getDouble(1), 0.0)
+            }
+        }
+    }
+
+    @Test
     fun unaInstalacionEnLaVersion10LlegaALaActualSinPerderNingunDato() {
         helper.createDatabase(BASE, 10).use { db ->
             insertarInstalacionDeLaVersion10(db)
         }
 
         helper.runMigrationsAndValidate(
-            BASE, 16, true,
+            BASE, 17, true,
             MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15, MIGRACION_15_16,
+            MIGRACION_16_17,
         ).use { db ->
             db.query("SELECT nombreFinca FROM perfil_finca").use { fila ->
                 assertTrue(fila.moveToNext())
