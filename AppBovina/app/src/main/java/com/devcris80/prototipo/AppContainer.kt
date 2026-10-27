@@ -2,7 +2,9 @@ package com.devcris80.prototipo
 
 import android.content.Context
 import com.devcris80.prototipo.data.local.AppDatabase
+import com.devcris80.prototipo.data.local.FotosEnArchivos
 import com.devcris80.prototipo.data.remote.SesionCifrada
+import com.devcris80.prototipo.data.remote.SupabaseAlmacenFotos
 import com.devcris80.prototipo.data.remote.SupabaseServidorSincronizacion
 import com.devcris80.prototipo.data.remote.crearClienteSupabase
 import com.devcris80.prototipo.data.repository.MotorSincronizacion
@@ -74,6 +76,8 @@ class AppContainer(context: Context) {
     val sincronizacionRepository: SincronizacionRepository = MotorSincronizacion(
         SupabaseServidorSincronizacion(supabase),
         database,
+        SupabaseAlmacenFotos(supabase),
+        FotosEnArchivos(context),
         programarTrabajo = ProgramadorSincronizacion(context)::programar,
     )
 

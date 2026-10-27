@@ -38,6 +38,8 @@ class MotorSincronizacionDescargaTest {
         MotorSincronizacion(
             servidor,
             db,
+            AlmacenFotosFalso(),
+            FotosLocalesFalsas(),
             programarTrabajo = {},
             clock = { 9_000 },
             tamanoPagina = tamanoPagina,
