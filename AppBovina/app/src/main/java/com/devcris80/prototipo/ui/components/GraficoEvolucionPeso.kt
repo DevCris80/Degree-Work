@@ -17,8 +17,8 @@ import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.StrokeJoin
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
-import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.domain.model.Registro
@@ -30,6 +30,7 @@ import java.util.Date
 import java.util.Locale
 
 private const val LINEAS_GUIA = 3
+private val ALTO_GRAFICO = 160.dp
 
 /**
  * Evolución del peso de un Animal: peso contra fecha, a partir de sus Registros. Con menos de dos Registros
@@ -53,12 +54,16 @@ fun GraficoEvolucionPeso(
                 modifier = Modifier.padding(top = 8.dp),
             )
         } else {
-            val resumen = "Peso de ${formatoPeso(datos.pesoMinimo)} a ${formatoPeso(datos.pesoMaximo)} kg entre el " +
-                "${formatoFecha.format(Date(datos.primeraFecha))} y el ${formatoFecha.format(Date(datos.ultimaFecha))}"
+            val pesoMaximo = "${formatoPeso(datos.pesoMaximo)} kg"
+            val pesoMinimo = "${formatoPeso(datos.pesoMinimo)} kg"
+            val primeraFecha = formatoFecha.format(Date(datos.primeraFecha))
+            val ultimaFecha = formatoFecha.format(Date(datos.ultimaFecha))
+            val resumen = "Peso de $pesoMinimo a $pesoMaximo entre el $primeraFecha y el $ultimaFecha"
             Column(
+                // Un solo resumen para el lector de pantalla: sin esto leería además cada etiqueta de los ejes.
                 modifier = Modifier
                     .padding(top = 12.dp)
-                    .semantics { contentDescription = resumen },
+                    .clearAndSetSemantics { contentDescription = resumen },
                 verticalArrangement = Arrangement.spacedBy(4.dp),
             ) {
                 Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
@@ -66,21 +71,19 @@ fun GraficoEvolucionPeso(
                         modifier = Modifier.height(ALTO_GRAFICO),
                         verticalArrangement = Arrangement.SpaceBetween,
                     ) {
-                        EtiquetaEje("${formatoPeso(datos.pesoMaximo)} kg")
-                        EtiquetaEje("${formatoPeso(datos.pesoMinimo)} kg")
+                        EtiquetaEje(pesoMaximo)
+                        EtiquetaEje(pesoMinimo)
                     }
-                    Lienzo(datos = datos, modifier = Modifier.weight(1f).height(ALTO_GRAFICO))
+                    LineaDeEvolucion(datos = datos, modifier = Modifier.weight(1f).height(ALTO_GRAFICO))
                 }
                 Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    EtiquetaEje(formatoFecha.format(Date(datos.primeraFecha)))
-                    EtiquetaEje(formatoFecha.format(Date(datos.ultimaFecha)))
+                    EtiquetaEje(primeraFecha)
+                    EtiquetaEje(ultimaFecha)
                 }
             }
         }
     }
 }
-
-private val ALTO_GRAFICO = 160.dp
 
 @Composable
 private fun EtiquetaEje(texto: String) {
@@ -88,7 +91,7 @@ private fun EtiquetaEje(texto: String) {
 }
 
 @Composable
-private fun Lienzo(datos: DatosGrafico, modifier: Modifier = Modifier) {
+private fun LineaDeEvolucion(datos: DatosGrafico, modifier: Modifier = Modifier) {
     val colorLinea = MaterialTheme.colorScheme.primary
     val colorGuia = MaterialTheme.colorScheme.outlineVariant
     val colorCentro = MaterialTheme.colorScheme.surfaceContainerLowest
