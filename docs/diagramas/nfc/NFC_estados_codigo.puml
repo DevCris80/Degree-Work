@@ -1,0 +1,69 @@
+@startuml NFC_estados_codigo
+title Esquema de identificación NFC — máquina de estados de un código
+
+hide empty description
+skinparam shadowing false
+skinparam defaultFontName sans-serif
+skinparam roundcorner 6
+skinparam state {
+  BackgroundColor #FFFFFF
+  BorderColor #5B6B86
+  FontColor #222222
+}
+skinparam ArrowColor #333333
+skinparam NoteBackgroundColor #FFF8C6
+skinparam NoteBorderColor #B5A642
+
+state "Sin historial" as SinHistorial
+SinHistorial : no existe ninguna Chapeta con el código
+SinHistorial : escanear → registrar animal nuevo
+SinHistorial : pesaje → pendiente CODIGO_SIN_CHAPETA_ACTIVA
+
+state "Activa" as Activa {
+  state "Animal activo" as AnimalActivo
+  AnimalActivo : escanear → abrir el detalle del animal
+  AnimalActivo : pesaje → Registro del animal (201)
+
+  state "Animal dado de baja" as AnimalBaja
+  AnimalBaja : escanear → ofrecer liberar la chapeta
+  AnimalBaja : pesaje → pendiente ANIMAL_DADO_DE_BAJA (202)
+
+  [*] --> AnimalActivo
+  AnimalActivo --> AnimalBaja : dar de baja el animal\n[Ganadero] (RF-11)
+}
+
+state "Liberada" as Liberada
+Liberada : todas sus Chapetas tienen fechaDesasociacion
+Liberada : escanear → registrar animal, con aviso del animal anterior
+Liberada : pesaje → pendiente CODIGO_SIN_CHAPETA_ACTIVA
+
+[*] --> SinHistorial
+SinHistorial --> Activa : registrar animal con el código\n(escaneado o digitado) (RF-17)
+SinHistorial --> Activa : asociar a un animal existente\nsin chapeta activa (RF-19, planificado)
+Activa --> Liberada : liberar chapeta\n[Ganadero] (RF-18)
+Liberada --> Activa : registrar otro animal con el código (RF-17)\no asociarlo a un animal existente (RF-19, planificado)
+Liberada --> Activa : al sincronizar, el servidor rechaza\nla liberación y devuelve su versión
+
+note right of Activa
+  Invariante: en este estado existe exactamente
+  una Chapeta con el código y fechaDesasociacion nula
+  (índice único parcial, RN-01).
+  Un intento de asociarlo a otro animal se rechaza
+  (CodigoYaActivo).
+  En el servidor la regla es por finca:
+  UNIQUE(id_perfil_finca, codigo) WHERE fecha_desasociacion IS NULL.
+  Si dos celulares asocian el mismo código sin señal, la Chapeta
+  que sube segunda se rechaza (23505): sale de la tabla local
+  y pasa a la bandeja de rechazos con su motivo.
+  Si la local ya estaba sincronizada, al descargar la del
+  servidor la local se libera (cede el código) y el código
+  sigue Activo, ahora con el animal que trae el servidor.
+end note
+
+note bottom of Liberada
+  El historial no se pierde: cada asociación anterior
+  queda como una fila de Chapeta con sus fechas (RN-04).
+  No hay transición de vuelta a «Sin historial».
+  Las transiciones por sincronización solo ocurren con señal.
+end note
+@enduml
