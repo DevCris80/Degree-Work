@@ -42,7 +42,6 @@ fun GraficoEvolucionPeso(
     modifier: Modifier = Modifier,
 ) {
     val datos = remember(registros) { datosDelGrafico(registros) }
-    val formatoFecha = remember { SimpleDateFormat("dd/MM/yy", Locale.getDefault()) }
 
     BovinaCard(modifier = modifier.fillMaxWidth()) {
         Text(text = "Evolución de peso", style = MaterialTheme.typography.titleMedium)
@@ -54,33 +53,41 @@ fun GraficoEvolucionPeso(
                 modifier = Modifier.padding(top = 8.dp),
             )
         } else {
-            val pesoMaximo = "${formatoPeso(datos.pesoMaximo)} kg"
-            val pesoMinimo = "${formatoPeso(datos.pesoMinimo)} kg"
-            val primeraFecha = formatoFecha.format(Date(datos.primeraFecha))
-            val ultimaFecha = formatoFecha.format(Date(datos.ultimaFecha))
-            val resumen = "Peso de $pesoMinimo a $pesoMaximo entre el $primeraFecha y el $ultimaFecha"
+            GraficoPesoConEjes(datos = datos, modifier = Modifier.padding(top = 12.dp))
+        }
+    }
+}
+
+/** La línea de peso con sus ejes, sin tarjeta alrededor, para usarla dentro de otra tarjeta. */
+@Composable
+fun GraficoPesoConEjes(
+    datos: DatosGrafico,
+    modifier: Modifier = Modifier,
+) {
+    val formatoFecha = remember { SimpleDateFormat("dd/MM/yy", Locale.getDefault()) }
+    val pesoMaximo = "${formatoPeso(datos.pesoMaximo)} kg"
+    val pesoMinimo = "${formatoPeso(datos.pesoMinimo)} kg"
+    val primeraFecha = formatoFecha.format(Date(datos.primeraFecha))
+    val ultimaFecha = formatoFecha.format(Date(datos.ultimaFecha))
+    val resumen = "Peso de $pesoMinimo a $pesoMaximo entre el $primeraFecha y el $ultimaFecha"
+    Column(
+        // Un solo resumen para el lector de pantalla: sin esto leería además cada etiqueta de los ejes.
+        modifier = modifier.clearAndSetSemantics { contentDescription = resumen },
+        verticalArrangement = Arrangement.spacedBy(4.dp),
+    ) {
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Column(
-                // Un solo resumen para el lector de pantalla: sin esto leería además cada etiqueta de los ejes.
-                modifier = Modifier
-                    .padding(top = 12.dp)
-                    .clearAndSetSemantics { contentDescription = resumen },
-                verticalArrangement = Arrangement.spacedBy(4.dp),
+                modifier = Modifier.height(ALTO_GRAFICO),
+                verticalArrangement = Arrangement.SpaceBetween,
             ) {
-                Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    Column(
-                        modifier = Modifier.height(ALTO_GRAFICO),
-                        verticalArrangement = Arrangement.SpaceBetween,
-                    ) {
-                        EtiquetaEje(pesoMaximo)
-                        EtiquetaEje(pesoMinimo)
-                    }
-                    LineaDeEvolucion(datos = datos, modifier = Modifier.weight(1f).height(ALTO_GRAFICO))
-                }
-                Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-                    EtiquetaEje(primeraFecha)
-                    EtiquetaEje(ultimaFecha)
-                }
+                EtiquetaEje(pesoMaximo)
+                EtiquetaEje(pesoMinimo)
             }
+            LineaDeEvolucion(datos = datos, modifier = Modifier.weight(1f).height(ALTO_GRAFICO))
+        }
+        Row(modifier = Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
+            EtiquetaEje(primeraFecha)
+            EtiquetaEje(ultimaFecha)
         }
     }
 }

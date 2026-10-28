@@ -22,7 +22,9 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
@@ -37,12 +39,16 @@ import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaFilterChip
 import com.devcris80.prototipo.ui.components.BovinaTopBar
+import com.devcris80.prototipo.ui.components.GraficoEventosPorMes
+import com.devcris80.prototipo.ui.components.GraficoPesoConEjes
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaMinTouchTarget
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
+import com.devcris80.prototipo.ui.util.barrasPorMes
+import com.devcris80.prototipo.ui.util.datosDelGrafico
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
@@ -309,10 +315,31 @@ private fun TarjetaEvolucionPeso(
                         style = MaterialTheme.typography.titleSmall,
                     )
                 }
-                evolucion.registros.forEach { registro ->
+                val datos = remember(evolucion.registros) { datosDelGrafico(evolucion.registros) }
+                if (datos != null) {
+                    GraficoPesoConEjes(datos = datos, modifier = Modifier.padding(vertical = 12.dp))
+                }
+                val primero = evolucion.registros.first()
+                val ultimo = evolucion.registros.last()
+                if (evolucion.registros.size < 2) {
                     FilaDato(
-                        etiqueta = formatoFecha.format(Date(registro.timestamp)),
-                        valor = "${registro.peso} kg",
+                        etiqueta = "Único pesaje (${formatoFecha.format(Date(primero.timestamp))})",
+                        valor = "${primero.peso} kg",
+                    )
+                } else {
+                    FilaDato(
+                        etiqueta = "Primer pesaje (${formatoFecha.format(Date(primero.timestamp))})",
+                        valor = "${primero.peso} kg",
+                    )
+                    FilaDato(
+                        etiqueta = "Último pesaje (${formatoFecha.format(Date(ultimo.timestamp))})",
+                        valor = "${ultimo.peso} kg",
+                    )
+                    val cambio = ultimo.peso - primero.peso
+                    FilaDato(
+                        etiqueta = "Cambio total",
+                        valor = (if (cambio >= 0) "+" else "") + String.format(Locale.getDefault(), "%.1f kg", cambio),
+                        destacada = true,
                     )
                 }
             }
@@ -329,13 +356,25 @@ private fun TarjetaEventosPorMes(eventosPorMes: List<EventosDelMes>) {
             TextoSinDatos("No hay eventos registrados.")
             return@BovinaCard
         }
-        eventosPorMes.forEach { delMes ->
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-            FilaConteo(
-                etiqueta = formatoMes.format(Date(delMes.mes.inicio())).replaceFirstChar(Char::uppercase),
-                cantidad = delMes.porTipo.values.sum(),
-                destacada = true,
-            )
+        val barras = remember(eventosPorMes) { barrasPorMes(eventosPorMes) }
+        // Sin elegir otro, se ve el detalle del mes más reciente.
+        var mesElegido by remember(eventosPorMes) { mutableStateOf(barras.last().mes) }
+        GraficoEventosPorMes(
+            barras = barras,
+            mesElegido = mesElegido,
+            onMesElegido = { mesElegido = it },
+            modifier = Modifier.padding(top = 12.dp),
+        )
+        HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
+        val delMes = eventosPorMes.firstOrNull { it.mes == mesElegido }
+        FilaConteo(
+            etiqueta = formatoMes.format(Date(mesElegido.inicio())).replaceFirstChar(Char::uppercase),
+            cantidad = delMes?.porTipo?.values?.sum() ?: 0,
+            destacada = true,
+        )
+        if (delMes == null) {
+            TextoSinDatos("Sin eventos este mes.")
+        } else {
             delMes.porTipo.entries.sortedByDescending { it.value }.forEach { (tipo, cantidad) ->
                 FilaConteo(etiqueta = tipo, cantidad = cantidad)
             }
