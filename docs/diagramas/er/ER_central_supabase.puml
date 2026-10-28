@@ -1,0 +1,202 @@
+@startuml ER_central_supabase
+title Modelo entidad-relación — base de datos central (PostgreSQL en Supabase)
+
+hide circle
+skinparam shadowing false
+skinparam defaultFontName sans-serif
+skinparam roundcorner 6
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #5E7F5A
+  HeaderBackgroundColor #DCEBD3
+}
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #5E7F5A
+  HeaderBackgroundColor #DCEBD3
+}
+skinparam ArrowColor #333333
+skinparam NoteBackgroundColor #FFF8C6
+skinparam NoteBorderColor #B5A642
+
+entity "auth.users" as auth_users <<Supabase Auth>> {
+  *id : uuid <<PK>>
+}
+
+entity perfil_finca {
+  *id_perfil_finca : uuid <<PK>>
+  --
+  *nombre_finca : text
+  latitud : double precision
+  longitud : double precision
+  *fecha_modificacion : timestamptz
+  *cursor_descarga : bigint
+}
+
+entity usuario {
+  *id_usuario : uuid <<PK, FK auth.users>>
+  --
+  *id_perfil_finca : uuid <<FK>>
+  *nombre : text
+  *rol : text <<CHECK Ganadero | Operario>>
+  *fecha_modificacion : timestamptz
+  *cursor_descarga : bigint
+}
+
+entity animal {
+  *id_animal : uuid <<PK>>
+  --
+  *id_perfil_finca : uuid <<FK>>
+  id_padre : uuid <<FK animal>>
+  id_madre : uuid <<FK animal>>
+  *nombre, raza : text
+  *sexo, etapa, proposito : text <<CHECK, RN-03>>
+  *fecha_nacimiento : timestamptz
+  *fecha_nacimiento_es_estimada : boolean
+  fecha_baja : timestamptz
+  *fecha_modificacion : timestamptz
+  *rev : integer <<≥ 1>>
+  *cursor_descarga : bigint
+}
+
+entity evento {
+  *id_evento : uuid <<PK>>
+  --
+  *id_animal : uuid <<FK>>
+  *id_usuario : uuid <<FK>>
+  *id_perfil_finca : uuid <<FK>>
+  *tipo_evento, detalle : text
+  *fecha : timestamptz
+  biologico, dosis, via : text
+  id_cria_resultante : uuid <<sin FK>>
+  fecha_baja : timestamptz
+  *fecha_modificacion : timestamptz
+  *rev : integer
+  *cursor_descarga : bigint
+}
+
+entity registro {
+  *id_registro : uuid <<PK>>
+  --
+  *id_animal : uuid <<FK>>
+  *id_usuario : uuid <<FK>>
+  *id_perfil_finca : uuid <<FK>>
+  id_lectura : text
+  *peso : real <<CHECK entre 0 y 1500 kg>>
+  *fecha_medicion : timestamptz
+  fecha_baja : timestamptz
+  *fecha_modificacion : timestamptz
+  *rev : integer
+  *cursor_descarga : bigint
+}
+
+entity chapeta {
+  *id_chapeta : uuid <<PK>>
+  --
+  *codigo : text <<CHECK normalizado>>
+  *id_animal : uuid <<FK>>
+  *id_perfil_finca : uuid <<FK>>
+  *fecha_asociacion : timestamptz
+  fecha_desasociacion : timestamptz
+  *fecha_modificacion : timestamptz
+  *cursor_descarga : bigint
+}
+
+entity pesaje_pendiente {
+  *id_pesaje_pendiente : uuid <<PK>>
+  --
+  *id_lectura, codigo : text
+  *peso : real
+  *fecha_medicion : timestamptz
+  *id_usuario : uuid <<FK>>
+  *id_perfil_finca : uuid <<FK>>
+  *motivo : text <<CHECK>>
+  resolucion : text <<CHECK>>
+  id_usuario_resolucion : uuid <<FK>>
+  fecha_resolucion : timestamptz
+  *fecha_modificacion : timestamptz
+  *cursor_descarga : bigint
+}
+
+entity revision {
+  *id_version : uuid <<PK>>
+  --
+  *entidad : text <<animal | evento | registro>>
+  *id_fila : uuid
+  *id_perfil_finca : uuid <<FK>>
+  *rev : integer
+  *contenido : jsonb
+  *id_usuario : uuid <<FK, autor>>
+  *fecha : timestamptz
+}
+
+entity sibling {
+  *id_version : uuid <<PK>>
+  --
+  *entidad : text
+  *id_fila : uuid
+  *id_perfil_finca : uuid <<FK>>
+  *rev_base : integer
+  *contenido : jsonb
+  *id_usuario : uuid <<FK, autor>>
+  *fecha_recepcion : timestamptz
+  resuelto_por : uuid
+  fecha_resolucion : timestamptz
+  *cursor_descarga : bigint
+}
+
+entity aceptacion_datos {
+  *id_aceptacion : uuid <<PK>>
+  --
+  *id_usuario : uuid <<FK auth.users>>
+  *version_texto : text <<FK privado.texto_autorizacion>>
+  *fecha_aceptacion : timestamptz
+}
+
+auth_users ||--o| usuario
+auth_users ||--o{ aceptacion_datos
+perfil_finca ||--o{ usuario
+perfil_finca ||--o{ animal
+animal |o--o{ animal : padre / madre
+animal ||--o{ evento
+animal ||--o{ registro
+animal ||--o{ chapeta
+usuario ||--o{ evento
+usuario ||--o{ registro
+usuario ||--o{ pesaje_pendiente : recibe
+usuario |o--o{ pesaje_pendiente : concilia
+usuario ||--o{ revision : autor
+usuario ||--o{ sibling : autor
+registro |o..o| pesaje_pendiente : id_lectura
+
+note bottom of chapeta
+  UNIQUE(id_perfil_finca, codigo)
+  WHERE fecha_desasociacion IS NULL (RN-01)
+end note
+
+note bottom of registro
+  UNIQUE(id_perfil_finca, id_lectura) en registro
+  y en pesaje_pendiente (RN-09, RN-21)
+end note
+
+note bottom of revision
+  Historial completo de las revisiones aceptadas, sin depuración
+  (RN-16). entidad + id_fila apuntan a la fila (relación lógica, sin FK).
+  Lo escribe subir_cambios.
+end note
+
+note bottom of sibling
+  Se conserva después de resolverse: resuelto_por es el id_version
+  de la edición que lo resolvió.
+end note
+
+legend bottom left
+  ● NOT NULL · sin ● admite NULL. Todas las tablas tienen RLS por finca y rol; ninguna política permite DELETE.
+  cursor_descarga: valor nuevo de una secuencia global en cada escritura (trigger), para la descarga incremental.
+  id_perfil_finca en las tablas hijas lo llena un trigger, para filtrar por finca sin unir con animal.
+  Por simplicidad no se dibujan las FK hacia perfil_finca de chapeta, evento, registro, pesaje_pendiente, revision y sibling.
+  Sin sincronizado, rev_base ni id_version en las filas: son estado local de cada celular.
+  Fotos: bucket «fotos» de Storage, un archivo <finca>/<id_animal>.webp por animal.
+  Planificada y aún sin migración: tabla invitacion (RN-18).
+endlegend
+@enduml

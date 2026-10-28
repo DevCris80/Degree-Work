@@ -1,0 +1,205 @@
+@startuml ER_local_room
+title Modelo entidad-relación — base de datos local (Room 2.8, esquema v18)
+
+hide circle
+skinparam shadowing false
+skinparam defaultFontName sans-serif
+skinparam roundcorner 6
+skinparam packageStyle rectangle
+skinparam class {
+  BackgroundColor #FFFFFF
+  BorderColor #5B6B86
+  HeaderBackgroundColor #D5DEEF
+}
+skinparam entity {
+  BackgroundColor #FFFFFF
+  BorderColor #5B6B86
+  HeaderBackgroundColor #D5DEEF
+}
+skinparam ArrowColor #333333
+skinparam NoteBackgroundColor #FFF8C6
+skinparam NoteBorderColor #B5A642
+
+package "Datos de la finca" {
+  entity perfil_finca {
+    *idPerfilFinca : TEXT <<PK>>
+    --
+    *nombreFinca : TEXT
+    latitud : REAL
+    longitud : REAL
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+  }
+
+  entity usuario {
+    *idUsuario : TEXT <<PK>>
+    --
+    *idPerfilFinca : TEXT <<FK>>
+    *nombre : TEXT
+    *rol : TEXT <<Ganadero | Operario>>
+    *delDispositivo : INTEGER <<booleano>>
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+  }
+
+  entity animal {
+    *idAnimal : TEXT <<PK>>
+    --
+    *idPerfilFinca : TEXT <<FK>>
+    idPadre : TEXT <<FK animal>>
+    idMadre : TEXT <<FK animal>>
+    *nombre : TEXT
+    *raza : TEXT
+    *sexo : TEXT <<Macho | Hembra>>
+    *etapa : TEXT <<Toro | Novillo | Vaca | Ternera>>
+    *fechaNacimiento : INTEGER
+    *fechaNacimientoEsEstimada : INTEGER
+    *proposito : TEXT
+    fotoUri : TEXT
+    fechaBaja : INTEGER <<baja lógica>>
+    *fotoPorSubir : INTEGER
+    fotoVersion : TEXT
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+    rev : INTEGER
+    revBase : INTEGER
+    *idVersion : TEXT
+  }
+
+  entity evento {
+    *idEvento : TEXT <<PK>>
+    --
+    *idAnimal : TEXT <<FK>>
+    *idUsuario : TEXT <<FK, autor>>
+    *tipoEvento : TEXT <<Vacunación | Parto>>
+    *fecha : INTEGER <<pasada o futura>>
+    *detalle : TEXT <<título>>
+    biologico : TEXT <<vacunación>>
+    dosis : TEXT <<vacunación>>
+    via : TEXT <<vacunación>>
+    idCriaResultante : TEXT <<parto, sin FK>>
+    fechaBaja : INTEGER <<baja lógica>>
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+    rev : INTEGER
+    revBase : INTEGER
+    *idVersion : TEXT
+  }
+
+  entity registro {
+    *idRegistro : TEXT <<PK>>
+    --
+    *idAnimal : TEXT <<FK>>
+    *idUsuario : TEXT <<FK, autor>>
+    idLectura : TEXT <<UNIQUE>>
+    *peso : REAL <<kg>>
+    *timestamp : INTEGER <<medición>>
+    fechaBaja : INTEGER <<baja lógica>>
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+    rev : INTEGER
+    revBase : INTEGER
+    *idVersion : TEXT
+  }
+
+  entity chapeta {
+    *idChapeta : TEXT <<PK>>
+    --
+    *codigo : TEXT <<UID normalizado>>
+    *idAnimal : TEXT <<FK>>
+    *fechaAsociacion : INTEGER
+    fechaDesasociacion : INTEGER <<liberación>>
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+  }
+
+  entity pesaje_pendiente {
+    *idPesajePendiente : TEXT <<PK>>
+    --
+    *idLectura : TEXT <<UNIQUE>>
+    *codigo : TEXT
+    *peso : REAL
+    *timestamp : INTEGER
+    *idUsuario : TEXT <<FK, receptor>>
+    *motivo : TEXT
+    resolucion : TEXT <<ASIGNADO | DESCARTADO>>
+    idUsuarioResolucion : TEXT <<FK>>
+    fechaResolucion : INTEGER
+    *sincronizado : INTEGER
+    *fechaModificacion : INTEGER
+  }
+}
+
+package "Estado de la sincronización (solo en el celular)" {
+  entity estado_sync {
+    *id : INTEGER <<PK, fila única>>
+    --
+    *cursorDescarga : INTEGER
+    fechaUltimaSincronizacion : INTEGER
+  }
+
+  entity rechazo {
+    *idRechazo : TEXT <<PK>>
+    --
+    *entidad : TEXT
+    *idFila : TEXT
+    *contenido : TEXT <<JSON>>
+    *motivo : TEXT
+    *fechaRechazo : INTEGER
+    fechaCorreccion : INTEGER
+  }
+
+  entity sibling {
+    *idVersion : TEXT <<PK>>
+    --
+    *entidad : TEXT <<animal | evento | registro>>
+    *idFila : TEXT
+    *revBase : INTEGER
+    *contenido : TEXT <<JSON>>
+    *idUsuario : TEXT
+    *fechaRecepcion : INTEGER
+  }
+
+  entity resolucion {
+    *idVersionSibling : TEXT <<PK>>
+    --
+    *entidad : TEXT
+    *idFila : TEXT
+  }
+}
+
+perfil_finca ||--o{ usuario
+perfil_finca ||--o{ animal
+animal |o--o{ animal : padre / madre
+animal ||--o{ evento : tiene
+animal ||--o{ registro : tiene
+animal ||--o{ chapeta : porta
+usuario ||--o{ evento : registra
+usuario ||--o{ registro : registra
+usuario ||--o{ pesaje_pendiente : recibe
+usuario |o--o{ pesaje_pendiente : concilia
+registro |o..o| pesaje_pendiente : idLectura
+evento }o..o| animal : idCriaResultante
+sibling ||..o| resolucion : idVersion
+
+note right of chapeta
+  Índice único parcial:
+  UNIQUE(codigo) WHERE fechaDesasociacion IS NULL (RN-01)
+end note
+
+note bottom of sibling
+  entidad + idFila apuntan a la fila de animal, evento o registro
+  en conflicto (relación lógica, sin FK). rechazo guarda igual la
+  fila que el servidor rechazó, con su motivo.
+end note
+
+legend bottom left
+  ● NOT NULL · sin ● admite NULL · PK clave primaria · FK clave foránea
+  Claves: UUID en TEXT generados en el celular (salvo estado_sync).
+  Fechas: INTEGER en milisegundos desde 1970 (UTC). Booleanos: INTEGER 0/1.
+  Línea continua: FK declarada. Línea punteada: relación lógica sin FK.
+  rev: revisión vigente asignada por el servidor · revBase: revisión de la que partió la edición local
+  idVersion: identificador de la edición. Solo animal, evento y registro llevan rev, revBase e idVersion.
+  Baja lógica: nada se borra (Ley 1659).
+endlegend
+@enduml
