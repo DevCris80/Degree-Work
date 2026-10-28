@@ -1,6 +1,6 @@
 # Matriz de trazabilidad RF – componentes C4
 
-Corte: 28 de octubre de 2026. Fuente de los RF: SRS v0.4 (corte 23-10-2026). Componentes: diagramas C3 `C3_componentes_app.puml` y `C3_componentes_bd.puml`.
+Corte: 28 de octubre de 2026. Fuente de los RF: SRS v0.5 (corte 28-10-2026). Componentes: diagramas C3 `C3_componentes_app.puml` y `C3_componentes_bd.puml`.
 
 KPI de OE2: 100 % de los RF asignados a al menos un componente del modelo C4.
 
@@ -20,20 +20,20 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 
 | RF | Requisito (resumen) | Estado del RF (SRS) | Componentes | Contenedores |
 |---|---|---|---|---|
-| RF-01 | Crear cuenta con finca y primer Ganadero | Parcial | UI-01, DOM-01, DAT-03, BD-06 | App, Supabase |
-| RF-02 | Iniciar sesión con Supabase Auth | Pendiente | UI-01, DAT-03 | App |
-| RF-03 | Conservar la sesión de forma segura | Pendiente | DAT-03 | App |
-| RF-04 | Autorización de datos personales (Ley 1581) | Pendiente | UI-01, DOM-01, DAT-03, BD-06 | App, Supabase |
+| RF-01 | Crear cuenta con finca y primer Ganadero | Implementado | UI-01, DOM-01, DAT-03, BD-06 | App, Supabase |
+| RF-02 | Iniciar sesión con Supabase Auth | Implementado | UI-01, DAT-03 | App |
+| RF-03 | Conservar la sesión de forma segura | Implementado | DAT-03 | App |
+| RF-04 | Autorización de datos personales (Ley 1581) | Implementado | UI-01, DOM-01, DAT-03, BD-06 | App, Supabase |
 | RF-05 | Generar y canjear código de invitación | Pendiente | UI-06, UI-01, DAT-04, BD-06 | App, Supabase |
-| RF-06 | Permisos por rol en celular y servidor | Pendiente | DOM-01, UI-02, UI-04, BD-03, BD-05, BD-06 | App, Supabase |
-| RF-07 | Recuperar contraseña | Pendiente | UI-01, DAT-03 | App |
+| RF-06 | Permisos por rol en celular y servidor | Implementado | DOM-01, UI-02, UI-04, BD-03, BD-05, BD-06 | App, Supabase |
+| RF-07 | Recuperar contraseña | Implementado | UI-01, DAT-03 | App |
 | RF-08 | Registrar animal | Implementado | UI-02, DOM-02, DAT-01, DAT-06 | App |
 | RF-09 | Listar animales activos | Implementado | UI-02, DAT-01 | App |
 | RF-10 | Detalle del animal con historial | Implementado | UI-02, DAT-01 | App |
 | RF-11 | Dar de baja un animal | Implementado | UI-02, DOM-02, DAT-01 | App |
-| RF-12 | Editar animal | Pendiente | UI-02, DOM-02, DAT-01 | App |
+| RF-12 | Editar animal | Implementado | UI-02, DOM-02, DAT-01 | App |
 | RF-13 | Registrar padre y madre | Implementado | UI-02, DOM-02, DAT-01 | App |
-| RF-14 | Ubicación de la finca | Pendiente | UI-06, DAT-01 | App |
+| RF-14 | Ubicación de la finca | Implementado | UI-06, DAT-01 | App |
 | RF-15 | Leer y normalizar el UID NFC | Implementado | UI-03, DOM-02 | App |
 | RF-16 | Decidir el destino del código escaneado | Implementado | UI-03, DOM-02 | App |
 | RF-17 | Asociar chapeta al registrar el animal | Implementado | UI-02, DOM-02, DAT-01 | App |
@@ -53,9 +53,9 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-31 | Baja lógica de eventos y pesajes | Pendiente | UI-02, DOM-04, DAT-01 | App |
 | RF-32 | Subir cambios locales | Parcial | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
 | RF-33 | Detectar concurrencia con rev_base (siblings) | Implementado | DAT-05, BD-02, BD-07 | App, Supabase |
-| RF-34 | Mostrar y resolver conflictos | Pendiente | UI-07, DOM-04, DAT-05, BD-02 | App, Supabase |
+| RF-34 | Mostrar y resolver conflictos | Implementado | UI-07, DOM-04, DAT-05, BD-02 | App, Supabase |
 | RF-35 | Bandeja de rechazos | Parcial | UI-07, DAT-05, BD-03 | App, Supabase |
-| RF-36 | Descargar cambios por cursor | Parcial | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |
+| RF-36 | Descargar cambios por cursor | Implementado | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |
 | RF-37 | Quitar a un Operario | Pendiente | UI-06, DAT-04, BD-06 | App, Supabase |
 | RF-38 | Subir y descargar fotos | Implementado | DAT-06, DAT-05 | App |
 | RF-39 | Inventario activo | Implementado | UI-08, DOM-05, DAT-01 | App |
