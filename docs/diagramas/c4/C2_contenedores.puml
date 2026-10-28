@@ -8,7 +8,6 @@ SetDefaultLegendEntries("person\nexternal_system\ncontainer")
 UpdateElementStyle("person", $legendText="Actor externo")
 UpdateElementStyle("external_system", $legendText="Dispositivo externo (integrado o simulado)")
 UpdateElementStyle("container", $legendText="Contenedor implementado")
-AddElementTag("planificado", $bgColor="#7f9fc4", $borderStyle=DashedLine(), $legendText="Contenedor planificado (no implementado al 22/10/2026)")
 AddRelTag("planificado", $lineStyle=DashedLine(), $legendText="Comunicación planificada (línea punteada); la continua está implementada")
 
 Person(ganadero, "Ganadero", "Responsable de la finca.")
@@ -25,10 +24,10 @@ System_Boundary(sistema, "MiGanado") {
   }
 
   Boundary(supabase, "Supabase (servicio gestionado)", "plataforma") {
-    Container(auth, "Supabase Auth", "GoTrue", "Cuentas, inicio de sesión, recuperación de contraseña y emisión del JWT.", $tags="planificado")
-    Container(rest, "API de datos", "PostgREST", "Verifica el JWT y expone las funciones de sincronización (subir_cambios, descargar_cambios) y de finca (crear_finca, generar_invitacion, canjear_invitacion, quitar_operario).", $tags="planificado")
-    ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", "Datos de todas las fincas con su cursor, revisiones y siblings, invitaciones e identidades. Las funciones de sincronización asignan rev con control de concurrencia optimista y guardan como sibling la edición en conflicto. Las políticas RLS filtran por finca y rol.", $tags="planificado")
-    Container(storage, "Almacenamiento de fotos", "Supabase Storage", "Fotos de los animales en WebP, con políticas por finca.", $tags="planificado")
+    Container(auth, "Supabase Auth", "GoTrue", "Cuentas, inicio de sesión, recuperación de contraseña y emisión del JWT. Al registrarse una cuenta nueva, un trigger crea su finca.")
+    Container(rest, "API de datos", "PostgREST", "Verifica el JWT y expone las funciones de sincronización (subir_cambios, descargar_cambios). Las de invitación (generar_invitacion, canjear_invitacion, quitar_operario) están planificadas.")
+    ContainerDb(pg, "Base de datos central", "PostgreSQL con RLS", "Datos de todas las fincas con su cursor, revisiones y siblings, aceptaciones de datos e identidades. Las funciones de sincronización asignan rev con control de concurrencia optimista y guardan como sibling la edición en conflicto. Las políticas RLS filtran por finca y rol.")
+    Container(storage, "Almacenamiento de fotos", "Supabase Storage", "Fotos de los animales en WebP, con políticas por finca.")
   }
 }
 
@@ -38,16 +37,16 @@ Rel(app, chapeta, "Lee el UID con el NFC del teléfono", "NFC, ISO/IEC 14443-A")
 Rel(bascula, app, "Envía el UID de la chapeta y el peso; sin autenticación", "HTTP/JSON, POST /pesaje, puerto 8080, hotspot del teléfono")
 Rel(app, room, "Lee y escribe", "Room / SQL")
 
-Rel(app, auth, "Crea la cuenta, inicia sesión y renueva el token", "HTTPS", $tags="planificado")
-Rel(app, rest, "Crea la finca y gestiona invitaciones", "HTTPS/JSON + JWT", $tags="planificado")
-Rel(app, rest, "Sube los cambios pendientes con rev_base; recibe rev asignada, sibling o rechazo", "HTTPS/JSON + JWT", $tags="planificado")
-Rel(app, rest, "Descarga los cambios posteriores al último recibido", "HTTPS/JSON + JWT", $tags="planificado")
-Rel(app, storage, "Sube y descarga fotos", "HTTPS + JWT", $tags="planificado")
+Rel(app, auth, "Crea la cuenta, inicia sesión y renueva el token", "HTTPS")
+Rel(app, rest, "Gestiona invitaciones", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(app, rest, "Sube los cambios pendientes con rev_base; recibe rev asignada, sibling o rechazo", "HTTPS/JSON + JWT")
+Rel(app, rest, "Descarga los cambios posteriores al último recibido", "HTTPS/JSON + JWT")
+Rel(app, storage, "Sube y descarga fotos", "HTTPS + JWT")
 
-Rel(rest, auth, "Verifica la firma del JWT", "Clave de firma de Supabase Auth", $tags="planificado")
-Rel(rest, pg, "Ejecuta las funciones de sincronización como el usuario (SECURITY INVOKER, RLS aplica) y las de finca con SECURITY DEFINER", "SQL", $tags="planificado")
-Rel(storage, pg, "Consulta las políticas de acceso", "SQL", $tags="planificado")
-Rel(auth, pg, "Guarda las identidades (esquema auth)", "SQL", $tags="planificado")
+Rel(rest, auth, "Verifica la firma del JWT", "Clave de firma de Supabase Auth")
+Rel(rest, pg, "Ejecuta las funciones de sincronización como el usuario (SECURITY INVOKER, RLS aplica) y las de finca con SECURITY DEFINER", "SQL")
+Rel(storage, pg, "Consulta las políticas de acceso", "SQL")
+Rel(auth, pg, "Guarda las identidades (esquema auth)", "SQL")
 
 Lay_L(app, chapeta)
 

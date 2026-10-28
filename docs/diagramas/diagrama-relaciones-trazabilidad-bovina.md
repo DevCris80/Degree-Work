@@ -1,6 +1,6 @@
 # Diagrama de relaciones — Sistema de trazabilidad bovina
 
-Esquema Room de la app: lo que hay hoy en `main` más lo ya decidido (revisiones y sincronización, ADR-0004 y ADR-0005). Lo marcado **pendiente** todavía no está en `main`.
+Esquema Room de la app (versión 18), tal como está en `main`.
 
 ```mermaid
 erDiagram
@@ -27,8 +27,8 @@ erDiagram
     PERFIL_FINCA {
         string idPerfilFinca PK
         string nombreFinca
-        double latitud "pendiente (RF-14)"
-        double longitud "pendiente (RF-14)"
+        double latitud "ubicación de la finca (RF-14)"
+        double longitud
         boolean sincronizado
         long fechaModificacion
     }
@@ -51,6 +51,8 @@ erDiagram
         long rev "revisión vigente; null si nunca subió"
         long revBase "revisión de la que partió la edición local"
         string idVersion "UUID de la última escritura local"
+        boolean fotoPorSubir "la foto local cambió y falta subirla"
+        string fotoVersion "fecha de la foto que bajó del servidor"
     }
     EVENTO {
         string idEvento PK
@@ -116,6 +118,11 @@ erDiagram
         string idUsuario
         long fechaRecepcion
     }
+    RESOLUCION {
+        string idVersionSibling PK
+        string entidad "animal, evento o registro"
+        string idFila
+    }
     RECHAZO {
         string idRechazo PK
         string entidad
@@ -144,7 +151,9 @@ erDiagram
 
 - Solo `ANIMAL`, `EVENTO` y `REGISTRO` llevan `rev`, `revBase` e `idVersion`. Toda escritura local genera un `idVersion` nuevo; varias escrituras antes de subir conservan el `revBase` de la primera. `CHAPETA` y `PESAJE_PENDIENTE` se insertan y cambian de estado una sola vez; `PERFIL_FINCA` tiene un único escritor y `USUARIO` solo lo cambia el servidor, así que ninguna lleva revisión.
 - `SIBLING` guarda las ediciones en conflicto sin resolver de cualquier fila con revisiones. Es polimórfica (`entidad` + `idFila`), así que no tiene FK. Al resolverse sale de la tabla local; el servidor la conserva.
+- `RESOLUCION` guarda el `idVersion` de cada `SIBLING` que una persona resolvió en este celular y que la próxima subida todavía no ha nombrado. Sale de la tabla cuando el servidor responde a esa subida. Es polimórfica, como `SIBLING`.
 - `RECHAZO` guarda la fila que el servidor no aceptó, completa y con su motivo, después de sacarla de su tabla. Mientras `fechaCorreccion` es nula, la fila no se reenvía. También es polimórfica.
+- `ANIMAL.fotoPorSubir` y `fotoVersion` son estado local de la foto, que sube a Storage y baja de él aparte de la fila (RF-38). Solo los escribe la sincronización de fotos, salvo que una edición cambie la foto.
 - `ESTADO_SYNC` guarda el último cursor de descarga aplicado y la fecha de la última sincronización completa.
 
 ## Solo en el servidor (Supabase)
@@ -157,5 +166,6 @@ El esquema del servidor replica las tablas de arriba, con estas diferencias. Su 
 | Columna `cursor` en cada tabla, tomada de una secuencia global en cada escritura | Descarga incremental (RF-36). |
 | Tabla `revision` (entidad, fila, `rev`, `id_version`, contenido, usuario, fecha) | Historial completo de cada fila con revisiones, sin depuración (RN-16). |
 | Tabla `sibling`, con `resuelto_por` (el `id_version` de la resolución) y su fecha | Los siblings se conservan después de resolverse. |
-| Tabla `invitacion` (código, finca, creada por, vence, usada por) | Código de un solo uso que vence a los 7 días (RN-18). |
+| Tabla `invitacion` (código, finca, creada por, vence, usada por), **planificada** | Código de un solo uso que vence a los 7 días (RN-18). Aún no está en las migraciones. |
 | Tabla `aceptacion_datos` (usuario, versión del texto, fecha) | Autorización de la Ley 1581 (RNF-13). |
+| Bucket `fotos` de Storage, un archivo `<finca>/<idAnimal>.webp` por animal | Fotos de los animales (RF-38). |
