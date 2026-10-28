@@ -8,8 +8,8 @@
 | Autores | Cristian Steven Villamil Rodríguez, Mariana Alvarez |
 | Director | Juan Guillermo Hurtado |
 | Repositorio | `github.com/DevCris80/Degree-Work` |
-| Versión de este documento | 0.4 (borrador) |
-| Fecha de corte del estado | 23 de octubre de 2026 |
+| Versión de este documento | 0.5 (borrador) |
+| Fecha de corte del estado | 28 de octubre de 2026 |
 
 > **Datos por completar antes de `srs-v1.0`** (marcados en el texto con ⚠):
 > 1. Fecha de la visita de campo y fecha de la confirmación del ganadero (sección 2.2 y matriz).
@@ -27,6 +27,7 @@
 | 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
 | 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), RF-39 a RF-43, indicadores (#97 y #98), y RF-27, pesaje manual (#95). Pasa a implementado RF-33 y a parcial RF-32, la subida (#81). RN-24 distingue un rechazo que el servidor tiene de uno que no (ADR-0004, regla 7). | Ciclo 2 | — |
 | 0.4 | 2026-10-27 | C. Villamil | Pasan a implementados RF-28 y RF-29 (#128, que reemplaza a #22). El evento acepta fecha pasada o futura: uno futuro queda programado y no cuenta en los indicadores hasta que llega su fecha. RF-29 se reescribe con lo que la pantalla registra: biológico, dosis y vía en la vacunación, y la cría resultante en el parto. Salen del alcance los días de retiro de leche y de carne y el peso al nacer. | Ciclo 2 | — |
+| 0.5 | 2026-10-28 | C. Villamil | El estado se alinea con `main` y con los issues cerrados: pasan a implementados RF-01 y RF-04 (#87), RF-02 y RF-03 (#23), RF-06 (#89), RF-07 (#91), RF-12 (#92), RF-14 (#93), RF-34 (#84) y RF-36 (#82), esta última tras correr `MotorSincronizacionDescargaTest` en el A15. RNF-02, RNF-07, RNF-09, RNF-11, RNF-12 y RNF-14 pasan a implementados; RNF-13 queda parcial y RNF-08 sin medir. Se corrieron en el A15 las pruebas de instrumentación (107 de 108 pasan) y en una base local las 150 pruebas pgTAP. | Ciclo 2 | — |
 | 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
 
 **Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
@@ -133,7 +134,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Campo | Valores |
 |---|---|
 | Prioridad (MoSCoW) | **M** Must · **S** Should · **C** Could |
-| Estado al 23-10-2026 | **Implementado** (hay código en `main`) · **Parcial** (existe, pero no cumple todo el enunciado) · **Pendiente** (decidido, sin código) |
+| Estado al 28-10-2026 | **Implementado** (hay código en `main`) · **Parcial** (existe, pero no cumple todo el enunciado) · **Pendiente** (decidido, sin código) |
 | Fuente | **CAMPO**: confirmado por el ganadero en la visita de campo (ver 2.2) · **EQUIPO**: decisión del equipo (con su ADR o issue cuando existe) · **NORMA**: exigido por una norma |
 | Objetivo | **OG** objetivo general · **OE1–OE4** objetivos específicos de la propuesta |
 | Verificación | **P** prueba automatizada · **D** demostración manual · **I** inspección · **A** análisis |
@@ -284,22 +285,22 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | ID | El sistema debe… | Pri. | Estado | Fuente | Obj. | CU |
 |---|---|---|---|---|---|---|
 | **C1. Cuenta y acceso** | | | | | | |
-| RF-01 | Permitir crear una cuenta con nombre, nombre de la finca, correo y contraseña, creando la identidad en Supabase Auth y la finca con su primer Usuario (Ganadero). | M | Parcial | EQUIPO (ADR-0002) | OE3 | CU-01 |
-| RF-02 | Permitir iniciar sesión con correo y contraseña contra Supabase Auth. | M | Pendiente | EQUIPO (ADR-0002) | OE3 | CU-02 |
-| RF-03 | Conservar la sesión de forma segura en el dispositivo, para operar sin señal después del primer inicio de sesión. | M | Pendiente | EQUIPO (ADR-0002) | OE3 | CU-02 |
-| RF-04 | Solicitar y registrar la autorización de tratamiento de datos personales antes de crear la cuenta. | M | Pendiente | NORMA (Ley 1581) | OE3 | CU-01 |
+| RF-01 | Permitir crear una cuenta con nombre, nombre de la finca, correo y contraseña, creando la identidad en Supabase Auth y la finca con su primer Usuario (Ganadero). | M | Implementado | EQUIPO (ADR-0002) | OE3 | CU-01 |
+| RF-02 | Permitir iniciar sesión con correo y contraseña contra Supabase Auth. | M | Implementado | EQUIPO (ADR-0002) | OE3 | CU-02 |
+| RF-03 | Conservar la sesión de forma segura en el dispositivo, para operar sin señal después del primer inicio de sesión. | M | Implementado | EQUIPO (ADR-0002) | OE3 | CU-02 |
+| RF-04 | Solicitar y registrar la autorización de tratamiento de datos personales antes de crear la cuenta. | M | Implementado | NORMA (Ley 1581) | OE3 | CU-01 |
 | RF-05 | Permitir al Ganadero generar un código de invitación y a un Operario canjearlo para unirse a la finca. | M | Pendiente | CAMPO | OE3 | CU-04 |
-| RF-06 | Restringir las acciones según la matriz de permisos (2.1), en el celular y en el servidor. | M | Pendiente | CAMPO | OE3 | Transversal |
-| RF-07 | Permitir recuperar la contraseña por correo. | C | Pendiente | EQUIPO | OE3 | CU-03 |
+| RF-06 | Restringir las acciones según la matriz de permisos (2.1), en el celular y en el servidor. | M | Implementado | CAMPO | OE3 | Transversal |
+| RF-07 | Permitir recuperar la contraseña por correo. | C | Implementado | EQUIPO | OE3 | CU-03 |
 | RF-37 | Permitir al Ganadero quitar a un Operario de la finca. | C | Pendiente | EQUIPO | OE3 | CU-05 |
 | **C2. Animales** | | | | | | |
 | RF-08 | Registrar un animal con nombre, raza, sexo, etapa coherente con el sexo, fecha de nacimiento exacta o estimada, propósito, foto opcional y código de chapeta opcional. | M | Implementado | CAMPO | OE3 | CU-06 |
 | RF-09 | Listar los animales activos con su chapeta activa y su último pesaje, filtrables por propósito, con el número de pesajes pendientes. | M | Implementado | EQUIPO | OE3 | CU-07 |
 | RF-10 | Mostrar el detalle de un animal con sus datos, chapeta activa e historial de pesajes y eventos, del más reciente al más antiguo. | M | Implementado | CAMPO | OE3 | CU-07 |
 | RF-11 | Dar de baja un animal (baja lógica), con confirmación previa. | M | Implementado | NORMA (Ley 1659) | OE3 | CU-09 |
-| RF-12 | Editar los datos de un animal. | S | Pendiente | CAMPO | OE3 | CU-08 |
+| RF-12 | Editar los datos de un animal. | S | Implementado | CAMPO | OE3 | CU-08 |
 | RF-13 | Registrar el padre y la madre de un animal entre los animales de la finca. | S | Implementado | CAMPO | OE3 | CU-06, CU-08 |
-| RF-14 | Registrar la ubicación (latitud y longitud) de la finca. | S | Pendiente | CAMPO | OE3 | CU-23 |
+| RF-14 | Registrar la ubicación (latitud y longitud) de la finca. | S | Implementado | CAMPO | OE3 | CU-23 |
 | **C3. Identificación** | | | | | | |
 | RF-15 | Leer el UID de un tag NFC-A con el NFC del celular y normalizarlo. | M | Implementado | CAMPO | OE3 | CU-10 |
 | RF-16 | Decidir qué hacer con un código escaneado según el estado de su chapeta y de su animal. | M | Implementado | CAMPO | OE3 | CU-10 |
@@ -323,9 +324,9 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | **C6. Sincronización** | | | | | | |
 | RF-32 | Subir los cambios locales al servicio de sincronización cuando hay señal. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
 | RF-33 | Detectar ediciones concurrentes con `rev_base` y guardarlas como siblings. | S | Implementado | EQUIPO | OE2, OE3 | CU-20 |
-| RF-34 | Mostrar las filas en conflicto y permitir resolverlas. | S | Pendiente | EQUIPO | OE2, OE3 | CU-21 |
+| RF-34 | Mostrar las filas en conflicto y permitir resolverlas. | S | Implementado | EQUIPO | OE2, OE3 | CU-21 |
 | RF-35 | Mostrar las filas rechazadas por el servidor, con su motivo, y permitir corregirlas. | M | Parcial | EQUIPO | OE2, OE3 | CU-22 |
-| RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Parcial | EQUIPO | OE2, OE3 | CU-20 |
+| RF-36 | Descargar los cambios de otros dispositivos desde el último cursor recibido. | M | Implementado | EQUIPO | OE2, OE3 | CU-20 |
 | RF-38 | Subir las fotos a Supabase Storage y descargar las de otros dispositivos. | S | Implementado | EQUIPO | OE3 | CU-20 |
 | **C7. Indicadores (BI)** | | | | | | |
 | RF-39 | Mostrar el inventario activo por propósito, sexo y etapa. | S | Implementado | EQUIPO | OE3 | CU-24 |
@@ -341,7 +342,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Campo | Contenido |
 |---|---|
 | Fuente | CAMPO |
-| Prioridad / Estado | M / Pendiente. Ningún caso de uso ni pantalla verifica el rol hoy. |
+| Prioridad / Estado | M / Implementado. En el celular, `DarDeBajaAnimal`, `LiberarChapeta` y `DescartarPesajePendiente` rechazan al Operario y sus pantallas no le muestran el control; en el servidor, las políticas RLS. Invitar y quitar Operarios llegan con RF-05 y RF-37. |
 | Enunciado | Toda acción de la matriz 2.1 marcada ✗ para un rol se impide en dos niveles: en el celular (el control no se muestra y el caso de uso la rechaza, aun sin señal) y en el servidor (políticas RLS por finca y rol). |
 | Reglas | RN-13 |
 | Criterios de aceptación | 1. **Dado** un Operario, **cuando** abre el detalle de un animal, **entonces** no ve "Dar de baja" ni "Liberar chapeta".<br>2. **Dado** un Operario, **cuando** abre un pesaje pendiente, **entonces** puede asignarlo pero no descartarlo.<br>3. **Dado** un Operario que envía una escritura prohibida al servidor, **cuando** se sincroniza, **entonces** el servidor la rechaza y la fila aparece en la bandeja de rechazos (RF-35).<br>4. **Dado** un usuario de otra finca, **cuando** consulta el servidor, **entonces** no recibe filas de esta finca. |
@@ -358,17 +359,17 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-01, RF-04 |
 | Objetivo / Fuente | OE3 / EQUIPO (ADR-0002), NORMA (Ley 1581) |
 | Actor | Ganadero |
-| Prioridad / Estado | M / Parcial. Hoy crea la finca y el Usuario solo en el celular; el correo y la contraseña se capturan y se descartan; no hay autorización de datos. |
+| Prioridad / Estado | M / Implementado. La app registra la identidad en Supabase Auth con la finca y la versión de la autorización como metadatos, y un trigger del servidor crea la finca, el primer Usuario y la aceptación. El texto de autorización es provisional (`0.1-provisional`). |
 | Precondiciones | La app no tiene cuenta en este dispositivo. Hay señal. |
 | Disparador | El usuario abre la app por primera vez. |
 | Flujo principal | 1. La app muestra Crear cuenta.<br>2. El usuario ingresa nombre, nombre de la finca, correo, contraseña y su confirmación.<br>3. La app muestra el texto de autorización de la Ley 1581 y el usuario lo acepta.<br>4. El sistema crea la identidad en Supabase Auth.<br>5. El sistema crea la finca y el Usuario con rol Ganadero, en una sola transacción, y registra la fecha de aceptación.<br>6. La app abre la lista de animales con el nombre de la finca. |
 | Flujos alternos y excepciones | 2a. Contraseña de menos de 6 caracteres, o confirmación distinta: el botón Crear cuenta queda deshabilitado.<br>2b. El usuario tiene un código de invitación: continúa en CU-04.<br>3a. El usuario no acepta: no se crea nada.<br>4a. Sin señal: la app lo indica y no crea nada, ni local ni remoto.<br>4b. El correo ya existe: la app lo indica y ofrece iniciar sesión. |
 | Offline / sincronización | Requiere señal (LIM-02). |
-| Postcondiciones | Identidad en Supabase Auth; PerfilFinca y Usuario guardados, con `sincronizado = false` hasta subir; aceptación registrada con fecha. |
+| Postcondiciones | Identidad en Supabase Auth; PerfilFinca, Usuario y aceptación (con fecha) creados en el servidor; PerfilFinca y Usuario copiados al celular. |
 | Entidades | PerfilFinca, Usuario |
 | Reglas | RN-20, RES-06, RES-07 |
 | Criterios de aceptación | 1. **Dado** un dispositivo sin cuenta y con señal, **cuando** el usuario completa datos válidos y acepta la autorización, **entonces** queda en la lista de animales con el nombre de su finca.<br>2. **Dado** que no acepta la autorización, **entonces** no se crea la cuenta.<br>3. **Dado** que no hay señal, **entonces** la app lo indica y no queda ninguna fila creada.<br>4. **Dado** un correo ya registrado, **entonces** la app lo indica y no crea una segunda finca. |
-| Trazas | Issue #40 · `CrearCuentaScreen` · `CrearCuentaViewModelTest` (solo la parte local) |
+| Trazas | Issues #40, #87 · `CrearCuentaScreen` · `CrearCuentaViewModelTest`, `CrearCuentaTest`, `RoomCuentaRepositoryTest`, `06_crear_finca` |
 
 **CU-02 — Iniciar sesión**
 
@@ -377,7 +378,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-02, RF-03 |
 | Objetivo / Fuente | OE3 / EQUIPO (ADR-0002) |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | M / Pendiente. La pantalla existe, pero el botón entra sin validar. |
+| Prioridad / Estado | M / Implementado. Valida contra Supabase Auth y guarda la sesión cifrada con una clave AES del Android Keystore. |
 | Precondiciones | El usuario tiene cuenta. Para el primer inicio de sesión en un dispositivo, hay señal. |
 | Disparador | El usuario abre la app en un dispositivo sin sesión, o su sesión fue cerrada. |
 | Flujo principal | 1. El usuario ingresa correo y contraseña.<br>2. Supabase Auth valida las credenciales.<br>3. El sistema guarda la sesión en el almacenamiento seguro del dispositivo (no en Room).<br>4. El sistema descarga la finca, el Usuario y los datos de la finca (RF-36).<br>5. La app abre la lista de animales. |
@@ -387,7 +388,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Entidades | Usuario, PerfilFinca |
 | Reglas | RN-13 |
 | Criterios de aceptación | 1. **Dado** un usuario con cuenta y con señal, **cuando** ingresa credenciales válidas, **entonces** ve los animales de su finca.<br>2. **Dado** credenciales inválidas, **entonces** no entra.<br>3. **Dado** un usuario que ya inició sesión, **cuando** abre la app en modo avión, **entonces** entra y puede registrar. |
-| Trazas | Issue #40 · `LoginScreen` · sin prueba |
+| Trazas | Issues #23, #40 · `LoginScreen`, `SesionCifrada` · `LoginViewModelTest`, `InicioViewModelTest` |
 
 **CU-03 — Recuperar contraseña**
 
@@ -396,13 +397,13 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-07 |
 | Objetivo / Fuente | OE3 / EQUIPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | C / Pendiente. El enlace existe sin acción. |
+| Prioridad / Estado | C / Implementado. El diálogo pide el correo, Supabase Auth envía el mensaje y la app confirma el envío. |
 | Precondiciones | Hay señal. |
 | Flujo principal | 1. En Iniciar sesión, el usuario toca "¿Olvidaste tu contraseña?" e ingresa su correo.<br>2. Supabase Auth envía el correo de recuperación.<br>3. La app confirma el envío. |
 | Flujos alternos y excepciones | 1a. Sin señal: la app lo indica. |
 | Offline / sincronización | Requiere señal (LIM-02). |
 | Criterios de aceptación | 1. **Dado** un correo registrado y con señal, **cuando** solicita la recuperación, **entonces** recibe el correo.<br>2. **Dado** un correo no registrado, **entonces** la app muestra el mismo mensaje de confirmación, sin revelar si la cuenta existe. |
-| Trazas | `LoginScreen` |
+| Trazas | Issue #91 · `LoginScreen` · `LoginViewModelTest` |
 
 **CU-04 — Invitar y unir a un Operario**
 
@@ -483,7 +484,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-12, RF-13 |
 | Objetivo / Fuente | OE3 / CAMPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | S / Pendiente |
+| Prioridad / Estado | S / Implementado |
 | Precondiciones | El animal está activo. |
 | Flujo principal | 1. En el detalle, el usuario elige Editar.<br>2. Modifica los datos (mismas validaciones que CU-06, incluida la genealogía).<br>3. Guarda.<br>4. El sistema guarda la nueva versión con `rev_base` igual a la revisión que tenía el celular. |
 | Flujos alternos y excepciones | 3a. No hubo cambios: no se crea versión. |
@@ -492,7 +493,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Entidades | Animal, revisiones |
 | Reglas | RN-03, RN-14, RN-15, RN-16 |
 | Criterios de aceptación | 1. **Dado** un animal, **cuando** se cambia su raza y se guarda, **entonces** el detalle muestra la raza nueva.<br>2. **Dado** un cambio de sexo, **entonces** la etapa debe volver a elegirse. |
-| Trazas | — |
+| Trazas | Issues #92, #111 · `EditarAnimalViewModel` · `ActualizarAnimalTest`, `EditarAnimalViewModelTest` |
 
 **CU-09 — Dar de baja animal**
 
@@ -518,12 +519,12 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-14 |
 | Objetivo / Fuente | OE3 / CAMPO |
 | Actor | Ganadero |
-| Prioridad / Estado | S / Pendiente. El modelo actual de PerfilFinca no tiene latitud ni longitud. |
+| Prioridad / Estado | S / Implementado. Solo el Ganadero ve el botón; la app pide una posición nueva al GPS, avisa si falta el permiso y valida las coordenadas. |
 | Flujo principal | 1. El Ganadero abre los datos de la finca y elige Registrar ubicación.<br>2. La app pide permiso de ubicación y toma la posición del GPS.<br>3. El Ganadero confirma y el sistema guarda latitud y longitud. |
 | Flujos alternos y excepciones | 2a. Permiso denegado: la app permite ingresar las coordenadas a mano ⚠. |
 | Offline / sincronización | El GPS funciona sin señal de datos. |
 | Criterios de aceptación | 1. **Dado** el permiso concedido, **entonces** la finca queda con latitud y longitud.<br>2. **Dado** el permiso denegado, **entonces** la app no se cierra y ofrece la alternativa. |
-| Trazas | — |
+| Trazas | Issue #93 · `RegistrarUbicacionFincaScreen` · `RegistrarUbicacionFincaViewModelTest`, `MappersPerfilFincaTest`, `MigracionesTest` |
 
 ##### C3. Identificación
 
@@ -708,7 +709,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-32, RF-33, RF-36, RF-38 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO (ADR-0004, ADR-0005) |
 | Actor | Sistema (en nombre del usuario con sesión) |
-| Prioridad / Estado | RF-32: M / Parcial: la sincronización corre al abrir la app, al iniciar sesión, dos minutos después de la última escritura local y con "Sincronizar ahora", como un único trabajo de WorkManager que espera la señal y reintenta con espera creciente (#83); falta probar los disparadores en un dispositivo y correr las pruebas nuevas de `MotorSincronizacionTest`. RF-36: M / Parcial: la descarga (paso 7) corre después de la subida, con el mismo botón; falta correr `MotorSincronizacionDescargaTest` en un dispositivo. RF-33: S / Implementado. RF-38: S / Implementado: las fotos suben y bajan al final, después de la descarga de datos, y una foto que no pasa se reintenta en segundo plano (#86). |
+| Prioridad / Estado | RF-32: M / Parcial: la sincronización corre al abrir la app, al iniciar sesión, dos minutos después de la última escritura local y con "Sincronizar ahora", como un único trabajo de WorkManager que espera la señal y reintenta con espera creciente (#83); `MotorSincronizacionTest` pasa en el A15; falta probar los disparadores en un dispositivo. RF-36: M / Implementado: la descarga (paso 7) corre después de la subida, con el mismo botón; `MotorSincronizacionDescargaTest` pasa en el A15. RF-33: S / Implementado. RF-38: S / Implementado: las fotos suben y bajan al final, después de la descarga de datos, y una foto que no pasa se reintenta en segundo plano (#86). |
 | Precondiciones | Sesión válida y señal. |
 | Disparador | Se abre la app, el usuario elige "Sincronizar ahora" o se guarda un cambio local. Cada disparo encola un único trabajo, que corre cuando hay señal. |
 | Flujo principal | 1. El celular toma un lote pequeño de filas con `sincronizado = false`, de padres a hijos; las editables llevan su `rev_base` e `id_version`.<br>2. El celular llama la función `subir_cambios` por PostgREST con el JWT del usuario. La función corre como el usuario, de modo que aplican las políticas RLS.<br>3. Para cada fila editable, la función compara `rev_base` con la revisión vigente: si es igual, acepta y asigna `rev + 1`; si es menor, la guarda como sibling. Una baja se aplica siempre sobre la vigente (RN-22) y un `id_version` ya procesado recibe la respuesta anterior (RN-23).<br>4. La función responde por fila: aceptada (con su `rev`), sibling (con la revisión vigente) o rechazada (con motivo).<br>5. El celular marca las aceptadas con `sincronizado = true`; en un sibling reemplaza su fila con la revisión vigente y guarda su edición como sibling local, y la fila queda "en conflicto"; las rechazadas pasan a la bandeja (CU-22, RN-24). Repite con el siguiente lote.<br>6. El celular llama `descargar_cambios` con el último cursor (con margen de solapamiento) y recibe los cambios por páginas, con los siblings sin resolver. Aplica cada página de forma idempotente por id y `rev` y guarda el cursor después de cada una.<br>7. El celular registra la fecha de la última sincronización: los datos quedaron al día.<br>8. Aparte, el celular sube a Storage las fotos pendientes, convertidas a WebP (RNF-10), y descarga las que cambiaron en otros celulares de la finca. Una foto que falla queda para la próxima vez y no cambia el resultado ni la fecha; una que Storage no aceptará nunca pasa a la bandeja (CU-22). |
@@ -727,13 +728,13 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-34 |
 | Objetivo / Fuente | OE2, OE3 / EQUIPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | S / Pendiente |
+| Prioridad / Estado | S / Implementado. Un conflicto resuelto sigue abierto si el servidor no acepta la resolución. |
 | Precondiciones | Hay filas en conflicto. |
 | Flujo principal | 1. La app marca como "en conflicto" la fila y muestra la revisión vigente.<br>2. El usuario abre el conflicto; la app muestra la revisión vigente y los siblings, campo por campo.<br>3. El usuario elige la versión que queda ⚠ (o combina campo por campo).<br>4. El sistema guarda la elección como una edición nueva sobre la revisión vigente, que nombra los siblings que resuelve; esos siblings quedan resueltos y se conservan. Un sibling que llegue después queda sin resolver. |
 | Flujos alternos y excepciones | 3a. El usuario no resuelve: la fila sigue consultable con la marca "en conflicto".<br>3b. Alguien edita la fila sin resolver el conflicto: la edición se acepta como revisión nueva y el conflicto sigue abierto (RN-17). |
 | Reglas | RN-15, RN-16, RN-17 |
 | Criterios de aceptación | 1. **Dado** un conflicto resuelto, **entonces** la marca desaparece en todos los celulares tras sincronizar, y el sibling sigue guardado.<br>2. **Dado** un conflicto sin resolver, **entonces** la fila se puede consultar. |
-| Trazas | — |
+| Trazas | Issue #84 · `ResolverConflictoScreen` · `ResolverConflictoTest`, `ResolverConflictoViewModelTest`, `RoomConflictoRepositoryTest` |
 
 **CU-22 — Corregir rechazos**
 
@@ -776,8 +777,8 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 
 | Pantalla | CU | Estado |
 |---|---|---|
-| Crear cuenta | CU-01, CU-04 | Existe; sin Supabase Auth ni autorización de datos |
-| Iniciar sesión | CU-02, CU-03 | Existe; sin validación |
+| Crear cuenta | CU-01, CU-04 | Implementada; falta canjear un código de invitación (CU-04) |
+| Iniciar sesión | CU-02, CU-03 | Implementada, con recuperación de contraseña |
 | Lista de animales | CU-07 | Implementada |
 | Detalle de animal | CU-07, CU-09, CU-12 | Implementada |
 | Registrar animal | CU-06 | Implementada |
@@ -786,9 +787,12 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Pesos (servicio de pesaje y pesajes pendientes) | CU-14, CU-15 | Implementada |
 | Eventos | CU-17 | Implementada |
 | Registrar pesaje manual | CU-16 | Implementada |
-| Editar animal, evento y pesaje; asociar chapeta | CU-08, CU-11, CU-18, CU-19 | Pendientes |
-| Usuarios e invitación; datos de la finca | CU-04, CU-05, CU-23 | Pendientes |
-| Conflictos; rechazos | CU-21, CU-22 | Pendientes |
+| Editar animal | CU-08 | Implementada |
+| Editar evento y pesaje; asociar chapeta | CU-11, CU-18, CU-19 | Pendientes |
+| Datos de la finca (ubicación) | CU-23 | Implementada |
+| Usuarios e invitación | CU-04, CU-05 | Pendientes |
+| Conflictos | CU-21 | Implementada |
+| Rechazos | CU-22 | Parcial |
 | Estado de sincronización (cambios sin subir y última sincronización, en Indicadores) | CU-20 | Implementada |
 | Indicadores | CU-24 | Implementada |
 
@@ -800,14 +804,14 @@ Criterios transversales de la interfaz: RNF-16.
 |---|---|---|---|
 | NFC del celular | Leer el UID de las chapetas | Modo lector NFC-A, sin comprobación NDEF; solo lectura (LIM-01). `android.hardware.nfc` declarado como no obligatorio. | Implementado |
 | Cámara | Foto del animal | Cámara o galería, a través de `FileProvider`. | Implementado |
-| GPS | Ubicación de la finca | Requiere agregar el permiso de ubicación. | Pendiente |
+| GPS | Ubicación de la finca (CU-23) | Permiso de ubicación declarado en el manifiesto; la app avisa si falta. | Implementado |
 | ESP32 (vía Wi-Fi) | Pesajes | Se conecta al hotspot del celular; ver 3.2.4. | Implementado (lado app) |
 
 #### 3.2.3 Interfaz de software
 
 | Sistema | Uso | Requisitos de la interfaz | Estado |
 |---|---|---|---|
-| Supabase Auth | Crear cuenta, iniciar sesión, renovar sesión, recuperar contraseña | La app lo llama directamente. Los tokens se guardan en el almacenamiento seguro del dispositivo (RNF-11). | Pendiente |
+| Supabase Auth | Crear cuenta, iniciar sesión, renovar sesión, recuperar contraseña | La app lo llama directamente. Los tokens se guardan en el almacenamiento seguro del dispositivo (RNF-11). | Implementado |
 | Supabase PostgREST y Postgres | Base de datos central y sincronización | **Subida:** la función `subir_cambios` recibe un lote de filas (las editables con `rev_base` e `id_version`) y responde por fila: aceptada con su `rev`, sibling con la revisión vigente, o rechazada con motivo. **Descarga:** la función `descargar_cambios` recibe el último cursor y un límite, y devuelve una página de filas posteriores (con margen de solapamiento), los siblings sin resolver y el nuevo cursor. PostgREST exige `Authorization: Bearer <JWT del usuario>` y las funciones corren como ese usuario (`SECURITY INVOKER`). Políticas RLS por finca y rol en todas las tablas; índice único parcial para RN-01 e índice único para RN-21; secuencia global para el cursor; tablas de revisiones y siblings para Animal, Evento y Registro. Contrato en ADR-0004 y ADR-0005. | Pendiente |
 | Supabase Storage | Fotos de animales | Archivos WebP con acceso restringido por finca mediante políticas. | Implementado |
 
@@ -854,7 +858,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO (RES-02: conectividad limitada) |
 | Verificación | A/D: dos sincronizaciones seguidas sin cambios; la segunda devuelve solo filas del margen. |
 | RF afectados | RF-36 |
-| Prioridad / Estado | M / Parcial |
+| Prioridad / Estado | M / Implementado: `unaSegundaDescargaSinCambiosSoloPideElMargen` pasa en el A15. |
 
 **RNF-10 — Tamaño de las fotos**
 
@@ -887,9 +891,9 @@ Resumen del contrato de pesaje:
 | Categoría | Fiabilidad — tolerancia a fallos |
 | Enunciado medible | El **100 %** de los pesajes válidos enviados queda guardado exactamente una vez (como Registro o Pesaje pendiente), aunque el ESP32 reintente. Las escrituras de cada caso de uso son todo o nada. |
 | Fuente | EQUIPO (ADR-0003) |
-| Verificación | P: prueba unitaria de `RegistrarPesaje` (pendiente). D: script que envía N pesajes con reintentos duplicados y compara conteos. |
+| Verificación | P: `RegistrarPesajeTest` y `PesajeHttpServerIntegracionTest` (en el A15). D: script que envía N pesajes con reintentos duplicados y compara conteos. |
 | RF afectados | RF-20 a RF-24, RF-26 |
-| Prioridad / Estado | M / Implementado; sin prueba automatizada |
+| Prioridad / Estado | M / Implementado: `RegistrarPesajeTest` y `PesajeHttpServerIntegracionTest`. |
 
 **RNF-03 — Servicio activo con la pantalla apagada**
 
@@ -922,7 +926,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO (KPI del objetivo general) |
 | Verificación | D: ≥ 100 filas creadas sin señal en un dispositivo; tras sincronizar, comparación de conteos y de contenido por fila en el servidor y en el segundo dispositivo. |
 | RF afectados | RF-32, RF-35, RF-36 |
-| Prioridad / Estado | M / Pendiente |
+| Prioridad / Estado | M / Sin medir: la sincronización existe; falta la medición con ≥ 100 filas y dos dispositivos. |
 
 #### 3.3.3 Seguridad y privacidad
 
@@ -935,7 +939,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO (ADR-0002) |
 | Verificación | I: código de almacenamiento de la sesión. D: inspección de la base de datos local. |
 | RF afectados | RF-01 a RF-03, RF-07 |
-| Prioridad / Estado | M / Pendiente |
+| Prioridad / Estado | M / Implementado: la sesión se guarda cifrada con una clave AES-GCM del Android Keystore, fuera de Room. |
 
 **RNF-12 — Autorización por finca y rol**
 
@@ -946,7 +950,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO (ADR-0002) |
 | Verificación | D: con dos cuentas de fincas distintas y una de Operario, intentar leer y escribir fuera de los permisos; todos los intentos se rechazan. |
 | RF afectados | RF-06, RF-32, RF-36, RF-38 |
-| Prioridad / Estado | M / Pendiente |
+| Prioridad / Estado | M / Implementado: políticas RLS por finca y rol, con las pruebas pgTAP `01_aislamiento_por_finca`, `02_permisos_por_rol` y `07_fotos`. |
 
 **RNF-13 — Tratamiento de datos personales**
 
@@ -957,8 +961,8 @@ Resumen del contrato de pesaje:
 | Fuente | NORMA (Ley 1581 de 2012) |
 | Verificación | I + D |
 | RF afectados | RF-01, RF-04, RF-05 |
-| Prioridad / Estado | M / Pendiente. Texto: ⚠ [ubicación]. |
-| Nota | La app tiene `allowBackup="true"`, que permite a Android copiar la base local a la nube de Google. Debe declararse en el texto de autorización o desactivarse. |
+| Prioridad / Estado | M / Parcial: la autorización se pide antes de crear la cuenta y se registra su fecha y versión (#87); el texto es provisional (`0.1-provisional`), ⚠ [ubicación]. |
+| Nota | `allowBackup` está en `false`: Android no copia la base local a la nube de Google. |
 
 **RNF-14 — Auditoría**
 
@@ -969,7 +973,7 @@ Resumen del contrato de pesaje:
 | Fuente | NORMA (Ley 1659); EQUIPO |
 | Verificación | I |
 | RF afectados | RF-23, RF-26, RF-28, RF-30, RF-33 |
-| Prioridad / Estado | M / Parcial: el autor ya se registra en Evento, Registro y Pesaje pendiente; las revisiones están pendientes. |
+| Prioridad / Estado | M / Implementado: el autor se registra en Evento, Registro y Pesaje pendiente, y el servidor conserva las revisiones y los siblings sin depuración (tablas `revision` y `sibling`). |
 
 #### 3.3.4 Usabilidad
 
@@ -1019,7 +1023,7 @@ Resumen del contrato de pesaje:
 | Fuente | EQUIPO (ADR-0001; KPI de OE3: pruebas unitarias y de integración) |
 | Verificación | I + ejecución de `./gradlew test` |
 | RF afectados | Todos |
-| Prioridad / Estado | M / Parcial: hay 44 pruebas, todas de ViewModel; faltan pruebas directas de casos de uso (entre ellas `RegistrarPesaje`) y la prueba de integración. |
+| Prioridad / Estado | M / Implementado: 274 pruebas JVM, 108 de instrumentación y 150 de pgTAP, con una prueba por caso de uso y `PesajeHttpServerIntegracionTest`. En el A15 pasan 107 de las 108: `ExampleInstrumentedTest` solo comprueba el nombre del paquete y falló porque la corrida usó otro `applicationId`. |
 
 ---
 
@@ -1031,20 +1035,20 @@ Resumen del contrato de pesaje:
 
 | RF | CU | Fuente | Conf. | Obj. | Pri. | Estado | Verificación | Issue |
 |---|---|---|---|---|---|---|---|---|
-| RF-01 | CU-01 | EQUIPO | — | OE3 | M | Parcial | P `CrearCuentaViewModelTest` (solo la parte local) | #40, #87 |
-| RF-02 | CU-02 | EQUIPO | — | OE3 | M | Pendiente | — | #40, #23 |
-| RF-03 | CU-02 | EQUIPO | — | OE3 | M | Pendiente | — | #23 |
-| RF-04 | CU-01 | NORMA | — | OE3 | M | Pendiente | — | #87 |
+| RF-01 | CU-01 | EQUIPO | — | OE3 | M | Implementado | P `CrearCuentaViewModelTest`, `CrearCuentaTest`, `RoomCuentaRepositoryTest`, `06_crear_finca` | #40, #87 |
+| RF-02 | CU-02 | EQUIPO | — | OE3 | M | Implementado | P `LoginViewModelTest`, `InicioViewModelTest` | #23, #40 |
+| RF-03 | CU-02 | EQUIPO | — | OE3 | M | Implementado | P `InicioViewModelTest`; I `SesionCifrada` | #23 |
+| RF-04 | CU-01 | NORMA | — | OE3 | M | Implementado | P `CrearCuentaViewModelTest`, `CrearCuentaTest`, `06_crear_finca` | #87 |
 | RF-05 | CU-04 | CAMPO | ⚠ | OE3 | M | Pendiente | — | #88 |
-| RF-06 | Transv. | CAMPO | ⚠ | OE3 | M | Pendiente | — | #79, #89 |
-| RF-07 | CU-03 | EQUIPO | — | OE3 | C | Pendiente | — | #91 |
+| RF-06 | Transv. | CAMPO | ⚠ | OE3 | M | Implementado | P `DarDeBajaAnimalTest`, `LiberarChapetaTest`, `DescartarPesajePendienteTest`, `02_permisos_por_rol` | #79, #89 |
+| RF-07 | CU-03 | EQUIPO | — | OE3 | C | Implementado | P `LoginViewModelTest` | #91 |
 | RF-08 | CU-06 | CAMPO | ⚠ | OE3 | M | Implementado | P `RegistrarAnimalViewModelTest` | #38 |
 | RF-09 | CU-07 | EQUIPO | — | OE3 | M | Implementado | P `ListaAnimalesViewModelTest` | #37 |
 | RF-10 | CU-07 | CAMPO | ⚠ | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | #37 |
 | RF-11 | CU-09 | NORMA | — | OE3 | M | Implementado | P `DetalleAnimalViewModelTest` | — |
-| RF-12 | CU-08 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #92 |
+| RF-12 | CU-08 | CAMPO | ⚠ | OE3 | S | Implementado | P `ActualizarAnimalTest`, `EditarAnimalViewModelTest` | #92 |
 | RF-13 | CU-06, CU-08 | CAMPO | ⚠ | OE3 | S | Implementado | P `RegistrarAnimalViewModelTest`, `DetalleAnimalViewModelTest`, `RoomAnimalRepositoryTest` | #20 |
-| RF-14 | CU-23 | CAMPO | ⚠ | OE3 | S | Pendiente | — | #93 |
+| RF-14 | CU-23 | CAMPO | ⚠ | OE3 | S | Implementado | P `RegistrarUbicacionFincaViewModelTest`, `MappersPerfilFincaTest` | #93 |
 | RF-15 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | D (lectura de un NTAG215; registro pendiente) | #31 |
 | RF-16 | CU-10 | CAMPO | ⚠ | OE3 | M | Implementado | P `EscanearViewModelTest` | #31, #36 |
 | RF-17 | CU-06 | CAMPO | ⚠ | OE3 | M | Implementado | P `RegistrarAnimalViewModelTest` | #38 |
@@ -1064,11 +1068,11 @@ Resumen del contrato de pesaje:
 | RF-31 | CU-19 | NORMA | — | OE3 | C | Pendiente | — | #96 |
 | RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `04_subir_cambios`, `MotorSincronizacionTest`, `DisparosDeSincronizacionTest` | #81, #83 |
 | RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest` | #80, #81 |
-| RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Pendiente | — | #84 |
+| RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Implementado | P `ResolverConflictoTest`, `ResolverConflictoViewModelTest`, `RoomConflictoRepositoryTest` | #84 |
 | RF-35 | CU-22 | EQUIPO | — | OE2, OE3 | M | Parcial | — | #85, #94 |
-| RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr | #82 |
+| RF-36 | CU-20 | EQUIPO | — | OE2, OE3 | M | Implementado | P `05_descargar_cambios`, `MotorSincronizacionDescargaTest` (en el A15, 28-10-2026) | #82 |
 | RF-37 | CU-05 | EQUIPO | — | OE3 | C | Pendiente | — | #90 |
-| RF-38 | CU-20 | EQUIPO | — | OE3 | S | Implementado | — | #86 |
+| RF-38 | CU-20 | EQUIPO | — | OE3 | S | Implementado | P `MotorSincronizacionFotosTest`, `FotosEnArchivosTest` (en el A15, 28-10-2026), `07_fotos` | #86 |
 | RF-39 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
 | RF-40 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #43, #98 |
 | RF-41 | CU-24 | EQUIPO | — | OE3 | S | Implementado | P `IndicadoresViewModelTest` | #97 |
@@ -1080,32 +1084,32 @@ Resumen del contrato de pesaje:
 | RNF | Categoría | Fuente | Conf. | Obj. | Pri. | Estado | Verificación |
 |---|---|---|---|---|---|---|---|
 | RNF-01 | Fiabilidad | CAMPO | ⚠ | OG | M | Diseño implementado | D (modo avión; registro pendiente) |
-| RNF-02 | Fiabilidad | EQUIPO | — | OE3 | M | Implementado | — (falta prueba de `RegistrarPesaje`) |
+| RNF-02 | Fiabilidad | EQUIPO | — | OE3 | M | Implementado | P `RegistrarPesajeTest`, `PesajeHttpServerIntegracionTest` |
 | RNF-03 | Fiabilidad | EQUIPO | — | OE3 | M | Verificado | D ⚠ [ubicación] |
 | RNF-04 | Fiabilidad | NORMA | — | OE3 | M | Implementado (celular) | I |
 | RNF-05 | Rendimiento | EQUIPO | — | OE3 | M | Sin medir | — |
 | RNF-06 | Compatibilidad | EQUIPO | — | OE3 | M | Implementado | I; D pendiente |
-| RNF-07 | Mantenibilidad | EQUIPO | — | OE3 | M | Parcial | P (44 pruebas de ViewModel) |
-| RNF-08 | Fiabilidad | EQUIPO | — | OG | M | Pendiente | — |
-| RNF-09 | Rendimiento | EQUIPO | — | OE2 | M | Parcial | P `05_descargar_cambios`; `MotorSincronizacionDescargaTest` sin correr |
+| RNF-07 | Mantenibilidad | EQUIPO | — | OE3 | M | Implementado | P (274 JVM, 108 de instrumentación y 150 pgTAP) |
+| RNF-08 | Fiabilidad | EQUIPO | — | OG | M | Sin medir | — |
+| RNF-09 | Rendimiento | EQUIPO | — | OE2 | M | Implementado | P `05_descargar_cambios`, `MotorSincronizacionDescargaTest` (en el A15, 28-10-2026) |
 | RNF-10 | Rendimiento | EQUIPO | — | OE3 | S | Implementado | — |
-| RNF-11 | Seguridad | EQUIPO | — | OE3 | M | Pendiente | — |
-| RNF-12 | Seguridad | EQUIPO | — | OE3 | M | Pendiente | — |
-| RNF-13 | Privacidad | NORMA | — | OE3 | M | Pendiente | — |
-| RNF-14 | Seguridad | NORMA | — | OE3 | M | Parcial | I |
+| RNF-11 | Seguridad | EQUIPO | — | OE3 | M | Implementado | I `SesionCifrada` |
+| RNF-12 | Seguridad | EQUIPO | — | OE3 | M | Implementado | P `01_aislamiento_por_finca`, `02_permisos_por_rol`, `07_fotos` |
+| RNF-13 | Privacidad | NORMA | — | OE3 | M | Parcial | P `CrearCuentaTest`, `06_crear_finca` |
+| RNF-14 | Seguridad | NORMA | — | OE3 | M | Implementado | I; P `04_subir_cambios` |
 | RNF-15 | Usabilidad | EQUIPO | — | OE4 | M | Pendiente | — |
 | RNF-16 | Usabilidad | EQUIPO | — | OE3 | S | Implementado | I |
 
-### 4.3 Resumen frente a los KPI (corte: 23-10-2026)
+### 4.3 Resumen frente a los KPI (corte: 28-10-2026)
 
 **Por prioridad y estado (RF)**
 
 | Prioridad | Total | Implementado | Parcial | Pendiente |
 |---|---|---|---|---|
-| Must | 26 | 15 | 2 | 9 |
-| Should | 12 | 6 | 0 | 6 |
-| Could | 5 | 1 | 0 | 4 |
-| **Total** | **43** | **22** | **2** | **19** |
+| Must | 26 | 22 | 2 | 2 |
+| Should | 12 | 11 | 0 | 1 |
+| Could | 5 | 3 | 0 | 2 |
+| **Total** | **43** | **36** | **2** | **5** |
 
 **KPI de la propuesta**
 
@@ -1115,7 +1119,7 @@ Resumen del contrato de pesaje:
 | OE1 — Requisitos no funcionales documentados | ≥ 5 | 16 |
 | OE1 — Ganaderos participantes | ≥ 3 | 1 |
 | OE1 — Requisitos confirmados por ganaderos | ≥ 80 % | Pendiente. Los marcados CAMPO son 14 de 59 (24 %). |
-| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 24 implementados (56 %); 17 con prueba automatizada y 7 que dependen de una demostración por registrar |
+| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 36 implementados (84 %); 29 con prueba automatizada y 7 que dependen de una demostración por registrar |
 
 La trazabilidad de requisitos a módulos (KPI de OE2) se documenta en la arquitectura (modelo C4, Fase 3).
 
