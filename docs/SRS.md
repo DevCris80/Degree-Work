@@ -22,6 +22,8 @@
   - [1.2 Destinatarios](#12-destinatarios)
   - [1.3 Uso previsto](#13-uso-previsto)
   - [1.4 Alcance del producto](#14-alcance-del-producto)
+  - [1.5 Definiciones y siglas](#15-definiciones-y-siglas)
+  - [1.6 Convenciones de este documento](#16-convenciones-de-este-documento)
 - [2. Descripción general](#2-descripción-general)
   - [2.1 Actores y matriz de permisos](#21-actores-y-matriz-de-permisos)
   - [2.2 Necesidades de los usuarios](#22-necesidades-de-los-usuarios)
@@ -157,6 +159,71 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Escritura de tags NFC | Solo se lee el UID |
 | Lectura de chapetas LF 134,2 kHz (ISO 11784/11785) | Ver LIM-01 |
 | Reportes exportables (PDF, Excel) | Decisión de alcance del equipo |
+
+### 1.5 Definiciones y siglas
+
+**Términos del dominio** (fuente: `CONTEXT.md`)
+
+| Término | Definición |
+|---|---|
+| Animal | Bovino individual registrado, identificado por `idAnimal` (UUID). |
+| Chapeta | Identificador físico colocado en un Animal, identificado por su `codigo` (UID del tag NFC normalizado). Está *activa* mientras no tiene fecha de desasociación. Un mismo código puede tener varias Chapetas en el tiempo, pero solo una activa a la vez. |
+| Liberar | Desasociar una Chapeta de su Animal. Nunca ocurre en silencio. |
+| Pesaje | Medición (código y peso) que reporta el ESP32 cuando un bovino pasa por la báscula. |
+| Registro | Pesaje ya asignado a un Animal activo. El sustantivo se reserva para pesajes. |
+| Pesaje pendiente | Pesaje válido que no pudo asignarse a un Animal, porque su código no tiene Chapeta activa o porque el Animal está dado de baja. |
+| Conciliar | Resolver un Pesaje pendiente: *asignarlo* a un Animal (crea el Registro) o *descartarlo*. Es definitivo. |
+| Evento | Suceso clínico o de manejo de un Animal (vacunación, tratamiento, parto, inseminación), con fecha y detalle. |
+| Dar de baja | Marcar un Animal, Evento o Registro con `fechaBaja`. Deja de aparecer en las listas, pero se conserva (baja lógica). |
+| Usuario | Persona que opera la app. Pertenece a una sola finca y tiene un rol. |
+| Ganadero | Rol del Usuario responsable de la finca. Puede hacer todo. |
+| Operario | Rol del Usuario que trabaja con el ganado, con permisos restringidos (ver 2.1). |
+| PerfilFinca | La finca a la que pertenecen los Usuarios y los Animales. |
+| Crear cuenta | Acto por el que una persona se convierte en Usuario. |
+
+**Términos de sincronización**
+
+| Término | Definición |
+|---|---|
+| `sincronizado` | Booleano de cada fila local: `false` significa que tiene cambios sin subir. |
+| Revisión (`rev`) | Número que asigna el servidor a cada versión aceptada de una fila editable (Animal, Evento, Registro). |
+| `rev_base` | Revisión de la que partió una edición hecha en el celular. |
+| `id_version` | Identificador (UUID) de cada escritura local de una fila editable. Permite reconocer una edición reenviada. |
+| Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta ni se fusiona. Cuenta la fila entera, aunque los campos editados no se pisen. |
+| Conflicto | Estado de una fila que tiene uno o más siblings sin resolver. |
+| Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior, desde un margen de solapamiento antes, porque dos escrituras pueden confirmar en orden distinto al de sus cursores. |
+| Rechazo | Cambio local que el servidor no aceptó por violar una regla de unicidad o de permisos. Queda en la bandeja de rechazos hasta que alguien lo corrige; la fila local vuelve a la versión del servidor, o sale de su tabla si el servidor no la tiene (RN-24). |
+
+**Siglas**
+
+| Sigla | Significado |
+|---|---|
+| BI | Inteligencia de negocios (*business intelligence*) |
+| CU | Caso de uso |
+| ESP32 | Microcontrolador del proyecto IoT complementario que reporta los pesajes |
+| GDP | Ganancia diaria de peso |
+| LIM | Limitación declarada |
+| NFC | *Near Field Communication* (13,56 MHz) |
+| RES | Restricción |
+| RF / RNF | Requisito funcional / no funcional |
+| RLS | *Row Level Security* (políticas por fila de Postgres/Supabase) |
+| RN | Regla de negocio |
+| SUP | Supuesto o dependencia |
+| UID | Identificador único de fábrica de un tag NFC |
+
+### 1.6 Convenciones de este documento
+
+| Campo | Valores |
+|---|---|
+| Prioridad (MoSCoW) | **M** Must · **S** Should · **C** Could |
+| Estado al 28-10-2026 | **Implementado** (hay código en `main`) · **Parcial** (existe, pero no cumple todo el enunciado) · **Pendiente** (decidido, sin código) |
+| Fuente | **CAMPO**: confirmado por el ganadero en la visita de campo (ver 2.2) · **EQUIPO**: decisión del equipo (con su ADR o issue cuando existe) · **NORMA**: exigido por una norma |
+| Objetivo | **OG** objetivo general · **OE1–OE4** objetivos específicos de la propuesta |
+| Verificación | **P** prueba automatizada · **D** demostración manual · **I** inspección · **A** análisis |
+
+Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verificable*: tiene una prueba automatizada o un registro de demostración.
+
+---
 
 ## 2. Descripción general
 
