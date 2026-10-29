@@ -40,6 +40,8 @@ import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaFilterChip
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.GraficoEventosPorMes
+import com.devcris80.prototipo.ui.components.GraficoInventarioPorProposito
+import com.devcris80.prototipo.ui.components.GraficoInventarioPorSexo
 import com.devcris80.prototipo.ui.components.GraficoPesoConEjes
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
@@ -47,6 +49,7 @@ import com.devcris80.prototipo.ui.theme.BovinaMinTouchTarget
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 import com.devcris80.prototipo.ui.util.appViewModel
+import com.devcris80.prototipo.ui.util.barrasDeInventario
 import com.devcris80.prototipo.ui.util.barrasPorMes
 import com.devcris80.prototipo.ui.util.datosDelGrafico
 import java.text.SimpleDateFormat
@@ -162,23 +165,13 @@ private fun TarjetaInventario(inventario: List<GrupoInventario>) {
             TextoSinDatos("Todavía no hay animales activos.")
             return@BovinaCard
         }
-        Text(
-            text = Sexo.entries.joinToString(" · ") { sexo ->
-                "${sexo.aEtiqueta()}: ${inventario.filter { it.etapa.sexo == sexo }.sumOf { it.cantidad }}"
-            },
-            style = MaterialTheme.typography.bodyMedium,
-            color = MaterialTheme.colorScheme.onSurfaceVariant,
-            modifier = Modifier.padding(top = 4.dp),
+        GraficoInventarioPorSexo(
+            hembras = inventario.filter { it.etapa.sexo == Sexo.HEMBRA }.sumOf { it.cantidad },
+            machos = inventario.filter { it.etapa.sexo == Sexo.MACHO }.sumOf { it.cantidad },
+            modifier = Modifier.padding(top = 12.dp),
         )
-        inventario.groupBy { it.proposito }.forEach { (proposito, grupos) ->
-            HorizontalDivider(modifier = Modifier.padding(vertical = 10.dp))
-            FilaConteo(
-                etiqueta = proposito.aEtiqueta(),
-                cantidad = grupos.sumOf { it.cantidad },
-                destacada = true,
-            )
-            grupos.forEach { FilaConteo(etiqueta = it.etapa.aEtiqueta(), cantidad = it.cantidad) }
-        }
+        HorizontalDivider(modifier = Modifier.padding(vertical = 12.dp))
+        GraficoInventarioPorProposito(barras = remember(inventario) { barrasDeInventario(inventario) })
     }
 }
 
