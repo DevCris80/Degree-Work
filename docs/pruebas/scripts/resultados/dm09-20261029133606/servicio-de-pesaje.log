@@ -1,0 +1,5 @@
+[13:37:10] pesaje 1: {"status":"ok","id_registro":"05652873-c930-48c0-9506-890bf3cda6dd"} HTTP=201
+[13:37:12] pesaje 2: {"status":"ok","id_registro":"b472b09e-f220-4f8a-8de6-36c732b6ac57"} HTTP=201
+[13:37:14] pesaje 3: {"status":"ok","id_registro":"b923ab60-0154-414a-a6fb-f94d3879f0be"} HTTP=201
+[13:37:16] código sin chapeta: {"status":"pendiente_asociacion","id_pesaje_pendiente":"46da3d16-1e75-4483-aeea-4580c4a62cb6","motivo":"CHIP_NO_ASOCIADO"} HTTP=202
+[13:37:25] tras detener: HTTP=000 exit=52

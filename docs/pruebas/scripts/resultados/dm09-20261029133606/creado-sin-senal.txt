@@ -1,0 +1,7 @@
+Sin sincronizar: {'animal': 1, 'chapeta': 1, 'registro': 5, 'evento': 1, 'pesaje_pendiente': 4}
+Animales nuevos o editados (nombre, raza, rev, revBase, idMadre/idPadre): [('DM09 animal', 'Cebú', None, None, 1)]
+Chapetas sin subir: [('DM09', 'DM09 animal')]
+Registros sin subir (peso, idLectura es manual si es nulo): [(400.0, None, 'DM09 animal'), (300.0, 'dm04-20261029132058-2', 'Estrella'), (300.0, 'dm04-20261029122318-2', 'Estrella'), (300.0, 'dm04-20261029122226-2', 'Estrella'), (300.0, 'dm04-2', 'Estrella')]
+Eventos sin subir: [('Vacunación', 'Ciclo 1', 'Paco', '2ml', 'Intravenosa')] columnas: ['tipoEvento', 'detalle', 'biologico', 'dosis', 'via']
+Pesajes pendientes asignados sin subir: [('DM04SINCHAPETA', 300.0, 'ASIGNADO'), ('DM04SINCHAPETA', 300.0, 'ASIGNADO'), ('DM04SINCHAPETA', 300.0, 'ASIGNADO'), ('DM04SINCHAPETA', 300.0, 'ASIGNADO')]
+Animal con padre/madre: [('DM09 animal', 'Golondrina', 'Capitán')]
