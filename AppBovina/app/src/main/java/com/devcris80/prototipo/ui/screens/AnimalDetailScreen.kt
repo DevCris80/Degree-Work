@@ -49,6 +49,7 @@ import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.FotoAnimal
+import com.devcris80.prototipo.ui.components.GraficoEvolucionPeso
 import com.devcris80.prototipo.ui.components.MarcaEnConflicto
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
@@ -273,6 +274,7 @@ fun DetalleAnimalScreen(
                     }
                 }
             }
+            item { GraficoEvolucionPeso(registros = listaRegistros) }
             item {
                 Row(
                     modifier = Modifier
