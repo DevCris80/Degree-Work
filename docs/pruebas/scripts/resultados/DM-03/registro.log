@@ -1,0 +1,8 @@
+[11:35:45] paso 1 (inactivo) servicio en dumpsys: 0
+[11:35:45] paso 2 POST con el servicio inactivo: HTTP=000 curl_exit=7 
+[11:35:50] paso 3 (activo) servicio en dumpsys: 3
+[11:35:50] paso 4 POST con el servicio activo: HTTP=201 curl_exit=0 {"status":"ok","id_registro":"65a14105-88dd-43c0-beed-30eba365e601"}
+[11:35:54] paso 5 (inactivo) servicio en dumpsys: 0
+[11:35:54] paso 6 POST con el servicio detenido: HTTP=000 curl_exit=7 {"status":"ok","id_registro":"65a14105-88dd-43c0-beed-30eba365e601"}
+[11:35:57] final (activo) servicio en dumpsys: 3
+[11:35:58] final POST: HTTP=201 curl_exit=0 {"status":"ok","id_registro":"cc7a7247-df7a-43c1-90b6-2f3c4cd05fe7"}
