@@ -81,7 +81,7 @@ Cada ficha trae los pasos, el resultado esperado, el criterio de aprobación y e
 | [DM-03](fichas/DM-03.md) | Iniciar y detener el servicio de pesaje | RF-20, RF-25 | `adb` y `curl` | Aprobada, con video |
 | [DM-04](fichas/DM-04.md) | Jornada de pesaje sin internet (DE-01) | RF-20 a RF-24, RNF-01 | `scripts/dm04-jornada-de-pesaje.sh` | Pasos 1 a 5 aprobados, con video; falta repetir sin internet |
 | [DM-05](fichas/DM-05.md) | Subida de cambios al reconectar (DS-01) | RF-32, RF-33, RF-35 | Manual, con Supabase | Pendiente |
-| [DM-06](fichas/DM-06.md) | Descarga en un segundo celular (DS-02) | RF-36, RF-38, RNF-09 | Manual, dos celulares | Pendiente |
+| [DM-06](fichas/DM-06.md) | Descarga en un segundo celular (DS-02) | RF-36, RF-38, RNF-09 | `scripts/dm06-descarga-en-segundo-celular.sh`, dos celulares | Aprobada: bases iguales fila por fila (307 registros), con video |
 | [DM-07](fichas/DM-07.md) | Edición concurrente del mismo animal (DE-02) | RF-12, RF-33, RF-34 | Manual, dos celulares | Pendiente |
 | [DM-08](fichas/DM-08.md) | Mismo código en dos celulares sin señal (DE-03) | RF-17, RF-35 | Manual, dos celulares | Pendiente |
 | [DM-09](fichas/DM-09.md) | Funciones de registro y consulta en modo avión | RNF-01 | Manual con `adb` | Pendiente |
@@ -90,7 +90,7 @@ Cada ficha trae los pasos, el resultado esperado, el criterio de aprobación y e
 | [DM-12](fichas/DM-12.md) | Tiempo hasta que un pesaje es visible | RNF-05 | `scripts/dm12-tiempo-de-pesaje.sh` | Aprobada: 30 de 30, máximo 2,6 s, con video |
 | [DM-13](fichas/DM-13.md) | Servicio de pesaje con la pantalla apagada | RNF-03 | `scripts/dm13-pantalla-apagada.sh` | Aprobada: 15 min, 30 de 30 |
 
-Resumen de lo ejecutado: **DM-03, DM-11, DM-12 y DM-13 aprobadas**; **DM-04 aprobada en los pasos funcionales**, pendiente de repetir sin internet. Todas corrieron en el A15 el 2026-10-29 con la app de depuración, con la sesión que ya tenía el celular. Los videos están junto a las fichas (`fichas/DM-03.mp4`, `DM-04.mp4`, `DM-11.mp4` y `DM-12.mp4`). Faltan DM-01, DM-02 y DM-05 a DM-10.
+Resumen de lo ejecutado: **DM-03, DM-06, DM-11, DM-12 y DM-13 aprobadas**; **DM-04 aprobada en los pasos funcionales**, pendiente de repetir sin internet. Todas corrieron en el A15 el 2026-10-29, con la sesión que ya tenía el celular y con el build de depuración del 2026-10-27 (esquema Room 17), anterior a `main`: el código del servidor de pesajes es el mismo, pero esa app no tenía los campos nuevos del evento ni los gráficos. Después se actualizó el A15 a `main` (esquema 18, sin perder datos) para las demostraciones con dos celulares. El segundo celular es un Oppo A5 5G (CPH2735, Android 16, con NFC), no el Xiaomi 14T que nombra el SRS; cada celular usa un usuario distinto de la misma finca. Los videos están junto a las fichas (`fichas/DM-03.mp4`, `DM-04.mp4`, `DM-06.mp4`, `DM-11.mp4` y `DM-12.mp4`). Faltan DM-01 y DM-02 (necesitan una chapeta NFC), DM-05, DM-07, DM-08, DM-09 y DM-10.
 
 ## 4. Lo que estas pruebas no cubren
 
