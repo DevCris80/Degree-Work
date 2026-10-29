@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.263Z" hostname="fedora" time="0.01">
+  <properties/>
+  <testcase name="descartarNoCreaRegistrosNiBorraElPendiente" classname="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" time="0.002"/>
+  <testcase name="unPendienteYaResueltoNoSeVuelveAConciliar" classname="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" time="0.002"/>
+  <testcase name="elGanaderoDescartaUnPesajePendiente" classname="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" time="0.001"/>
+  <testcase name="unPendienteQueNoExisteNoEstaDisponible" classname="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" time="0.002"/>
+  <testcase name="sinUsuarioEnElDispositivoNoSeDescartaElPesajePendiente" classname="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" time="0.001"/>
+  <testcase name="elOperarioNoDescartaUnPesajePendienteAunqueSeLlameAlCasoDeUso" classname="com.devcris80.prototipo.domain.usecase.DescartarPesajePendienteTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

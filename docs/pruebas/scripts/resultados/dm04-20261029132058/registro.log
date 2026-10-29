@@ -1,0 +1,18 @@
+[13:20:58.131] paso 1: chapeta activa FP009
+{"status":"ok","id_registro":"b1627349-91fe-4759-9f4b-0e48f1eee01b"}
+HTTP=201
+[13:21:05.427] paso 2: código sin chapeta
+{"status":"pendiente_asociacion","id_pesaje_pendiente":"87eb2ce2-ed3b-4ce3-a98f-472ed181683e","motivo":"CHIP_NO_ASOCIADO"}
+HTTP=202
+[13:21:12.876] paso 3: reintento del paso 1 con el mismo id_lectura
+{"status":"ok","id_registro":"b1627349-91fe-4759-9f4b-0e48f1eee01b"}
+HTTP=201
+[13:21:20.216] paso 4: cuerpo sin peso
+{"status":"error","message":"peso: falta"}
+HTTP=400
+[13:21:27.577] paso 5: antiguedad_ms=60000 (envío en epoch ms=1793298087576)
+{"status":"ok","id_registro":"bcd1b500-8adc-48cf-9702-b1eca2396cfc"}
+HTTP=201
+registros: [('dm04-20261029132058-1', 451.5, 0), ('dm04-20261029132058-5', 452.5, 0)]
+pendientes: [('dm04-20261029132058-2', 'DM04SINCHAPETA', 'CODIGO_SIN_CHAPETA_ACTIVA', 0)]
+paso 5: envío - hora guardada = 55909 ms (esperado ≈ 60000)

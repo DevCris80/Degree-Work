@@ -1,0 +1,17 @@
+[13:40:51] devuelvo la conectividad
+Oppo avión=0 ping=rtt min/avg/max/mdev = 43.354/43.354/43.354/0.000 ms | A15 ping=rtt min/avg/max/mdev = 32.591/32.591/32.591/0.000 ms
+[13:41:29] ronda 1 de sincronización hecha (Oppo, A15)
+[13:41:53] ronda 2 de sincronización hecha (Oppo, A15)
+Oppo sin sincronizar: {'animal': 0, 'chapeta': 0, 'registro': 0, 'evento': 0, 'pesaje_pendiente': 0, 'perfil_finca': 0} | rechazos: 1 | siblings: 1
+A15 sin sincronizar: {'animal': 0, 'chapeta': 0, 'registro': 0, 'evento': 0, 'pesaje_pendiente': 0, 'perfil_finca': 0} | rechazos: 1 | siblings: 1
+[13:42:08] ronda 3: el Oppo descarga lo que subió el A15
+tabla                  A     B  solo_A solo_B distintas
+perfil_finca           1     1       0      0         0
+usuario                2     2       0      0         0
+animal                23    23       0      0         0
+chapeta               22    22       0      0         0
+evento                50    50       0      0         0
+registro             622   622       0      0         0
+pesaje_pendiente      19    19       0      0         0
+sibling                1     1       0      0         0
+RESULTADO: LAS BASES SON IGUALES

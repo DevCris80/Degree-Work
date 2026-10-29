@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.380Z" hostname="fedora" time="0.011">
+  <properties/>
+  <testcase name="conUnPadreMachoYUnaMadreHembraSeGuardaLaCria" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.003"/>
+  <testcase name="unPadreQueEsHembraSeRechazaYNoSeGuardaNiElAnimalNiSuChapeta" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.002"/>
+  <testcase name="guardaElAnimalYSuChapetaActivaConElCodigoNormalizado" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.001"/>
+  <testcase name="devuelveLosPesajesPendientesDeEseCodigoSinAsignarlos" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.0"/>
+  <testcase name="losPendientesYaResueltosDeEseCodigoNoSeOfrecen" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.001"/>
+  <testcase name="sinCodigoGuardaSoloElAnimal" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.001"/>
+  <testcase name="unaMadreQueNoExisteSeRechazaYNoSeGuardaNada" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.001"/>
+  <testcase name="unCodigoConOtraChapetaActivaNoGuardaNada" classname="com.devcris80.prototipo.domain.usecase.RegistrarAnimalTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

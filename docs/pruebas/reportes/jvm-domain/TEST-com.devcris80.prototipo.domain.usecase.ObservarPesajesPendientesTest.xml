@@ -1,0 +1,8 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientesTest" tests="2" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.366Z" hostname="fedora" time="0.012">
+  <properties/>
+  <testcase name="losPendientesYaResueltosNoAparecen" classname="com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientesTest" time="0.01"/>
+  <testcase name="elEstadoDelCodigoSaleDeLaChapetaDeHoyYNoDelMotivoConQueLlego" classname="com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientesTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

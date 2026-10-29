@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.304Z" hostname="fedora" time="0.012">
+  <properties/>
+  <testcase name="madrePrecargada_quedaElegidaYSeGuardaEnLaCria" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.003"/>
+  <testcase name="aceptarLaOferta_asignaLosPesajesYLuegoEmiteGuardado" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.002"/>
+  <testcase name="codigoPrecargado_quedaDeSoloLecturaConElAviso" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.0"/>
+  <testcase name="unToroDadoDeBajaSigueSiendoCandidato_despuesDeLosActivos" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.0"/>
+  <testcase name="guardarSinCodigo_emiteGuardadoYNoCreaChapeta" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <testcase name="cambiarSexo_actualizaEtapasDisponiblesYLimpiaLaEtapaElegida" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <testcase name="formularioIncompleto_noSePuedeGuardar" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.0"/>
+  <testcase name="guardarConPesajesPendientesDelCodigo_ofreceAsignarlosSinEmitirGuardadoTodavia" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <testcase name="losCandidatosAPadreSonLosMachosYAMadreLasHembras" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.0"/>
+  <testcase name="rechazarLaOferta_noAsignaPeroIgualEmiteGuardado" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <testcase name="guardarConCodigoYaActivo_noGuardaYMarcaElEstado" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <testcase name="quitarElPadreElegido_loDejaSinPadre" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.0"/>
+  <testcase name="guardarConPadreYMadre_losGuardaEnElAnimal" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <testcase name="aceptarLaOfertaConPendienteYaResuelto_marcaElErrorYIgualEmiteGuardado" classname="com.devcris80.prototipo.ui.screens.RegistrarAnimalViewModelTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

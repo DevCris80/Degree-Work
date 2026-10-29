@@ -1,0 +1,11 @@
+[13:26:24] antes: '308 cambios guardados, por subir' [163,844][757,890]
+[13:26:24] internet devuelto
+[13:26:35] app detenida a ~1 s de empezar a subir
+[13:26:37] tras la interrupción: {'registro': 307, 'pesaje_pendiente': 1} total registro: 614
+[13:26:51] app lanzada (sincroniza al abrirse)
+[13:26:57] APP DETENIDA A MITAD DE LA SUBIDA con 283 pendientes
+[13:26:59] tras la interrupción: pendientes=283
+[13:27:11] app relanzada
+[13:27:26] pantalla: 'Todos los datos sincronizados' [163,844][681,890]
+[13:27:51] Oppo: sincronizar
+toqué 'Sincronizar ahora' en 464 230

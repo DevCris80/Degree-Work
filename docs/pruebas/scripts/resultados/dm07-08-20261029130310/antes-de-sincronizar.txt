@@ -1,0 +1,8 @@
+== A15 (sin internet)
+sin sincronizar: {'animal': 2, 'chapeta': 1, 'registro': 0, 'evento': 0}
+Tornado (nombre, raza, rev, revBase, sincronizado): [('Tornado A15', 'Brahman', 1, 1, 0)]
+chapeta DM08DUP: [('DM08DUP', 'Vaca Prueba A15', 0)]
+== Oppo (sin internet)
+sin sincronizar: {'animal': 2, 'chapeta': 1, 'registro': 0, 'evento': 0}
+Tornado (nombre, raza, rev, revBase, sincronizado): [('Tornado', 'Criollo', 1, 1, 0)]
+chapeta DM08DUP: [('DM08DUP', 'dip oppo', 0)]

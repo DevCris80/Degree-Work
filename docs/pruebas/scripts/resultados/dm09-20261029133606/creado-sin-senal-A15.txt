@@ -1,0 +1,5 @@
+A15 sin sincronizar: {'animal': 1, 'chapeta': 1, 'registro': 0, 'evento': 0, 'pesaje_pendiente': 1, 'perfil_finca': 1}
+Animales sin subir (nombre, dado de baja): [('Florecita', 1)]
+Chapetas sin subir (código, animal, liberada): [('FP019', 'Estrellita', 1)]
+Pendientes sin subir (código, resolución): [('DM04SINCHAPETA', 'DESCARTADO')]
+Perfil de la finca: ubicación registrada (latitud y longitud omitidas del registro), sincronizado=0

@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.419Z" hostname="fedora" time="0.013">
+  <properties/>
+  <testcase name="elReintentoDeUnPesajePendienteDevuelveElMismoPendienteAunqueYaSeHayaConciliado" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="sinUsuarioEnElDispositivoNoSeGuardaNada" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.0"/>
+  <testcase name="unaAntiguedadNegativaOMayorQueLaHoraDeRecepcionEsInvalida" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="elPesoMaximoSiEsValido" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="laHoraDeUnPesajePendienteTambienEsLaDeRecepcionMenosLaAntiguedad" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="reenviarUnPesajePendienteSinConciliarDevuelveElMismoPendienteYNoCreaOtro" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="laChapetaDeUnAnimalDadoDeBajaQuedaComoPendienteConEseMotivo" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="laHoraGuardadaEsLaDeRecepcionMenosLaAntiguedadQueReportaElEsp32" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.002"/>
+  <testcase name="uncodigoSinChapetaActivaQuedaComoPesajePendienteYNoCreaAnimalesNiChapetas" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.0"/>
+  <testcase name="reenviarElMismoPesajeNoCreaNadaNuevoYDevuelveElMismoRegistro" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="unPesoFueraDeRangoEsInvalidoYNoGuardaNada" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="elCodigoSeNormalizaAntesDeBuscarLaChapeta" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <testcase name="unCodigoConChapetaActivaDeUnAnimalActivoQuedaComoRegistroAnombreDelUsuario" classname="com.devcris80.prototipo.domain.usecase.RegistrarPesajeTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

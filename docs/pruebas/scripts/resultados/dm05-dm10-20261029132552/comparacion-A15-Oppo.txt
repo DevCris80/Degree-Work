@@ -1,0 +1,10 @@
+tabla                  A     B  solo_A solo_B distintas
+perfil_finca           1     1       0      0         0
+usuario                2     2       0      0         0
+animal                22    22       0      0         0
+chapeta               21    21       0      0         0
+evento                49    49       0      0         0
+registro             614   614       0      0         0
+pesaje_pendiente      18    18       0      0         0
+sibling                1     1       0      0         0
+RESULTADO: LAS BASES SON IGUALES

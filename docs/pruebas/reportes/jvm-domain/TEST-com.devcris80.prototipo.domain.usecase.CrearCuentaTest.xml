@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" tests="6" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.242Z" hostname="fedora" time="0.011">
+  <properties/>
+  <testcase name="sinNombreFincaOCorreoNoLlegaAlServidor" classname="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" time="0.003"/>
+  <testcase name="laContrasenaLlegaTalCualAunqueTengaEspacios" classname="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" time="0.003"/>
+  <testcase name="sinAceptarLaAutorizacionNoSeCreaNadaNiSeLlamaAlServidor" classname="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" time="0.001"/>
+  <testcase name="devuelveLoQueRespondeElServidor" classname="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" time="0.001"/>
+  <testcase name="conTodoAceptadoPideCrearLaCuentaConLaVersionDelTextoYLosDatosSinEspaciosDeMas" classname="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" time="0.001"/>
+  <testcase name="unaContrasenaDeMenosDe6CaracteresOUnaConfirmacionDistintaNoLleganAlServidor" classname="com.devcris80.prototipo.domain.usecase.CrearCuentaTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

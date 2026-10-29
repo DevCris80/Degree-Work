@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.data.repository.MappersPerfilFincaTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:52.821Z" hostname="fedora" time="0.006">
+  <properties/>
+  <testcase name="laRespuestaDelServidorActualizaLaUbicacionLocalYMarcaLaFincaSubida" classname="com.devcris80.prototipo.data.repository.MappersPerfilFincaTest" time="0.005"/>
+  <testcase name="laFincaDescargadaTraeSuUbicacion" classname="com.devcris80.prototipo.data.repository.MappersPerfilFincaTest" time="0.0"/>
+  <testcase name="unaFincaSinUbicacionSubeLasCoordenadasNulas" classname="com.devcris80.prototipo.data.repository.MappersPerfilFincaTest" time="0.0"/>
+  <testcase name="laFincaDescargadaSinUbicacionLaDejaNula" classname="com.devcris80.prototipo.data.repository.MappersPerfilFincaTest" time="0.001"/>
+  <testcase name="laUbicacionSubeConElPerfil" classname="com.devcris80.prototipo.data.repository.MappersPerfilFincaTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

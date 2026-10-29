@@ -1,0 +1,13 @@
+DM-13 | chip=FP005 minutos=15 intervalo=30s
+--- antes
+bateria=24%
+pantalla=mWakefulness=Awake
+servicio_activo=3
+pantalla apagada: mWakefulness=Dozing
+--- después
+bateria=32%
+pantalla=mWakefulness=Awake
+servicio_activo=3
+registros=30 registros_distintos=30 pendientes=0 pendientes_distintos=0 total=30
+enviados=30 respondidos_201_o_202=30 guardados=30
+RESULTADO: APROBADO

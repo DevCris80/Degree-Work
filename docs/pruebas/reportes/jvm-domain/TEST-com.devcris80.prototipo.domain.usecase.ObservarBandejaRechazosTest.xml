@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.282Z" hostname="fedora" time="0.033">
+  <properties/>
+  <testcase name="unAnimalRechazadoQueSalioDelCelularConservaSuNombreEnSusFilas" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.01"/>
+  <testcase name="unaFilaQueSalioConSuAnimalLoDice" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.003"/>
+  <testcase name="otroErrorMuestraElMensajeDelServidor" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="unPesajePendienteYaConciliadoEnOtroCelularSeAceptaComoQuedoEnElServidor" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="unRechazoCerradoSaleDeLaBandeja" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="unAnimalDadoDeBajaConservaSuNombre" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.001"/>
+  <testcase name="unaFotoQueStorageNoAceptaSeCierra" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="unPermisoDenegadoSeCierraSinReenviar" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="elRegistroDeUnPesajeQueOtroCelularYaConcilioSeAceptaComoQuedoEnElServidor" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="siElCodigoQuedoEnEsteMismoAnimalSoloQuedaAceptarlo" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <testcase name="enE07LaChapetaRechazadaTraeElNombreDelAnimalQueYaTieneElCodigo" classname="com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazosTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,14 @@
+== A15 final
+Tornado (nombre, raza, rev, revBase, sincronizado): [('Tornado', 'Criollo', 3, None, 1)]
+siblings de Tornado: []
+rechazos (motivo, fechaCorreccion): []
+chapetas DM08: [('DM08DUP', 'Vaca Prueba A15', 1)]
+animales nuevos: [('Vaca Prueba A15', 1), ('dip oppo', 1)]
+sin sincronizar: {'animal': 0, 'chapeta': 0}
+== OP final
+Tornado (nombre, raza, rev, revBase, sincronizado): [('Tornado', 'Criollo', 3, None, 1)]
+siblings de Tornado: []
+rechazos (motivo, fechaCorreccion): [('23505: duplicate key value violates uniq', 1793297361846)]
+chapetas DM08: [('DM08DUP', 'Vaca Prueba A15', 1)]
+animales nuevos: [('dip oppo', 1), ('Vaca Prueba A15', 1)]
+sin sincronizar: {'animal': 0, 'chapeta': 0}

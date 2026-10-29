@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneoTest" tests="4" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.441Z" hostname="fedora" time="0.004">
+  <properties/>
+  <testcase name="unaChapetaActivaDeUnAnimalActivoAbreElAnimal" classname="com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneoTest" time="0.001"/>
+  <testcase name="unCodigoLiberadoRegistraAvisandoDelUltimoAnimalQueLoTuvo" classname="com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneoTest" time="0.002"/>
+  <testcase name="unaChapetaActivaDeUnAnimalDadoDeBajaPideLiberarla" classname="com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneoTest" time="0.0"/>
+  <testcase name="unCodigoNuncaVistoRegistraUnAnimalNuevo" classname="com.devcris80.prototipo.domain.usecase.ResolverDestinoEscaneoTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,28 @@
+DM-11 | celular 192.168.1.7:8080 | N=50 reintentos=2 chip=FP002 | prefijo=dm11-20261029113611
+bateria=15
+level:
+11:17:17.387
+11:17:18.389
+11:17:20.395
+11:17:30.433
+11:17:30.647
+11:17:40.694
+11:17:47.696
+11:17:49.086
+11:17:49.774
+11:17:59.645
+11:18:09.721
+11:18:29.821
+11:20:20.591
+11:22:21.309
+11:24:22.173
+11:26:12.816
+11:28:33.677
+11:30:24.320
+11:32:25.008
+11:34:25.851%
+pantalla=mWakefulness=Awake
+servicio_activo=3
+registros=50 registros_distintos=50 pendientes=0 pendientes_distintos=0 total=50
+respuestas distintas entre envío y reintento: 0
+RESULTADO: APROBADO (50 de 50 guardados una sola vez)

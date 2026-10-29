@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.102Z" hostname="fedora" time="0.064">
+  <properties/>
+  <testcase name="muestraLosCambiosSinSubirYLaFechaDeLaUltimaSincronizacion" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.01"/>
+  <testcase name="losAnimalesParaElegirLlevanSuCodigoDeChapetaActiva" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.008"/>
+  <testcase name="con400kgElDia1Y430kgElDia31_laGananciaDiariaEsDeUnKiloPorDia" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.006"/>
+  <testcase name="conTresVacasDeLecheYDosNovillosDeCarne_elInventarioMuestraEsosConteos" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.004"/>
+  <testcase name="cuentaLosEventosPorMesYPorTipo_sinLosDadosDeBajaNiLosDeAnimalesDadosDeBaja" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.009"/>
+  <testcase name="cuentaLosPesajesPendientesSinResolverYDaElMasAntiguo" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.004"/>
+  <testcase name="conUnSoloPesaje_noHayGananciaDiaria" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.004"/>
+  <testcase name="conDosPesajesAMenosDeUnDia_noHayGananciaDiaria" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.004"/>
+  <testcase name="siElAnimalElegidoSeDaDeBaja_dejaDeMostrarseSuEvolucionDePeso" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.004"/>
+  <testcase name="unAnimalDadoDeBaja_noApareceEnNingunIndicador" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.003"/>
+  <testcase name="laCompletitudDaLosAnimalesSinChapetaActivaYLosSinPesajeEnLosUltimos30Dias" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.004"/>
+  <testcase name="sinAnimalesNiPendientes_hayIndicadoresVaciosEnLugarDeQuedarseCargando" classname="com.devcris80.prototipo.ui.screens.IndicadoresViewModelTest" time="0.003"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
