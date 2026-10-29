@@ -12,6 +12,106 @@
 | Fecha de corte del estado | 28 de octubre de 2026 |
 
 
+<!-- índice:inicio -->
+## Índice
+
+**Secciones**
+
+- [1. Introducción](#1-introducción)
+  - [1.1 Objetivo](#11-objetivo)
+  - [1.2 Destinatarios](#12-destinatarios)
+  - [1.3 Uso previsto](#13-uso-previsto)
+  - [1.4 Alcance del producto](#14-alcance-del-producto)
+- [2. Descripción general](#2-descripción-general)
+  - [2.1 Actores y matriz de permisos](#21-actores-y-matriz-de-permisos)
+  - [2.2 Necesidades de los usuarios](#22-necesidades-de-los-usuarios)
+  - [2.3 Supuestos y dependencias](#23-supuestos-y-dependencias)
+  - [2.4 Restricciones y limitaciones declaradas](#24-restricciones-y-limitaciones-declaradas)
+  - [2.5 Reglas de negocio](#25-reglas-de-negocio)
+- [3. Requisitos](#3-requisitos)
+  - [3.1 Requisitos funcionales](#31-requisitos-funcionales)
+    - [3.1.1 Catálogo](#311-catálogo)
+    - [3.1.2 Requisito transversal](#312-requisito-transversal)
+    - [3.1.3 Fichas de casos de uso](#313-fichas-de-casos-de-uso)
+  - [3.2 Requisitos de interfaz externa](#32-requisitos-de-interfaz-externa)
+    - [3.2.1 Interfaz de usuario](#321-interfaz-de-usuario)
+    - [3.2.2 Interfaz de hardware](#322-interfaz-de-hardware)
+    - [3.2.3 Interfaz de software](#323-interfaz-de-software)
+    - [3.2.4 Interfaz de comunicaciones](#324-interfaz-de-comunicaciones)
+  - [3.3 Requisitos no funcionales](#33-requisitos-no-funcionales)
+    - [3.3.1 Rendimiento y eficiencia](#331-rendimiento-y-eficiencia)
+    - [3.3.2 Fiabilidad y disponibilidad sin conexión](#332-fiabilidad-y-disponibilidad-sin-conexión)
+    - [3.3.3 Seguridad y privacidad](#333-seguridad-y-privacidad)
+    - [3.3.4 Usabilidad](#334-usabilidad)
+    - [3.3.5 Compatibilidad](#335-compatibilidad)
+    - [3.3.6 Mantenibilidad y verificabilidad](#336-mantenibilidad-y-verificabilidad)
+- [4. Matriz de trazabilidad](#4-matriz-de-trazabilidad)
+  - [4.1 Requisitos funcionales](#41-requisitos-funcionales)
+  - [4.2 Requisitos no funcionales](#42-requisitos-no-funcionales)
+
+**Casos de uso** (fichas en la sección [3.1.3](#313-fichas-de-casos-de-uso))
+
+| Caso de uso | Nombre |
+|---|---|
+| [CU-01](#cu-01) | Crear cuenta |
+| [CU-02](#cu-02) | Iniciar sesión |
+| [CU-03](#cu-03) | Recuperar contraseña |
+| [CU-04](#cu-04) | Invitar y unir a un Operario |
+| [CU-05](#cu-05) | Quitar a un Operario |
+| [CU-06](#cu-06) | Registrar animal |
+| [CU-07](#cu-07) | Consultar animales |
+| [CU-08](#cu-08) | Editar animal |
+| [CU-09](#cu-09) | Dar de baja animal |
+| [CU-10](#cu-10) | Escanear chapeta |
+| [CU-11](#cu-11) | Asociar chapeta a un animal existente |
+| [CU-12](#cu-12) | Liberar chapeta |
+| [CU-13](#cu-13) | Recibir pesaje del ESP32 |
+| [CU-14](#cu-14) | Controlar el servicio de pesaje |
+| [CU-15](#cu-15) | Conciliar pesajes pendientes |
+| [CU-16](#cu-16) | Registrar pesaje manual |
+| [CU-17](#cu-17) | Registrar evento |
+| [CU-18](#cu-18) | Editar evento o pesaje |
+| [CU-19](#cu-19) | Dar de baja evento o pesaje |
+| [CU-20](#cu-20) | Sincronizar |
+| [CU-21](#cu-21) | Resolver conflicto |
+| [CU-22](#cu-22) | Corregir rechazos |
+| [CU-23](#cu-23) | Registrar ubicación de la finca |
+| [CU-24](#cu-24) | Consultar indicadores |
+
+**Requisitos no funcionales** (sección [3.3](#33-requisitos-no-funcionales))
+
+| Requisito | Nombre | Categoría |
+|---|---|---|
+| [RNF-01](#rnf-01) | Operación sin señal | [3.3.2 Fiabilidad y disponibilidad sin conexión](#332-fiabilidad-y-disponibilidad-sin-conexión) |
+| [RNF-02](#rnf-02) | Ningún pesaje válido se pierde ni se duplica | [3.3.2 Fiabilidad y disponibilidad sin conexión](#332-fiabilidad-y-disponibilidad-sin-conexión) |
+| [RNF-03](#rnf-03) | Servicio activo con la pantalla apagada | [3.3.2 Fiabilidad y disponibilidad sin conexión](#332-fiabilidad-y-disponibilidad-sin-conexión) |
+| [RNF-04](#rnf-04) | Sin borrado físico e integridad del esquema | [3.3.2 Fiabilidad y disponibilidad sin conexión](#332-fiabilidad-y-disponibilidad-sin-conexión) |
+| [RNF-05](#rnf-05) | Tiempo de registro de un pesaje | [3.3.1 Rendimiento y eficiencia](#331-rendimiento-y-eficiencia) |
+| [RNF-06](#rnf-06) | Plataforma y dispositivos | [3.3.5 Compatibilidad](#335-compatibilidad) |
+| [RNF-07](#rnf-07) | Pruebas del prototipo | [3.3.6 Mantenibilidad y verificabilidad](#336-mantenibilidad-y-verificabilidad) |
+| [RNF-08](#rnf-08) | Integridad de la sincronización | [3.3.2 Fiabilidad y disponibilidad sin conexión](#332-fiabilidad-y-disponibilidad-sin-conexión) |
+| [RNF-09](#rnf-09) | Descarga incremental | [3.3.1 Rendimiento y eficiencia](#331-rendimiento-y-eficiencia) |
+| [RNF-10](#rnf-10) | Tamaño de las fotos | [3.3.1 Rendimiento y eficiencia](#331-rendimiento-y-eficiencia) |
+| [RNF-11](#rnf-11) | Autenticación y sesión | [3.3.3 Seguridad y privacidad](#333-seguridad-y-privacidad) |
+| [RNF-12](#rnf-12) | Autorización por finca y rol | [3.3.3 Seguridad y privacidad](#333-seguridad-y-privacidad) |
+| [RNF-13](#rnf-13) | Tratamiento de datos personales | [3.3.3 Seguridad y privacidad](#333-seguridad-y-privacidad) |
+| [RNF-14](#rnf-14) | Auditoría | [3.3.3 Seguridad y privacidad](#333-seguridad-y-privacidad) |
+| [RNF-15](#rnf-15) | Eficiencia frente al registro manual | [3.3.4 Usabilidad](#334-usabilidad) |
+| [RNF-16](#rnf-16) | Uso en campo | [3.3.4 Usabilidad](#334-usabilidad) |
+
+**Otros identificadores**
+
+| Identificador | Dónde está |
+|---|---|
+| RF-01 a RF-43, requisitos funcionales | Catálogo [3.1.1](#311-catálogo); estado y verificación en la matriz [4.1](#41-requisitos-funcionales) |
+| N-xx, necesidades, y E-xx, escenarios | [2.2](#22-necesidades-de-los-usuarios) |
+| SUP-xx, supuestos y dependencias | [2.3](#23-supuestos-y-dependencias) |
+| RES-xx y LIM-xx, restricciones y limitaciones | [2.4](#24-restricciones-y-limitaciones-declaradas) |
+| RN-xx, reglas de negocio | [2.5](#25-reglas-de-negocio) |
+| Matriz de permisos por rol | [2.1](#21-actores-y-matriz-de-permisos) |
+| Requisitos no funcionales, estado y verificación | [4.2](#42-requisitos-no-funcionales) |
+<!-- índice:fin -->
+
 ---
 
 ## 1. Introducción
@@ -265,7 +365,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C1. Cuenta y acceso
 
-**CU-01 — Crear cuenta**
+<a id="cu-01"></a>**CU-01 — Crear cuenta**
 
 | Campo | Contenido |
 |---|---|
@@ -284,7 +384,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un dispositivo sin cuenta y con señal, **cuando** el usuario completa datos válidos y acepta la autorización, **entonces** queda en la lista de animales con el nombre de su finca.<br>2. **Dado** que no acepta la autorización, **entonces** no se crea la cuenta.<br>3. **Dado** que no hay señal, **entonces** la app lo indica y no queda ninguna fila creada.<br>4. **Dado** un correo ya registrado, **entonces** la app lo indica y no crea una segunda finca. |
 | Trazas | Issues #40, #87 · `CrearCuentaScreen` · `CrearCuentaViewModelTest`, `CrearCuentaTest`, `RoomCuentaRepositoryTest`, `06_crear_finca` |
 
-**CU-02 — Iniciar sesión**
+<a id="cu-02"></a>**CU-02 — Iniciar sesión**
 
 | Campo | Contenido |
 |---|---|
@@ -303,7 +403,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un usuario con cuenta y con señal, **cuando** ingresa credenciales válidas, **entonces** ve los animales de su finca.<br>2. **Dado** credenciales inválidas, **entonces** no entra.<br>3. **Dado** un usuario que ya inició sesión, **cuando** abre la app en modo avión, **entonces** entra y puede registrar. |
 | Trazas | Issues #23, #40 · `LoginScreen`, `SesionCifrada` · `LoginViewModelTest`, `InicioViewModelTest` |
 
-**CU-03 — Recuperar contraseña**
+<a id="cu-03"></a>**CU-03 — Recuperar contraseña**
 
 | Campo | Contenido |
 |---|---|
@@ -318,7 +418,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un correo registrado y con señal, **cuando** solicita la recuperación, **entonces** recibe el correo.<br>2. **Dado** un correo no registrado, **entonces** la app muestra el mismo mensaje de confirmación, sin revelar si la cuenta existe. |
 | Trazas | Issue #91 · `LoginScreen` · `LoginViewModelTest` |
 
-**CU-04 — Invitar y unir a un Operario**
+<a id="cu-04"></a>**CU-04 — Invitar y unir a un Operario**
 
 | Campo | Contenido |
 |---|---|
@@ -337,7 +437,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un código vigente, **cuando** el Operario lo canjea, **entonces** ve los animales de la finca con permisos de Operario.<br>2. **Dado** un código ya usado o con más de 7 días, **entonces** se rechaza.<br>3. **Dado** un Operario, **entonces** no puede generar códigos. |
 | Trazas | — |
 
-**CU-05 — Quitar a un Operario**
+<a id="cu-05"></a>**CU-05 — Quitar a un Operario**
 
 | Campo | Contenido |
 |---|---|
@@ -355,7 +455,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C2. Animales
 
-**CU-06 — Registrar animal**
+<a id="cu-06"></a>**CU-06 — Registrar animal**
 
 | Campo | Contenido |
 |---|---|
@@ -374,7 +474,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** el formulario completo, **cuando** guarda, **entonces** el animal aparece en la lista.<br>2. **Dado** sexo Hembra, **entonces** solo puede elegir Vaca o Ternera.<br>3. **Dado** un código con chapeta activa en otro animal, **entonces** no se guarda ni el animal ni la chapeta.<br>4. **Dado** un código con dos pesajes pendientes, **cuando** acepta asignarlos, **entonces** el detalle del animal muestra esos dos pesajes con su hora de medición original. |
 | Trazas | Issues #20, #31, #38 · `AnimalFormScreen` · `RegistrarAnimalViewModelTest`, `RoomAnimalRepositoryTest` |
 
-**CU-07 — Consultar animales**
+<a id="cu-07"></a>**CU-07 — Consultar animales**
 
 | Campo | Contenido |
 |---|---|
@@ -390,7 +490,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un animal dado de baja, **entonces** no aparece en la lista.<br>2. **Dado** el filtro Leche, **entonces** solo aparecen animales con propósito Leche.<br>3. **Dado** un animal con tres pesajes, **entonces** el detalle los muestra del más reciente al más antiguo. |
 | Trazas | Issue #37 · `AnimalListScreen`, `AnimalDetailScreen` · `ListaAnimalesViewModelTest`, `DetalleAnimalViewModelTest` |
 
-**CU-08 — Editar animal**
+<a id="cu-08"></a>**CU-08 — Editar animal**
 
 | Campo | Contenido |
 |---|---|
@@ -408,7 +508,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un animal, **cuando** se cambia su raza y se guarda, **entonces** el detalle muestra la raza nueva.<br>2. **Dado** un cambio de sexo, **entonces** la etapa debe volver a elegirse. |
 | Trazas | Issues #92, #111 · `EditarAnimalViewModel` · `ActualizarAnimalTest`, `EditarAnimalViewModelTest` |
 
-**CU-09 — Dar de baja animal**
+<a id="cu-09"></a>**CU-09 — Dar de baja animal**
 
 | Campo | Contenido |
 |---|---|
@@ -425,7 +525,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un animal dado de baja, **entonces** su historial sigue en la base de datos.<br>2. **Dado** un pesaje con el código de un animal dado de baja, **entonces** queda pendiente con motivo `ANIMAL_DADO_DE_BAJA`. |
 | Trazas | `AnimalDetailScreen` · `DetalleAnimalViewModelTest` |
 
-**CU-23 — Registrar ubicación de la finca**
+<a id="cu-23"></a>**CU-23 — Registrar ubicación de la finca**
 
 | Campo | Contenido |
 |---|---|
@@ -441,7 +541,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C3. Identificación
 
-**CU-10 — Escanear chapeta**
+<a id="cu-10"></a>**CU-10 — Escanear chapeta**
 
 | Campo | Contenido |
 |---|---|
@@ -458,7 +558,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un tag asociado a un animal activo, **cuando** se escanea, **entonces** se abre su detalle.<br>2. **Dado** el UID `04:a3:1b:2c`, **entonces** se busca como `04A31B2C`.<br>3. **Dado** un tag nunca visto, **entonces** se abre Registrar animal con el código en solo lectura. |
 | Trazas | Issues #31, #36 · `EscanearScreen` · `EscanearViewModelTest` |
 
-**CU-11 — Asociar chapeta a un animal existente**
+<a id="cu-11"></a>**CU-11 — Asociar chapeta a un animal existente**
 
 | Campo | Contenido |
 |---|---|
@@ -476,7 +576,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un animal cuya chapeta fue liberada, **cuando** se le asocia un código nuevo, **entonces** el detalle muestra el código nuevo y el historial conserva el anterior.<br>2. **Dado** un código activo en otro animal, **entonces** no se asocia. |
 | Trazas | — |
 
-**CU-12 — Liberar chapeta**
+<a id="cu-12"></a>**CU-12 — Liberar chapeta**
 
 | Campo | Contenido |
 |---|---|
@@ -495,7 +595,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C4. Pesajes
 
-**CU-13 — Recibir pesaje del ESP32**
+<a id="cu-13"></a>**CU-13 — Recibir pesaje del ESP32**
 
 | Campo | Contenido |
 |---|---|
@@ -514,7 +614,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un código con chapeta activa de un animal activo, **entonces** se responde 201 y el pesaje aparece en su detalle.<br>2. **Dado** el mismo `id_lectura` enviado dos veces, **entonces** existe un solo pesaje y ambas respuestas son iguales.<br>3. **Dado** `peso` = 0 o 1600, **entonces** se responde 400.<br>4. **Dado** `antiguedad_ms` = 60000, **entonces** la hora guardada es un minuto anterior a la recepción.<br>5. **Dado** un código desconocido, **entonces** se responde 202 y no se crea ningún animal ni chapeta. |
 | Trazas | `PesajeHttpServer`, caso de uso `RegistrarPesaje` · Verificación: D (prueba E2E ESP32 → hotspot → Room con 201). Sin prueba automatizada. |
 
-**CU-14 — Controlar el servicio de pesaje**
+<a id="cu-14"></a>**CU-14 — Controlar el servicio de pesaje**
 
 | Campo | Contenido |
 |---|---|
@@ -528,7 +628,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** el servicio iniciado, **entonces** la notificación está visible y la pantalla indica "activo".<br>2. **Dado** el servicio detenido, **entonces** un `POST /pesaje` no recibe respuesta. |
 | Trazas | Issue #39 · `PesosScreen` · sin prueba automatizada |
 
-**CU-15 — Conciliar pesajes pendientes**
+<a id="cu-15"></a>**CU-15 — Conciliar pesajes pendientes**
 
 | Campo | Contenido |
 |---|---|
@@ -547,7 +647,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un pendiente asignado, **entonces** el pesaje aparece en el detalle del animal con su hora de medición original.<br>2. **Dado** un pendiente descartado, **entonces** desaparece de la lista y se conserva en la base de datos como descartado.<br>3. **Dado** que se asignan varios pendientes y uno falla, **entonces** no se asigna ninguno. |
 | Trazas | Issues #52, #53, #61 · `PesosScreen` · `PesajesPendientesViewModelTest` |
 
-**CU-16 — Registrar pesaje manual**
+<a id="cu-16"></a>**CU-16 — Registrar pesaje manual**
 
 | Campo | Contenido |
 |---|---|
@@ -565,7 +665,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C5. Eventos
 
-**CU-17 — Registrar evento**
+<a id="cu-17"></a>**CU-17 — Registrar evento**
 
 | Campo | Contenido |
 |---|---|
@@ -583,7 +683,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** una vacuna aplicada ayer y registrada hoy, **cuando** se ingresa la fecha de ayer, **entonces** el evento queda con la fecha de ayer.<br>2. **Dado** un evento guardado, **entonces** aparece en la pestaña Eventos del animal con el nombre del usuario que lo registró.<br>3. **Dado** una fecha de mañana, **cuando** se guarda el evento, **entonces** aparece como programado y no cuenta en los eventos por mes.<br>4. **Dado** un parto con una cría elegida, **entonces** la cría queda con la madre del evento. |
 | Trazas | Issues #39, #44, #128 (reemplaza a #22) · `EventoFormScreen` · `NuevoEventoViewModelTest`, `RegistrarEventoTest`, `EventosViewModelTest` |
 
-**CU-18 — Editar evento o pesaje**
+<a id="cu-18"></a>**CU-18 — Editar evento o pesaje**
 
 | Campo | Contenido |
 |---|---|
@@ -599,7 +699,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un pesaje editado, **entonces** el historial muestra el valor nuevo y la versión anterior se conserva como revisión. |
 | Trazas | — |
 
-**CU-19 — Dar de baja evento o pesaje**
+<a id="cu-19"></a>**CU-19 — Dar de baja evento o pesaje**
 
 | Campo | Contenido |
 |---|---|
@@ -615,7 +715,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C6. Sincronización
 
-**CU-20 — Sincronizar**
+<a id="cu-20"></a>**CU-20 — Sincronizar**
 
 | Campo | Contenido |
 |---|---|
@@ -634,7 +734,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** 20 animales y 50 pesajes creados sin señal en un celular, **cuando** sincroniza, **entonces** el otro celular de la finca los recibe completos y sin alteración.<br>2. **Dado** dos ediciones del mismo animal desde la misma revisión, **entonces** la primera queda vigente y la segunda queda como sibling.<br>3. **Dado** una sincronización interrumpida y repetida, **entonces** no hay filas duplicadas en el servidor.<br>4. **Dado** un usuario de otra finca, **entonces** no recibe nada de esta. |
 | Trazas | — |
 
-**CU-21 — Resolver conflicto**
+<a id="cu-21"></a>**CU-21 — Resolver conflicto**
 
 | Campo | Contenido |
 |---|---|
@@ -649,7 +749,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Criterios de aceptación | 1. **Dado** un conflicto resuelto, **entonces** la marca desaparece en todos los celulares tras sincronizar, y el sibling sigue guardado.<br>2. **Dado** un conflicto sin resolver, **entonces** la fila se puede consultar. |
 | Trazas | Issue #84 · `ResolverConflictoScreen` · `ResolverConflictoTest`, `ResolverConflictoViewModelTest`, `RoomConflictoRepositoryTest` |
 
-**CU-22 — Corregir rechazos**
+<a id="cu-22"></a>**CU-22 — Corregir rechazos**
 
 | Campo | Contenido |
 |---|---|
@@ -666,7 +766,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 
 ##### C7. Indicadores
 
-**CU-24 — Consultar indicadores**
+<a id="cu-24"></a>**CU-24 — Consultar indicadores**
 
 | Campo | Contenido |
 |---|---|
@@ -750,7 +850,7 @@ Resumen del contrato de pesaje:
 
 #### 3.3.1 Rendimiento y eficiencia
 
-**RNF-05 — Tiempo de registro de un pesaje**
+<a id="rnf-05"></a>**RNF-05 — Tiempo de registro de un pesaje**
 
 | Campo | Contenido |
 |---|---|
@@ -762,7 +862,7 @@ Resumen del contrato de pesaje:
 | Prioridad / Estado | M / Sin medir |
 | Nota | El KPI de la propuesta mide "desde la detección del sensor". El tramo del sensor al envío pertenece al ESP32 (RES-08); la app solo puede medir desde la recepción. La tesis debe declarar esta diferencia. |
 
-**RNF-09 — Descarga incremental**
+<a id="rnf-09"></a>**RNF-09 — Descarga incremental**
 
 | Campo | Contenido |
 |---|---|
@@ -773,7 +873,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-36 |
 | Prioridad / Estado | M / Implementado: `unaSegundaDescargaSinCambiosSoloPideElMargen` pasa en el A15. |
 
-**RNF-10 — Tamaño de las fotos**
+<a id="rnf-10"></a>**RNF-10 — Tamaño de las fotos**
 
 | Campo | Contenido |
 |---|---|
@@ -786,7 +886,7 @@ Resumen del contrato de pesaje:
 
 #### 3.3.2 Fiabilidad y disponibilidad sin conexión
 
-**RNF-01 — Operación sin señal**
+<a id="rnf-01"></a>**RNF-01 — Operación sin señal**
 
 | Campo | Contenido |
 |---|---|
@@ -797,7 +897,7 @@ Resumen del contrato de pesaje:
 | RF afectados | Todos, salvo los de LIM-02 |
 | Prioridad / Estado | M / Diseño implementado (ADR-0001); sin registro de prueba |
 
-**RNF-02 — Ningún pesaje válido se pierde ni se duplica**
+<a id="rnf-02"></a>**RNF-02 — Ningún pesaje válido se pierde ni se duplica**
 
 | Campo | Contenido |
 |---|---|
@@ -808,7 +908,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-20 a RF-24, RF-26 |
 | Prioridad / Estado | M / Implementado: `RegistrarPesajeTest` y `PesajeHttpServerIntegracionTest`. |
 
-**RNF-03 — Servicio activo con la pantalla apagada**
+<a id="rnf-03"></a>**RNF-03 — Servicio activo con la pantalla apagada**
 
 | Campo | Contenido |
 |---|---|
@@ -819,7 +919,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-20, RF-25 |
 | Prioridad / Estado | M / Verificado |
 
-**RNF-04 — Sin borrado físico e integridad del esquema**
+<a id="rnf-04"></a>**RNF-04 — Sin borrado físico e integridad del esquema**
 
 | Campo | Contenido |
 |---|---|
@@ -830,7 +930,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-11, RF-18, RF-31 |
 | Prioridad / Estado | M / Implementado en el celular; pendiente en el servidor |
 
-**RNF-08 — Integridad de la sincronización**
+<a id="rnf-08"></a>**RNF-08 — Integridad de la sincronización**
 
 | Campo | Contenido |
 |---|---|
@@ -843,7 +943,7 @@ Resumen del contrato de pesaje:
 
 #### 3.3.3 Seguridad y privacidad
 
-**RNF-11 — Autenticación y sesión**
+<a id="rnf-11"></a>**RNF-11 — Autenticación y sesión**
 
 | Campo | Contenido |
 |---|---|
@@ -854,7 +954,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-01 a RF-03, RF-07 |
 | Prioridad / Estado | M / Implementado: la sesión se guarda cifrada con una clave AES-GCM del Android Keystore, fuera de Room. |
 
-**RNF-12 — Autorización por finca y rol**
+<a id="rnf-12"></a>**RNF-12 — Autorización por finca y rol**
 
 | Campo | Contenido |
 |---|---|
@@ -865,7 +965,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-06, RF-32, RF-36, RF-38 |
 | Prioridad / Estado | M / Implementado: políticas RLS por finca y rol, con las pruebas pgTAP `01_aislamiento_por_finca`, `02_permisos_por_rol` y `07_fotos`. |
 
-**RNF-13 — Tratamiento de datos personales**
+<a id="rnf-13"></a>**RNF-13 — Tratamiento de datos personales**
 
 | Campo | Contenido |
 |---|---|
@@ -877,7 +977,7 @@ Resumen del contrato de pesaje:
 | Prioridad / Estado | M / Parcial: la autorización se pide antes de crear la cuenta y se registra su fecha y versión (#87); el texto es provisional (`0.1-provisional`), ⚠ [ubicación]. |
 | Nota | `allowBackup` está en `false`: Android no copia la base local a la nube de Google. |
 
-**RNF-14 — Auditoría**
+<a id="rnf-14"></a>**RNF-14 — Auditoría**
 
 | Campo | Contenido |
 |---|---|
@@ -890,7 +990,7 @@ Resumen del contrato de pesaje:
 
 #### 3.3.4 Usabilidad
 
-**RNF-15 — Eficiencia frente al registro manual**
+<a id="rnf-15"></a>**RNF-15 — Eficiencia frente al registro manual**
 
 | Campo | Contenido |
 |---|---|
@@ -901,7 +1001,7 @@ Resumen del contrato de pesaje:
 | RF afectados | RF-08, RF-15, RF-20, RF-28 |
 | Prioridad / Estado | M / Pendiente (Fase 6) |
 
-**RNF-16 — Uso en campo**
+<a id="rnf-16"></a>**RNF-16 — Uso en campo**
 
 | Campo | Contenido |
 |---|---|
@@ -914,7 +1014,7 @@ Resumen del contrato de pesaje:
 
 #### 3.3.5 Compatibilidad
 
-**RNF-06 — Plataforma y dispositivos**
+<a id="rnf-06"></a>**RNF-06 — Plataforma y dispositivos**
 
 | Campo | Contenido |
 |---|---|
@@ -927,7 +1027,7 @@ Resumen del contrato de pesaje:
 
 #### 3.3.6 Mantenibilidad y verificabilidad
 
-**RNF-07 — Pruebas del prototipo**
+<a id="rnf-07"></a>**RNF-07 — Pruebas del prototipo**
 
 | Campo | Contenido |
 |---|---|
