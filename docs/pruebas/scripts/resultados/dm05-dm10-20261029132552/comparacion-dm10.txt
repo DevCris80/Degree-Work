@@ -1,0 +1,2 @@
+celular A -> servidor -> celular B: origen=300 destino=300 faltan=0 sobran=0 alteradas=0 -> 100.0 % sin pérdida ni alteración
+RESULTADO: APROBADO
