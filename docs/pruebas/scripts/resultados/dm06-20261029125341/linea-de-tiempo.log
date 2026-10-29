@@ -1,0 +1,20 @@
+[+0 s] inicio; A=adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp, B=7LV8AYVSPZONEUWW
+[+0 s] paso 1: pesajes al celular A: 201 201 201 201 y uno sin chapeta 202
+[+2 s] paso 2: A toca «Sincronizar ahora»
+[+9 s]    A sin cambios por subir tras 3 s (A pasó antes por «cambios guardados, por subir»)
+[+9 s] paso 3: B toca «Sincronizar ahora»
+[+14 s]    B ve '17 pesajes pendientes' tras 2 s
+[+16 s]    B ve el último peso de Canela, 875.5 kg, tras 2 s
+[+19 s] paso 4: B toca «Sincronizar ahora» otra vez, sin cambios en el servidor
+[+35 s]    B sigue con '17 pesajes pendientes' y 875.5 kg: sí / sí
+[+35 s] paso 5: copiar y comparar las bases
+tabla                  A     B  solo_A solo_B distintas
+perfil_finca           1     1       0      0         0
+usuario                2     2       0      0         0
+animal                20    20       0      0         0
+chapeta               20    20       0      0         0
+evento                49    49       0      0         0
+registro             307   307       0      0         0
+pesaje_pendiente      17    17       0      0         0
+sibling                1     1       0      0         0
+RESULTADO: LAS BASES SON IGUALES
