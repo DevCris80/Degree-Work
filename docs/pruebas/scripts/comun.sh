@@ -52,7 +52,7 @@ PY
 }
 
 estado_celular() {
-  echo "bateria=$("$ADB" shell dumpsys battery | awk '/level/{print $2}')%"
+  echo "bateria=$("$ADB" shell dumpsys battery | awk '/^  level:/{print $2}')%"
   echo "pantalla=$("$ADB" shell dumpsys power | grep -o 'mWakefulness=[A-Za-z]*' | head -1)"
   echo "servicio_activo=$("$ADB" shell dumpsys activity services "$PAQUETE" | grep -c 'PesajeHttpForegroundService')"
 }
