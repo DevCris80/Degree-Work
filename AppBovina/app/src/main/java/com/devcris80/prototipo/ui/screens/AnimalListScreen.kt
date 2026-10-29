@@ -72,6 +72,7 @@ fun ListaAnimalesScreen(
     onIndicadoresClick: () -> Unit,
     onRegistrarUbicacionClick: () -> Unit,
     onRechazosClick: () -> Unit,
+    onInvitarClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -173,6 +174,7 @@ fun ListaAnimalesScreen(
                     nombreFinca = estado.nombreFinca,
                     totalAnimales = estado.animales.size,
                     onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
+                    onInvitarClick = onInvitarClick.takeIf { estado.puedeInvitar },
                     rechazosAbiertos = estado.rechazosAbiertos,
                     cambiosSinSubir = estado.cambiosSinSubir,
                 )
@@ -239,6 +241,7 @@ private fun ResumenFinca(
     nombreFinca: String,
     totalAnimales: Int,
     onRegistrarUbicacionClick: (() -> Unit)?,
+    onInvitarClick: (() -> Unit)?,
     rechazosAbiertos: Int,
     cambiosSinSubir: Int,
 ) {
@@ -297,13 +300,16 @@ private fun ResumenFinca(
                 color = color,
             )
         }
-        if (onRegistrarUbicacionClick != null) {
+        if (onRegistrarUbicacionClick != null || onInvitarClick != null) {
             Row(
                 modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
                 horizontalArrangement = Arrangement.End,
             ) {
-                TextButton(onClick = onRegistrarUbicacionClick) {
-                    Text(text = "Registrar ubicación de la finca")
+                if (onInvitarClick != null) {
+                    TextButton(onClick = onInvitarClick) { Text(text = "Invitar a un Operario") }
+                }
+                if (onRegistrarUbicacionClick != null) {
+                    TextButton(onClick = onRegistrarUbicacionClick) { Text(text = "Registrar ubicación de la finca") }
                 }
             }
         }

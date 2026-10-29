@@ -41,6 +41,8 @@ data class ListaAnimalesUiState(
     val nombreUsuario: String = "",
     /** Solo el Ganadero edita los datos de la finca (matriz 2.1). */
     val puedeRegistrarUbicacion: Boolean = false,
+    /** Solo el Ganadero genera códigos de invitación (RN-18). */
+    val puedeInvitar: Boolean = false,
     val animales: List<AnimalConResumen> = emptyList(),
     val filtro: Proposito? = null,
     val pesajesPendientes: Int = 0,
@@ -107,6 +109,7 @@ class ListaAnimalesViewModel(
             nombreFinca = perfil?.nombreFinca.orEmpty(),
             nombreUsuario = usuario?.nombre.orEmpty(),
             puedeRegistrarUbicacion = usuario?.rol == Rol.GANADERO,
+            puedeInvitar = usuario?.rol == Rol.GANADERO,
             animales = animales.filter { filtroActual == null || it.animal.proposito == filtroActual },
             filtro = filtroActual,
             pesajesPendientes = pendientes.size,

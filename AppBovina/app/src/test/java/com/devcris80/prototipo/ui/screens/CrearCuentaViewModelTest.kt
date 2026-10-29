@@ -138,4 +138,70 @@ class CrearCuentaViewModelTest {
         assertTrue(mensajes.all { !it.isNullOrBlank() })
         assertEquals("cada caso dice algo distinto", 3, mensajes.toSet().size)
     }
+
+    private fun conCodigo(codigo: String = "ABCD2345") = crearViewModel().apply {
+        onNombreGanaderoCambiado("Luis")
+        onCorreoCambiado("luis@finca.co")
+        onContrasenaCambiada("secreta")
+        onConfirmacionCambiada("secreta")
+        onAutorizacionCambiada(true)
+        onTengoCodigoCambiado(true)
+        onCodigoInvitacionCambiado(codigo)
+    }
+
+    @Test
+    fun conCodigoNoPideElNombreDeLaFincaPeroSiElCodigo() {
+        val viewModel = conCodigo(codigo = "")
+
+        assertFalse(viewModel.estado.value.puedeCrear)
+
+        viewModel.onCodigoInvitacionCambiado("ABCD2345")
+
+        assertTrue(viewModel.estado.value.puedeCrear)
+        assertEquals("", viewModel.estado.value.nombreFinca)
+    }
+
+    @Test
+    fun conCodigoSeUneALaFincaYAvisaQueLaCuentaSeCreo() = runTest {
+        val viewModel = conCodigo()
+
+        viewModel.onCrearCuenta()
+
+        assertEquals(CrearCuentaEvento.CuentaCreada, viewModel.eventos.first())
+        assertEquals("ABCD2345", sesionRepository.uniones.single().codigoInvitacion)
+        assertTrue(sesionRepository.creaciones.isEmpty())
+    }
+
+    @Test
+    fun unCodigoRechazadoDiceQueNoSirveYNoOfreceIniciarSesion() {
+        sesionRepository.resultadoCreacion = ResultadoCreacionCuenta.CodigoRechazado
+        val viewModel = conCodigo()
+
+        viewModel.onCrearCuenta()
+
+        assertTrue(viewModel.estado.value.error.orEmpty().contains("código"))
+        assertFalse(viewModel.estado.value.ofrecerIniciarSesion)
+        assertFalse(viewModel.estado.value.cargando)
+    }
+
+    @Test
+    fun cambiarElCodigoLimpiaElError() {
+        sesionRepository.resultadoCreacion = ResultadoCreacionCuenta.CodigoRechazado
+        val viewModel = conCodigo().apply { onCrearCuenta() }
+
+        viewModel.onCodigoInvitacionCambiado("OTROCOD2")
+
+        assertNull(viewModel.estado.value.error)
+    }
+
+    @Test
+    fun sinSenalConCodigoLoDiceYNoQuedaNadaCreado() {
+        sesionRepository.resultadoCreacion = ResultadoCreacionCuenta.SinConexion
+        val viewModel = conCodigo()
+
+        viewModel.onCrearCuenta()
+
+        assertTrue(viewModel.estado.value.error.orEmpty().contains("señal"))
+        assertFalse(sesionRepository.guardada.value)
+    }
 }

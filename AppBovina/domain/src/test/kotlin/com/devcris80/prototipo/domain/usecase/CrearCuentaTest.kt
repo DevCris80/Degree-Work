@@ -21,7 +21,57 @@ class CrearCuentaTest {
         contrasena: String = "secreta",
         confirmacion: String = contrasena,
         aceptaAutorizacion: Boolean = true,
-    ) = CuentaNueva(nombre, nombreFinca, correo, contrasena, confirmacion, aceptaAutorizacion)
+        conCodigo: Boolean = false,
+        codigoInvitacion: String = "",
+    ) = CuentaNueva(
+        nombre, nombreFinca, correo, contrasena, confirmacion, aceptaAutorizacion, conCodigo, codigoInvitacion,
+    )
+
+    @Test
+    fun conCodigoSinElCodigoNoLlegaAlServidorAunqueFalteElNombreDeFinca() = runTest {
+        val sinCodigo = cuenta(nombreFinca = "", conCodigo = true, codigoInvitacion = "  ")
+
+        assertEquals(CrearCuenta.Resultado.Incompleta(FaltaParaCrear.DATOS), crearCuenta(sinCodigo))
+        assertTrue(sesionRepository.uniones.isEmpty())
+    }
+
+    @Test
+    fun conCodigoNoPideElNombreDeLaFinca() = runTest {
+        val resultado = crearCuenta(cuenta(nombreFinca = "", conCodigo = true, codigoInvitacion = "ABCD2345"))
+
+        assertEquals(CrearCuenta.Resultado.DelServidor(ResultadoCreacionCuenta.Exito), resultado)
+    }
+
+    @Test
+    fun conCodigoSinAceptarLaAutorizacionNoLlegaAlServidor() = runTest {
+        val resultado = crearCuenta(cuenta(aceptaAutorizacion = false, conCodigo = true, codigoInvitacion = "ABCD2345"))
+
+        assertEquals(CrearCuenta.Resultado.Incompleta(FaltaParaCrear.AUTORIZACION), resultado)
+        assertTrue(sesionRepository.uniones.isEmpty())
+    }
+
+    @Test
+    fun conCodigoPideUnirseALaFincaYNoCrearOtra() = runTest {
+        crearCuenta(
+            cuenta(nombre = " Luis ", correo = " luis@finca.co ", conCodigo = true, codigoInvitacion = " abcd2345 "),
+        )
+
+        assertEquals(
+            FakeSesionRepository.UnionAFinca("Luis", "abcd2345", "luis@finca.co", "secreta", AutorizacionDatos.VERSION),
+            sesionRepository.uniones.single(),
+        )
+        assertTrue(sesionRepository.creaciones.isEmpty())
+    }
+
+    @Test
+    fun conCodigoDevuelveLoQueRespondeElServidor() = runTest {
+        sesionRepository.resultadoCreacion = ResultadoCreacionCuenta.CodigoRechazado
+
+        assertEquals(
+            CrearCuenta.Resultado.DelServidor(ResultadoCreacionCuenta.CodigoRechazado),
+            crearCuenta(cuenta(conCodigo = true, codigoInvitacion = "ABCD2345")),
+        )
+    }
 
     @Test
     fun sinAceptarLaAutorizacionNoSeCreaNadaNiSeLlamaAlServidor() = runTest {

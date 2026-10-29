@@ -39,4 +39,5 @@ sealed class Rutas(val ruta: String) {
     data object Eventos : Rutas("eventos")
     data object EstadoServicio : Rutas("servicio")
     data object UbicacionFinca : Rutas("ubicacion-finca")
+    data object InvitarOperario : Rutas("invitar-operario")
 }

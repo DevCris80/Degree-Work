@@ -21,6 +21,7 @@ import kotlinx.coroutines.NonCancellable
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.withContext
 import kotlinx.serialization.json.JsonObject
+import kotlinx.serialization.json.JsonObjectBuilder
 import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
@@ -66,21 +67,41 @@ class SupabaseSesionRepository(
         correo: String,
         contrasena: String,
         versionAutorizacion: String,
+    ): ResultadoCreacionCuenta = registrar(correo, contrasena, conCodigo = false) {
+        // El trigger crear_finca (supabase/migrations) crea la finca en el mismo alta, con estos metadatos.
+        put("nombre", nombre)
+        put("nombre_finca", nombreFinca)
+        put("version_autorizacion", versionAutorizacion)
+    }
+
+    override suspend fun unirseAFinca(
+        nombre: String,
+        codigoInvitacion: String,
+        correo: String,
+        contrasena: String,
+        versionAutorizacion: String,
+    ): ResultadoCreacionCuenta = registrar(correo, contrasena, conCodigo = true) {
+        // El mismo trigger canjea el código en el alta: sin un código vigente, el servidor no crea la identidad.
+        put("nombre", nombre)
+        put("codigo_invitacion", codigoInvitacion)
+        put("version_autorizacion", versionAutorizacion)
+    }
+
+    private suspend fun registrar(
+        correo: String,
+        contrasena: String,
+        conCodigo: Boolean,
+        metadatos: JsonObjectBuilder.() -> Unit,
     ): ResultadoCreacionCuenta {
         // Con datos de otra cuenta en el dispositivo no se crea nada, ni siquiera en el servidor.
         if (perfilFincaDao.getOnce() != null || usuarioDao.getOnce() != null) {
             return ResultadoCreacionCuenta.OtraCuentaEnElDispositivo
         }
         val resultado = try {
-            // El trigger crear_finca (supabase/migrations) crea la finca en el mismo alta, con estos metadatos.
             supabase.auth.signUpWith(Email) {
                 email = correo
                 password = contrasena
-                data = buildJsonObject {
-                    put("nombre", nombre)
-                    put("nombre_finca", nombreFinca)
-                    put("version_autorizacion", versionAutorizacion)
-                }
+                data = buildJsonObject(metadatos)
             }
             // La confirmación de correo está desactivada en el proyecto: el registro deja la sesión abierta.
             val idUsuario = checkNotNull(supabase.auth.currentUserOrNull()) { "El registro no dejó sesión" }.id
@@ -95,6 +116,10 @@ class SupabaseSesionRepository(
             when (e.errorCode) {
                 AuthErrorCode.UserAlreadyExists, AuthErrorCode.EmailExists -> ResultadoCreacionCuenta.CorreoYaRegistrado
                 AuthErrorCode.WeakPassword -> ResultadoCreacionCuenta.ContrasenaRechazada
+                // Si el trigger rechaza el código, Auth solo dice que falló al guardar al usuario: con un código en
+                // el alta, esa es la señal de que no lo aceptó.
+                AuthErrorCode.UnexpectedFailure ->
+                    if (conCodigo) ResultadoCreacionCuenta.CodigoRechazado else ResultadoCreacionCuenta.NoSePudo
                 else -> ResultadoCreacionCuenta.NoSePudo
             }
         } catch (e: Exception) {
