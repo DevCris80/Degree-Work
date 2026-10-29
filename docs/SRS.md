@@ -11,26 +11,6 @@
 | Versión de este documento | 0.5 (borrador) |
 | Fecha de corte del estado | 28 de octubre de 2026 |
 
-> **Datos por completar antes de `srs-v1.0`** (marcados en el texto con ⚠):
-> 1. Fecha de la visita de campo y fecha de la confirmación del ganadero (sección 2.2 y matriz).
-> 2. Ubicación del texto de autorización de la Ley 1581 (RF-04, RNF-13).
-> 3. Ubicación del registro de la prueba de 15 minutos con pantalla apagada (RNF-03).
-> 4. Verificación de NFC en el Samsung Galaxy A15 (SUP-05).
-
----
-
-## 0. Control de versiones
-
-| Versión | Fecha | Autor | Cambio | Ciclo TSP | Tag |
-|---|---|---|---|---|---|
-| 0.1 | 2026-10-21 | C. Villamil, M. Alvarez | Primera formalización de la SRS. Los requisitos del ciclo 1 se reconstruyen desde el código, los ADR y la especificación inicial; los del ciclo 2 se definen en esta versión. | Relanzamiento (ciclo 2) | — |
-| 0.2 | 2026-10-23 | C. Villamil | La sincronización usa funciones de Postgres en Supabase en lugar de un servicio FastAPI (ADR-0005). Se fijan las reglas de revisiones, siblings y rechazos (ADR-0004: RN-22 a RN-24). La navegación pasa a cuatro pestañas. Se confirman los permisos de la matriz 2.1: el Operario no da de baja eventos ni pesajes ni registra la ubicación de la finca. | Ciclo 2 | — |
-| 0.3 | 2026-10-23 | C. Villamil | Pasan a implementados RF-13, padre y madre (#20), RF-39 a RF-43, indicadores (#97 y #98), y RF-27, pesaje manual (#95). Pasa a implementado RF-33 y a parcial RF-32, la subida (#81). RN-24 distingue un rechazo que el servidor tiene de uno que no (ADR-0004, regla 7). | Ciclo 2 | — |
-| 0.4 | 2026-10-27 | C. Villamil | Pasan a implementados RF-28 y RF-29 (#128, que reemplaza a #22). El evento acepta fecha pasada o futura: uno futuro queda programado y no cuenta en los indicadores hasta que llega su fecha. RF-29 se reescribe con lo que la pantalla registra: biológico, dosis y vía en la vacunación, y la cría resultante en el parto. Salen del alcance los días de retiro de leche y de carne y el peso al nacer. | Ciclo 2 | — |
-| 0.5 | 2026-10-28 | C. Villamil | El estado se alinea con `main` y con los issues cerrados: pasan a implementados RF-01 y RF-04 (#87), RF-02 y RF-03 (#23), RF-06 (#89), RF-07 (#91), RF-12 (#92), RF-14 (#93), RF-34 (#84) y RF-36 (#82), esta última tras correr `MotorSincronizacionDescargaTest` en el A15. RNF-02, RNF-07, RNF-09, RNF-11, RNF-12 y RNF-14 pasan a implementados; RNF-13 queda parcial y RNF-08 sin medir. Se corrieron en el A15 las pruebas de instrumentación (107 de 108 pasan) y en una base local las 150 pruebas pgTAP. | Ciclo 2 | — |
-| 1.0 | 2026-10-29 | — | Versión entregada con el documento de tesis. | Ciclo 2 | `srs-v1.0` |
-
-**Nota de temporalidad.** Esta SRS se formaliza durante la fase de construcción (Fase 4). No existía una SRS formal anterior: los requisitos del primer ciclo vivían en `docs/spec_app_android_prototipo.md`, en los ADR y en los issues de GitHub. El estado de cada requisito corresponde al código de la rama `main` en la fecha de corte.
 
 ---
 
@@ -78,71 +58,6 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Lectura de chapetas LF 134,2 kHz (ISO 11784/11785) | Ver LIM-01 |
 | Reportes exportables (PDF, Excel) | Decisión de alcance del equipo |
 
-### 1.5 Definiciones y siglas
-
-**Términos del dominio** (fuente: `CONTEXT.md`)
-
-| Término | Definición |
-|---|---|
-| Animal | Bovino individual registrado, identificado por `idAnimal` (UUID). |
-| Chapeta | Identificador físico colocado en un Animal, identificado por su `codigo` (UID del tag NFC normalizado). Está *activa* mientras no tiene fecha de desasociación. Un mismo código puede tener varias Chapetas en el tiempo, pero solo una activa a la vez. |
-| Liberar | Desasociar una Chapeta de su Animal. Nunca ocurre en silencio. |
-| Pesaje | Medición (código y peso) que reporta el ESP32 cuando un bovino pasa por la báscula. |
-| Registro | Pesaje ya asignado a un Animal activo. El sustantivo se reserva para pesajes. |
-| Pesaje pendiente | Pesaje válido que no pudo asignarse a un Animal, porque su código no tiene Chapeta activa o porque el Animal está dado de baja. |
-| Conciliar | Resolver un Pesaje pendiente: *asignarlo* a un Animal (crea el Registro) o *descartarlo*. Es definitivo. |
-| Evento | Suceso clínico o de manejo de un Animal (vacunación, tratamiento, parto, inseminación), con fecha y detalle. |
-| Dar de baja | Marcar un Animal, Evento o Registro con `fechaBaja`. Deja de aparecer en las listas, pero se conserva (baja lógica). |
-| Usuario | Persona que opera la app. Pertenece a una sola finca y tiene un rol. |
-| Ganadero | Rol del Usuario responsable de la finca. Puede hacer todo. |
-| Operario | Rol del Usuario que trabaja con el ganado, con permisos restringidos (ver 2.1). |
-| PerfilFinca | La finca a la que pertenecen los Usuarios y los Animales. |
-| Crear cuenta | Acto por el que una persona se convierte en Usuario. |
-
-**Términos de sincronización**
-
-| Término | Definición |
-|---|---|
-| `sincronizado` | Booleano de cada fila local: `false` significa que tiene cambios sin subir. |
-| Revisión (`rev`) | Número que asigna el servidor a cada versión aceptada de una fila editable (Animal, Evento, Registro). |
-| `rev_base` | Revisión de la que partió una edición hecha en el celular. |
-| `id_version` | Identificador (UUID) de cada escritura local de una fila editable. Permite reconocer una edición reenviada. |
-| Sibling | Versión concurrente de una fila: una edición cuyo `rev_base` es menor que la revisión vigente se guarda como sibling, no se descarta ni se fusiona. Cuenta la fila entera, aunque los campos editados no se pisen. |
-| Conflicto | Estado de una fila que tiene uno o más siblings sin resolver. |
-| Cursor de descarga | Valor de una secuencia global del servidor que aumenta con cualquier escritura sincronizada. El celular guarda el último que recibió y pide lo posterior, desde un margen de solapamiento antes, porque dos escrituras pueden confirmar en orden distinto al de sus cursores. |
-| Rechazo | Cambio local que el servidor no aceptó por violar una regla de unicidad o de permisos. Queda en la bandeja de rechazos hasta que alguien lo corrige; la fila local vuelve a la versión del servidor, o sale de su tabla si el servidor no la tiene (RN-24). |
-
-**Siglas**
-
-| Sigla | Significado |
-|---|---|
-| BI | Inteligencia de negocios (*business intelligence*) |
-| CU | Caso de uso |
-| ESP32 | Microcontrolador del proyecto IoT complementario que reporta los pesajes |
-| GDP | Ganancia diaria de peso |
-| LIM | Limitación declarada |
-| NFC | *Near Field Communication* (13,56 MHz) |
-| RES | Restricción |
-| RF / RNF | Requisito funcional / no funcional |
-| RLS | *Row Level Security* (políticas por fila de Postgres/Supabase) |
-| RN | Regla de negocio |
-| SUP | Supuesto o dependencia |
-| UID | Identificador único de fábrica de un tag NFC |
-
-### 1.6 Convenciones de este documento
-
-| Campo | Valores |
-|---|---|
-| Prioridad (MoSCoW) | **M** Must · **S** Should · **C** Could |
-| Estado al 28-10-2026 | **Implementado** (hay código en `main`) · **Parcial** (existe, pero no cumple todo el enunciado) · **Pendiente** (decidido, sin código) |
-| Fuente | **CAMPO**: confirmado por el ganadero en la visita de campo (ver 2.2) · **EQUIPO**: decisión del equipo (con su ADR o issue cuando existe) · **NORMA**: exigido por una norma |
-| Objetivo | **OG** objetivo general · **OE1–OE4** objetivos específicos de la propuesta |
-| Verificación | **P** prueba automatizada · **D** demostración manual · **I** inspección · **A** análisis |
-
-Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verificable*: tiene una prueba automatizada o un registro de demostración.
-
----
-
 ## 2. Descripción general
 
 ### 2.1 Actores y matriz de permisos
@@ -178,8 +93,6 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Corregir rechazos | ✓ | ✓ (según la acción que corrige) | RF-35 |
 
 ### 2.2 Necesidades de los usuarios
-
-**Fuente CAMPO.** Visita de campo a la finca piloto en Lejanías (Meta), ⚠ [FECHA DE LA VISITA], con observación del manejo y entrevista al ganadero. Los requisitos marcados como CAMPO fueron confirmados por el ganadero; la confirmación individual de cada requisito se registra por mensaje el ⚠ [FECHA DE CONFIRMACIÓN] (evidencia: ⚠ [ubicación de fotos y mensajes]).
 
 | ID | Necesidad | Fuente | Requisitos |
 |---|---|---|---|
@@ -1099,27 +1012,4 @@ Resumen del contrato de pesaje:
 | RNF-14 | Seguridad | NORMA | — | OE3 | M | Implementado | I; P `04_subir_cambios` |
 | RNF-15 | Usabilidad | EQUIPO | — | OE4 | M | Pendiente | — |
 | RNF-16 | Usabilidad | EQUIPO | — | OE3 | S | Implementado | I |
-
-### 4.3 Resumen frente a los KPI (corte: 28-10-2026)
-
-**Por prioridad y estado (RF)**
-
-| Prioridad | Total | Implementado | Parcial | Pendiente |
-|---|---|---|---|---|
-| Must | 26 | 22 | 2 | 2 |
-| Should | 12 | 11 | 0 | 1 |
-| Could | 5 | 3 | 0 | 2 |
-| **Total** | **43** | **36** | **2** | **5** |
-
-**KPI de la propuesta**
-
-| KPI | Meta | Estado al corte |
-|---|---|---|
-| OE1 — Requisitos funcionales documentados | ≥ 10 | 43 |
-| OE1 — Requisitos no funcionales documentados | ≥ 5 | 16 |
-| OE1 — Ganaderos participantes | ≥ 3 | 1 |
-| OE1 — Requisitos confirmados por ganaderos | ≥ 80 % | Pendiente. Los marcados CAMPO son 14 de 59 (24 %). |
-| OE3 — RF implementados y verificables | ≥ 90 % (39 de 43) | 36 implementados (84 %); 29 con prueba automatizada y 7 que dependen de una demostración por registrar |
-
-La trazabilidad de requisitos a módulos (KPI de OE2) se documenta en la arquitectura (modelo C4, Fase 3).
 
