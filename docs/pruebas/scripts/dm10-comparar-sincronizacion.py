@@ -2,7 +2,11 @@
 """DM-10 (RNF-08): compara las filas de un celular con las del servidor y con las de otro celular.
 
 Uso:
-  dm10-comparar-sincronizacion.py <prefijo de id_lectura> <base del celular A> <servidor.csv> [<base del celular B>]
+  dm10-comparar-sincronizacion.py <prefijo de id_lectura> <base del celular A> <servidor.csv | -> [<base del celular B>]
+
+Con `-` en lugar del CSV no se compara contra el servidor directamente. Entonces el celular B hace de lector
+del servidor: lo que B descarga es lo que el servidor guardó, así que la comparación A -> B mide el camino
+completo A -> servidor -> B.
 
 - Las bases son copias de `app-bovina.db` (ver `sacar_base` en comun.sh).
 - `servidor.csv` sale de la consulta, en el editor SQL de Supabase o con psql, exportada a CSV:
@@ -53,9 +57,13 @@ def main():
         sys.exit(__doc__)
     prefijo, base_a, servidor = sys.argv[1:4]
     a = del_celular(base_a, prefijo)
-    resultados = [comparar("celular A -> servidor", a, del_servidor(servidor))]
+    resultados = []
+    if servidor != "-":
+        resultados.append(comparar("celular A -> servidor", a, del_servidor(servidor)))
     if len(sys.argv) > 4:
-        resultados.append(comparar("celular A -> celular B", a, del_celular(sys.argv[4], prefijo)))
+        resultados.append(comparar("celular A -> servidor -> celular B" if servidor == "-" else "celular A -> celular B", a, del_celular(sys.argv[4], prefijo)))
+    if not resultados:
+        sys.exit("Falta el CSV del servidor o la base del celular B.")
     if len(a) < 100:
         print(f"AVISO: el requisito pide al menos 100 filas y el prefijo tiene {len(a)}.")
     ok = all(p >= 95.0 for p in resultados) and len(a) >= 100
