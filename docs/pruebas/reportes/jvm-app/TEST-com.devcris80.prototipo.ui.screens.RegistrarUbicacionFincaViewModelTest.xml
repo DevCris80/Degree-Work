@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.318Z" hostname="fedora" time="0.003">
+  <properties/>
+  <testcase name="sinLatitudOSinLongitudNoGuardaYAvisa" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.001"/>
+  <testcase name="unaLatitudFueraDeRangoNoGuarda" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="losExtremosDelGloboSonCoordenadasValidas" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.001"/>
+  <testcase name="sinPerfilDeFincaNoGuardaYAvisa" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="unaCoordenadaQueNoEsUnNumeroNoGuarda" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="conElPermisoNegadoAvisaYDejaIngresarLasCoordenadasAMano" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="guardarConCoordenadasValidasLasDejaEnLaFincaYConservaSusDemasDatos" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="unaFincaSinUbicacionEmpiezaConLosCamposVacios" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="laComaDecimalDelTecladoSeAcepta" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="laPosicionDelGpsLlenaLosCamposYSePuedeGuardar" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="alAbrirMuestraLaFincaYLasCoordenadasQueYaTiene" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="siElGpsNoRespondeAvisaYConservaLoQueHabiaEscrito" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <testcase name="unaLongitudFueraDeRangoNoGuarda" classname="com.devcris80.prototipo.ui.screens.RegistrarUbicacionFincaViewModelTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

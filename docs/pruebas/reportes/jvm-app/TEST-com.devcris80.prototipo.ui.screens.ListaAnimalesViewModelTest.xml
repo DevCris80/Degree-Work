@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.168Z" hostname="fedora" time="0.061">
+  <properties/>
+  <testcase name="conPesajesPendientesSinResolver_elEstadoLosCuenta" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.005"/>
+  <testcase name="marcaLosAnimalesQueTienenUnSiblingSinResolver" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.005"/>
+  <testcase name="sincronizar_subeYDescargaYAvisaLosConflictosYRechazosSinEsperarALasFotos" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.006"/>
+  <testcase name="soloElGanaderoPuedeRegistrarLaUbicacionDeLaFinca" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.007"/>
+  <testcase name="losRechazosAbiertosSeAvisanEnLaLista" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.007"/>
+  <testcase name="sincronizarSinSenal_dejaProgramadoElTrabajoYAvisaQueSeSincronizaDespues" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.005"/>
+  <testcase name="combinaFincaUsuarioAnimalesChapetaYUltimoRegistro" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.007"/>
+  <testcase name="cerrarSesion_olvidaLaSesionGuardada" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.002"/>
+  <testcase name="laListaSabeCuantosCambiosFaltanPorSubir" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.003"/>
+  <testcase name="mientrasSincroniza_otroToqueNoVuelveASubir" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.008"/>
+  <testcase name="onFiltroSeleccionado_filtraLosAnimalesPorProposito" classname="com.devcris80.prototipo.ui.screens.ListaAnimalesViewModelTest" time="0.005"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

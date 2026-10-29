@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.ActualizarAnimalTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.122Z" hostname="fedora" time="0.083">
+  <properties/>
+  <testcase name="unPadreConCriasSigueEditandoSusOtrosDatos" classname="com.devcris80.prototipo.domain.usecase.ActualizarAnimalTest" time="0.078"/>
+  <testcase name="unAnimalSinCriasCambiaDeSexoConNormalidad" classname="com.devcris80.prototipo.domain.usecase.ActualizarAnimalTest" time="0.002"/>
+  <testcase name="unPadreConCriasNoCambiaDeSexo" classname="com.devcris80.prototipo.domain.usecase.ActualizarAnimalTest" time="0.001"/>
+  <testcase name="unaFotoNuevaDelFormularioReemplazaLaGuardada" classname="com.devcris80.prototipo.domain.usecase.ActualizarAnimalTest" time="0.001"/>
+  <testcase name="unaFotoQueBajoMientrasSeEditabaSeConservaSiLaPersonaNoCambioLaFoto" classname="com.devcris80.prototipo.domain.usecase.ActualizarAnimalTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

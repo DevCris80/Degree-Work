@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.util.GraficoEventosTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.338Z" hostname="fedora" time="0.004">
+  <properties/>
+  <testcase name="losMesesCruzanElCambioDeAnio" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.002"/>
+  <testcase name="sinEventosNoHayBarras" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.0"/>
+  <testcase name="cadaBarraSumaTodosLosTiposDeSuMes" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.0"/>
+  <testcase name="lasBarrasVanDelMesMasAntiguoAlMasRecienteAunqueLleguenAlReves" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.0"/>
+  <testcase name="unMesEnCeroTieneAlturaCero" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.0"/>
+  <testcase name="conMasDeLosMesesMaximosSeQuedanLosMasRecientes" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.001"/>
+  <testcase name="unMesSinEventosEntreDosConEventosAparecePeroEnCero" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.0"/>
+  <testcase name="laAlturaEsRelativaAlMesConMasEventos" classname="com.devcris80.prototipo.ui.util.GraficoEventosTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

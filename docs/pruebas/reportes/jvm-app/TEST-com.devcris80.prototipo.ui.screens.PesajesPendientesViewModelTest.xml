@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" tests="14" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.259Z" hostname="fedora" time="0.043">
+  <properties/>
+  <testcase name="confirmarAsignar_conAnimalDadoDeBaja_marcaAnimalNoDisponible" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.006"/>
+  <testcase name="confirmarAsignar_resuelveElPendienteYSinOtrosNoOfreceRestantes" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.002"/>
+  <testcase name="codigoDeAnimalDadoDeBaja_quedaComoChapetaDeAnimalDadoDeBaja" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.003"/>
+  <testcase name="codigoDeAnimalActivo_sugiereEseAnimal" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.004"/>
+  <testcase name="confirmarDescartar_resuelveComoDescartado" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.001"/>
+  <testcase name="elGanaderoPuedeDescartarPesajesPendientes" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.003"/>
+  <testcase name="asignarRestantesConfirmado_asignaLosQueQuedaban" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.005"/>
+  <testcase name="asignarRestantesDescartado_noAsignaYLimpiaLaOferta" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.002"/>
+  <testcase name="codigoSinChapeta_quedaComoSinChapetaActiva" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.002"/>
+  <testcase name="elOperarioNoPuedeDescartarPeroSiAsignar" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.002"/>
+  <testcase name="errorVisto_limpiaElError" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.003"/>
+  <testcase name="confirmarDescartar_pendienteYaResuelto_marcaPendienteNoDisponible" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.003"/>
+  <testcase name="asignarRestantesConfirmado_conUnoYaResuelto_marcaPendienteNoDisponible" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.003"/>
+  <testcase name="confirmarAsignar_conOtrosDelMismoCodigo_ofreceAsignarlosTambien" classname="com.devcris80.prototipo.ui.screens.PesajesPendientesViewModelTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

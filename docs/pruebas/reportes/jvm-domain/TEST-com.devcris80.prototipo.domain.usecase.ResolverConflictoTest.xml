@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.ResolverConflictoTest" tests="5" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.433Z" hostname="fedora" time="0.007">
+  <properties/>
+  <testcase name="conservarLaVigenteCierraLosSiblingsQueLaPersonaVio" classname="com.devcris80.prototipo.domain.usecase.ResolverConflictoTest" time="0.003"/>
+  <testcase name="unConflictoSinSiblingsSeRechazaYNoEscribeNada" classname="com.devcris80.prototipo.domain.usecase.ResolverConflictoTest" time="0.001"/>
+  <testcase name="elegirUnSiblingSeQuedaConSuFilaYCierraSoloLosQueSeVieron" classname="com.devcris80.prototipo.domain.usecase.ResolverConflictoTest" time="0.001"/>
+  <testcase name="siLaFilaYaNoExisteAvisaYNoEscribe" classname="com.devcris80.prototipo.domain.usecase.ResolverConflictoTest" time="0.001"/>
+  <testcase name="unSiblingQueNoEsDelConflictoSeRechazaYNoEscribeNada" classname="com.devcris80.prototipo.domain.usecase.ResolverConflictoTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" tests="12" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.392Z" hostname="fedora" time="0.016">
+  <properties/>
+  <testcase name="unPartoSinCriaNoEditaNingunAnimal" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.005"/>
+  <testcase name="unAnimalQueNoExisteONoEstaActivoNoRecibeEventos" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="unPartoDeUnaHembraDejaALaCriaConEsaMadreYGuardaSoloLoDelParto" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="unaCriaQueNoExisteONoEsOtroAnimalNoRegistraElParto" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="unPartoDeUnMachoDejaALaCriaConEsePadre" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.002"/>
+  <testcase name="unaCriaSinMadreQuedaConLaDelEventoAunqueTengaPadre" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.0"/>
+  <testcase name="sinUsuarioEnElDispositivoNoRegistraNada" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="sinTituloOSinBiologicoEnUnaVacunacionNoRegistraNada" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="unaVacunacionIgnoraLaCriaYLaCriaYaEnlazadaNoSeEscribeDeNuevo" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="unaCriaQueYaTieneOtraMadreONoSeSobrescribeYNoSeRegistraElParto" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <testcase name="unPartoNoPideBiologicoYElTituloSeGuardaSinEspaciosDeMas" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.0"/>
+  <testcase name="registraUnaVacunacionFuturaANombreDelUsuarioConSusCampos" classname="com.devcris80.prototipo.domain.usecase.RegistrarEventoTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

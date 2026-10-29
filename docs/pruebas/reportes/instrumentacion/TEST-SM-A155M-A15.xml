@@ -1,0 +1,207 @@
+<?xml version='1.0' encoding='UTF-8' ?>
+<testsuites tests="108" failures="1" errors="0" skipped="0" time="0.000" timestamp="2026-10-29T16:27:36" hostname="localhost">
+  <testsuite name="com.devcris80.prototipo.ExampleInstrumentedTest" tests="1" failures="1" errors="0" skipped="0" time="0.002" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="useAppContext" classname="com.devcris80.prototipo.ExampleInstrumentedTest" time="0.002">
+      <failure>org.junit.ComparisonFailure: expected:&lt;....devcris80.prototipo[]&gt; but was:&lt;....devcris80.prototipo[.prueba]&gt;
+	at org.junit.Assert.assertEquals(Assert.java:117)
+	at org.junit.Assert.assertEquals(Assert.java:146)
+	at com.devcris80.prototipo.ExampleInstrumentedTest.useAppContext(ExampleInstrumentedTest.kt:22)
+</failure>
+    </testcase>
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" tests="6" failures="0" errors="0" skipped="0" time="0.361" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="limpiarBorraLasFotosQueNingunAnimalUsaDespuesDeUnDia" classname="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" time="0.000" />
+    <testcase name="borrarSoloBorraLasFotosDeLaApp" classname="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" time="0.000" />
+    <testcase name="unaFotoQueBajoDelServidorQuedaEnElCelular" classname="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" time="0.045" />
+    <testcase name="unaFotoGrandeDeLaCamaraSaleEnWebpDe1280PxYDerecha" classname="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" time="0.231" />
+    <testcase name="unaFotoPequenaNoSeAgranda" classname="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" time="0.076" />
+    <testcase name="unaFotoQueYaNoSePuedeLeerNoDaNada" classname="com.devcris80.prototipo.data.archivos.FotosEnArchivosTest" time="0.009" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.local.MigracionesTest" tests="10" failures="0" errors="0" skipped="0" time="1.297" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="de13a14MarcaComoDelDispositivoAlUnicoUsuario" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.206" />
+    <testcase name="de12a13ConservaLosAnimalesSinPadreNiMadre" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.130" />
+    <testcase name="de16a17AgregaLaUbicacionVaciaYConservaLaFinca" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.132" />
+    <testcase name="de11a12ConservaLosDatosYDaUnIdVersionDistintoACadaFila" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.129" />
+    <testcase name="unaInstalacionEnLaVersion11LlegaALa13" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.119" />
+    <testcase name="de14a15AgregaLaTablaResolucionVaciaYConservaLosSiblings" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.123" />
+    <testcase name="de15a16DejaPorSubirLasFotosQueYaEstabanEnElCelular" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.124" />
+    <testcase name="de17a18AgregaLosCamposDeCadaTipoVaciosYConservaElEvento" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.121" />
+    <testcase name="de10a11PoneAlUnicoUsuarioComoAutorDeLosEventosYConservaSusDatos" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.097" />
+    <testcase name="unaInstalacionEnLaVersion10LlegaALaActualSinPerderNingunDato" classname="com.devcris80.prototipo.data.local.MigracionesTest" time="0.116" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.BandejaRechazosE07Test" tests="1" failures="0" errors="0" skipped="0" time="0.214" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="elSegundoCelularVeElRechazoConElNombreDelAnimalQueYaTieneElCodigoYCerrarloNoReenviaNada" classname="com.devcris80.prototipo.data.repository.BandejaRechazosE07Test" time="0.214" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.EscriturasLocalesTest" tests="5" failures="0" errors="0" skipped="0" time="0.295" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unRegistroGuardadoVuelveConTodosSusCamposYSinSincronizar" classname="com.devcris80.prototipo.data.repository.EscriturasLocalesTest" time="0.054" />
+    <testcase name="unAnimalGuardadoVuelveConTodosSusCampos" classname="com.devcris80.prototipo.data.repository.EscriturasLocalesTest" time="0.068" />
+    <testcase name="insertarYDarDeBajaUnAnimalLoDejanSinSincronizarConSuFechaDeModificacion" classname="com.devcris80.prototipo.data.repository.EscriturasLocalesTest" time="0.060" />
+    <testcase name="unRegistroManualGuardaSuIdLecturaNulo" classname="com.devcris80.prototipo.data.repository.EscriturasLocalesTest" time="0.052" />
+    <testcase name="unEventoGuardadoVuelveConTodosSusCamposYSinSincronizar" classname="com.devcris80.prototipo.data.repository.EscriturasLocalesTest" time="0.061" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" tests="11" failures="0" errors="0" skipped="0" time="1.199" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unSiblingSinResolverDejaLaFilaEnConflictoHastaQueLlegaResuelto" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.140" />
+    <testcase name="unaDescargaCortadaSeRetomaDesdeElUltimoCursorGuardado" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.117" />
+    <testcase name="unaChapetaSincronizadaLeCedeSuCodigoALaActivaDelServidor" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.122" />
+    <testcase name="unaEdicionLocalHechaMientrasDescargaNoSeSobrescribe" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.088" />
+    <testcase name="unaChapetaNuevaQueChocaConLaDelServidorPasaALaBandeja" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.137" />
+    <testcase name="losCamposDeCadaTipoDeEventoLlegaConElEvento" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.085" />
+    <testcase name="loQueSubioOtroCelularLlegaConSuUsuarioYQuedaSincronizado" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.097" />
+    <testcase name="unaBajaYUnaChapetaLiberadaEnElServidorSeReflejanEnElCelular" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.125" />
+    <testcase name="unaSegundaDescargaSinCambiosSoloPideElMargen" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.103" />
+    <testcase name="unSiblingQueEstaPersonaYaResolvioNoVuelveAAbrirseAntesDeSubir" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.110" />
+    <testcase name="unaCriaQueLlegaAntesQueSuMadreSeGuardaConElla" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionDescargaTest" time="0.075" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" tests="12" failures="0" errors="0" skipped="0" time="2.095" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unaFotoQueStorageRechazaQuedaEnLaBandejaYVuelveLaDelServidor" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.179" />
+    <testcase name="quitarUnaFotoDejaBajarOtraVezLaDelServidor" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.144" />
+    <testcase name="sinSenalParaLasFotosLosDatosQuedanSincronizados" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.216" />
+    <testcase name="sinFotoEnElServidorUnaFotoRechazadaSeQuita" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.112" />
+    <testcase name="unaFotoEditadaQueNoSubioNoLaPisaLaDelServidor" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.161" />
+    <testcase name="laFotoQueEsteCelularSubioNoVuelveABajar" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.230" />
+    <testcase name="unaFotoTomadaEnUnCelularApareceEnOtroDeLaMismaFinca" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.187" />
+    <testcase name="sincronizarLosDatosNoEsperaALasFotos" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.159" />
+    <testcase name="unaFotoQueBajoMientrasLaLocalCambiabaSeBorraYQuedaLaLocal" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.159" />
+    <testcase name="unaFotoCambiadaEnOtroCelularReemplazaLaDeEste" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.158" />
+    <testcase name="unaFotoQueYaNoSePuedeLeerDejaDeEstarPorSubir" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.160" />
+    <testcase name="unaPasadaDeFotosEnCursoNoHaceEsperarALosDatos" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionFotosTest" time="0.230" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" tests="17" failures="0" errors="0" skipped="0" time="3.026" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unaChapetaQueVuelveAQuedarActivaPorUnRechazoSacaALaBandejaALaNuevaConSuCodigo" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.144" />
+    <testcase name="unaChapetaRechazadaQueElServidorNoTieneSaleALaBandejaYElRestoDelLoteSeAcepta" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.146" />
+    <testcase name="unaFilaEditadaMientrasSubiaQuedaPendienteSobreLaRevisionAceptada" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.090" />
+    <testcase name="unSiblingDejaLaFilaConLaVigenteYGuardaLaEdicionLocal" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.112" />
+    <testcase name="elLoteLlevaLaFilaConLasColumnasDelServidor" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.086" />
+    <testcase name="sinSenalAMitadLosLotesConfirmadosQuedanYElRestoSeReenvia" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.144" />
+    <testcase name="unAnimalRechazadoQueElServidorNoTieneSacaASusDependientesALaBandeja" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.142" />
+    <testcase name="laEdicionQueResuelveNombraAlServidorSusSiblingsYLosOlvidaAlSubir" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.076" />
+    <testcase name="unaEdicionSinSiblingsPorResolverNoLlevaResuelve" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.076" />
+    <testcase name="dosSincronizacionesALaVezNoSeSolapanNiSubenDosVecesLoMismo" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.329" />
+    <testcase name="unRechazoDeUnaFilaEditadaMientrasSubiaGuardaSuUltimaVersionYSacaASusDependientes" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.101" />
+    <testcase name="siElServidorContestaSiblingALaResolucionElConflictoSigueAbierto" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.095" />
+    <testcase name="unaModificacionRechazadaVuelveALaVersionDelServidorYQuedaEnLaBandeja" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.092" />
+    <testcase name="siElServidorAceptaLaResolucionLosSiblingsSalenDeLaTabla" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.092" />
+    <testcase name="veinteAnimalesYCincuentaPesajesSubenDePadresAHijosYQuedanSincronizados" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="1.014" />
+    <testcase name="unaCriaQueElServidorYaTieneNoSaleConSuMadreRechazada" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.148" />
+    <testcase name="losCambiosSinSubirSonLasFilasPendientesYLaFechaQuedaAlTerminar" classname="com.devcris80.prototipo.data.repository.MotorSincronizacionTest" time="0.139" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RevisionesLocalesTest" tests="4" failures="0" errors="0" skipped="0" time="0.216" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unEventoYUnRegistroNuevosTienenIdVersion" classname="com.devcris80.prototipo.data.repository.RevisionesLocalesTest" time="0.084" />
+    <testcase name="unAnimalNuevoNoTieneRevisionPeroSiIdVersion" classname="com.devcris80.prototipo.data.repository.RevisionesLocalesTest" time="0.039" />
+    <testcase name="editarUnAnimalSincronizadoGuardaLosCambiosYLoDejaPendienteConSuRevBase" classname="com.devcris80.prototipo.data.repository.RevisionesLocalesTest" time="0.059" />
+    <testcase name="dosEscriturasSinSincronizarCambianElIdVersionYConservanElRevBase" classname="com.devcris80.prototipo.data.repository.RevisionesLocalesTest" time="0.034" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomAnimalRepositoryTest" tests="1" failures="0" errors="0" skipped="0" time="0.057" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="losCandidatosAPadreIncluyenLosDadosDeBaja_primeroLosActivosYCadaGrupoPorNombre" classname="com.devcris80.prototipo.data.repository.RoomAnimalRepositoryTest" time="0.057" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomChapetaRepositoryTest" tests="4" failures="0" errors="0" skipped="0" time="0.295" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="guardaYLeeLaChapetaConTodosSusCampos" classname="com.devcris80.prototipo.data.repository.RoomChapetaRepositoryTest" time="0.090" />
+    <testcase name="unaChapetaLiberadaDejaDeSerActivaPeroSeConservaComoUltima" classname="com.devcris80.prototipo.data.repository.RoomChapetaRepositoryTest" time="0.074" />
+    <testcase name="laUltimaChapetaDeUnCodigoEsLaAsociadaMasReciente" classname="com.devcris80.prototipo.data.repository.RoomChapetaRepositoryTest" time="0.063" />
+    <testcase name="cadaEscrituraLocalMarcaLaFilaComoPendienteDeSubirYGuardaLaFechaDeModificacion" classname="com.devcris80.prototipo.data.repository.RoomChapetaRepositoryTest" time="0.068" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" tests="12" failures="0" errors="0" skipped="0" time="0.652" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unaFilaSinSiblingsNoEstaEnConflicto" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.071" />
+    <testcase name="elConflictoTraeLaVigenteYCadaSiblingComoFilaCompleta" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.080" />
+    <testcase name="unSiblingQueNoEstabaEntreLosResueltosSigueEnConflicto" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.081" />
+    <testcase name="conservarLaVigenteTambienEsUnaEdicionNuevaQueNombraLosSiblings" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.054" />
+    <testcase name="observeFilasEnConflictoListaSoloLasDeEsaEntidad" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.049" />
+    <testcase name="unSiblingQueNoSePuedeLeerNoSeMuestraNiSePuedeElegir" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.060" />
+    <testcase name="resolverUnaFilaQueYaNoExisteDevuelveFalsoYNoEscribeNada" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.030" />
+    <testcase name="editarLaFilaSinResolverNoQuitaLaMarca" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.055" />
+    <testcase name="elegirUnSiblingEscribeSuFilaComoEdicionSobreLaVigenteYQuitaLaMarca" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.047" />
+    <testcase name="unaFilaSinSiblingsNoTieneConflicto" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.040" />
+    <testcase name="unaFilaConUnSiblingSinResolverEstaEnConflicto" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.047" />
+    <testcase name="unSiblingQueLlegaDosVecesSeGuardaUnaSola" classname="com.devcris80.prototipo.data.repository.RoomConflictoRepositoryTest" time="0.038" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomCuentaRepositoryTest" tests="4" failures="0" errors="0" skipped="0" time="0.193" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="laFincaYElUsuarioDelDispositivoSeLeenConSusDatos" classname="com.devcris80.prototipo.data.repository.RoomCuentaRepositoryTest" time="0.076" />
+    <testcase name="guardarLaUbicacionDeLaFincaLaDejaPendienteDeSubirSinPerderSusUsuarios" classname="com.devcris80.prototipo.data.repository.RoomCuentaRepositoryTest" time="0.029" />
+    <testcase name="losDemasUsuariosDeLaFincaNoSonElDelDispositivo" classname="com.devcris80.prototipo.data.repository.RoomCuentaRepositoryTest" time="0.031" />
+    <testcase name="sinCuentaNoHayFincaNiUsuario" classname="com.devcris80.prototipo.data.repository.RoomCuentaRepositoryTest" time="0.057" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomEventoRepositoryTest" tests="2" failures="0" errors="0" skipped="0" time="0.114" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="losCamposDeCadaTipoSeGuardanYSeLeen" classname="com.devcris80.prototipo.data.repository.RoomEventoRepositoryTest" time="0.050" />
+    <testcase name="losEventosActivosDejanFueraLosDadosDeBajaPeroNoLosDeAnimalesDadosDeBaja" classname="com.devcris80.prototipo.data.repository.RoomEventoRepositoryTest" time="0.064" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" tests="7" failures="0" errors="0" skipped="0" time="0.418" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="conciliarEsDefinitivoUnPendienteResueltoNoCambia" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.047" />
+    <testcase name="conciliarGuardaQuienCuandoYComoYLoSacaDeLosSinResolver" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.077" />
+    <testcase name="noPermiteDosPendientesConElMismoIdLectura" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.082" />
+    <testcase name="losSinResolverVanDelMasRecienteAlMasAntiguoYSeFiltranPorCodigo" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.049" />
+    <testcase name="siNoExisteConciliarNoHaceNada" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.048" />
+    <testcase name="guardaYLeeElPendienteConTodosSusCampos" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.040" />
+    <testcase name="cadaEscrituraLocalMarcaLaFilaComoPendienteDeSubirYGuardaLaFechaDeModificacion" classname="com.devcris80.prototipo.data.repository.RoomPesajePendienteRepositoryTest" time="0.075" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" tests="6" failures="0" errors="0" skipped="0" time="0.208" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="cerrarUnRechazoLoSacaDeLaBandejaYLoConserva" classname="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" time="0.052" />
+    <testcase name="soloSeObservanLosRechazosQueSiguenAbiertos" classname="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" time="0.041" />
+    <testcase name="unaChapetaRechazadaTraeSuCodigoDeErrorSuAnimalYSuCodigo" classname="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" time="0.028" />
+    <testcase name="unRegistroQueSalioConSuAnimalLoDice" classname="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" time="0.028" />
+    <testcase name="unPesajePendienteRechazadoTraeSuPesoYSuCodigo" classname="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" time="0.027" />
+    <testcase name="unAnimalRechazadoGuardaSuNombreYUnContenidoIlegibleNoLoSacaDeLaBandeja" classname="com.devcris80.prototipo.data.repository.RoomRechazoRepositoryTest" time="0.032" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.data.repository.RoomRegistroRepositoryTest" tests="1" failures="0" errors="0" skipped="0" time="0.108" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="losRegistrosDeUnAnimalYSuUltimoDejanFueraLosDadosDeBaja" classname="com.devcris80.prototipo.data.repository.RoomRegistroRepositoryTest" time="0.108" />
+  </testsuite>
+  <testsuite name="com.devcris80.prototipo.service.PesajeHttpServerIntegracionTest" tests="4" failures="0" errors="0" skipped="0" time="0.534" timestamp="2026-10-29T16:27:36" hostname="localhost">
+    <properties>
+      <property name="device" value="adb-R58X703G64K-sMjk6r._adb-tls-connect._tcp" />
+    </properties>
+    <testcase name="unPesajeDeUnaChapetaActivaTerminaComoRegistroEnRoomYSuReenvioNoDuplicaNada" classname="com.devcris80.prototipo.service.PesajeHttpServerIntegracionTest" time="0.151" />
+    <testcase name="unChipSinChapetaTerminaComoPesajePendienteEnRoomYSuReenvioDevuelveElMismo" classname="com.devcris80.prototipo.service.PesajeHttpServerIntegracionTest" time="0.141" />
+    <testcase name="unCuerpoInvalidoRecibe400YNoGuardaNada" classname="com.devcris80.prototipo.service.PesajeHttpServerIntegracionTest" time="0.155" />
+    <testcase name="sinCuentaEnElTelefonoRecibe503YNoGuardaNada" classname="com.devcris80.prototipo.service.PesajeHttpServerIntegracionTest" time="0.087" />
+  </testsuite>
+</testsuites>

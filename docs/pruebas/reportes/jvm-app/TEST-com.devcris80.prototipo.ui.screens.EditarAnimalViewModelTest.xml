@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" tests="11" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.054Z" hostname="fedora" time="0.016">
+  <properties/>
+  <testcase name="guardarSinCambiosNoCreaUnaEscrituraNueva" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.004"/>
+  <testcase name="alAbrirCargaLosDatosDelAnimalEnElFormulario" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="guardarSinTocarLaFotoConservaLaQueBajoMientrasElFormularioEstabaAbierto" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.002"/>
+  <testcase name="cambiarLaRazaYGuardarEscribeElAnimalConLaRazaNuevaYAvisaQueGuardo" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="cambiarElSexoObligaAElegirDeNuevoLaEtapaYSinEllaNoSePuedeGuardar" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="unAnimalDadoDeBajaNoSeEdita" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="unAnimalQueEsPadreOMadreDeOtrosTieneElSexoBloqueadoYNoLoCambia" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="unAnimalSinCriasTieneElSexoDesbloqueado" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.002"/>
+  <testcase name="losCandidatosAPadreYMadreNoIncluyenAlPropioAnimal" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="siLlegaUnaCriaMientrasSeEditaGuardarNoCambiaElSexoYElFormularioLoExplica" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.001"/>
+  <testcase name="unaFotoTomadaEnElFormularioSeGuardaAunqueHayaBajadoOtra" classname="com.devcris80.prototipo.ui.screens.EditarAnimalViewModelTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

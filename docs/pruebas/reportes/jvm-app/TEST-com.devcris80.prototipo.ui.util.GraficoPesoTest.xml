@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.util.GraficoPesoTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.345Z" hostname="fedora" time="0.001">
+  <properties/>
+  <testcase name="conLaMismaFechaEnTodosLosRegistrosLosPuntosQuedanAlMedioHorizontalmente" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <testcase name="todosLosPuntosCaenDentroDelAreaDelGrafico" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.001"/>
+  <testcase name="siSoloQuedaUnRegistroActivoNoHayGrafico" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <testcase name="conCeroRegistrosNoHayGrafico" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <testcase name="conElMismoPesoEnTodosLosRegistrosLosPuntosQuedanAlMedioYNoSeDivideEntreCero" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <testcase name="conDosRegistrosHayGraficoConLosPuntosDeIzquierdaADerechaPorFecha" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <testcase name="losRegistrosDadosDeBajaNoAparecen" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <testcase name="conUnSoloRegistroNoHayGrafico" classname="com.devcris80.prototipo.ui.util.GraficoPesoTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

@@ -1,0 +1,15 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" tests="9" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:52.993Z" hostname="fedora" time="0.06">
+  <properties/>
+  <testcase name="onDarDeBaja_llamaAlCasoDeUsoConElAnimalCorrecto" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.006"/>
+  <testcase name="marcaElAnimalYLosEventosEnConflictoSinEsconderlos" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.014"/>
+  <testcase name="elGanaderoVeLasAccionesDeAdministrar" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.007"/>
+  <testcase name="combinaAnimalEventosRegistrosYChapetaActiva" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.01"/>
+  <testcase name="elOperarioNoVeLasAccionesDeAdministrar" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.007"/>
+  <testcase name="elOperarioNoDaDeBajaNiLiberaAunqueSeLlamenLasAcciones" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.002"/>
+  <testcase name="sinPadreNiMadre_ambosQuedanNulos" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.005"/>
+  <testcase name="muestraElPadreYLaMadre_aunqueElPadreEsteDadoDeBaja" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.005"/>
+  <testcase name="onLiberarChapeta_liberaLaChapetaIndicada" classname="com.devcris80.prototipo.ui.screens.DetalleAnimalViewModelTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

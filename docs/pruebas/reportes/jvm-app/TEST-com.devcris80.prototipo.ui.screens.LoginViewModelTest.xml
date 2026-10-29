@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.LoginViewModelTest" tests="13" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.231Z" hostname="fedora" time="0.006">
+  <properties/>
+  <testcase name="unErrorDelServidor_muestraUnMensajeGenerico" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.001"/>
+  <testcase name="credencialesValidas_inicianSesionProgramanLaSincronizacionYEmitenElEvento" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.001"/>
+  <testcase name="enviarLaRecuperacion_pideElCorreoSinEspaciosYConfirmaSinRevelarSiLaCuentaExiste" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.001"/>
+  <testcase name="sinSenal_laRecuperacionLoIndicaYNoDaPorEnviado" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="sinSenal_avisaQueHaceFaltaConexion" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.001"/>
+  <testcase name="olvideMiContrasena_abreElDialogoConElCorreoQueYaEstabaEscrito" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="sinCorreoNoSeEnviaLaRecuperacion" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="siSeCierraElDialogoConUnEnvioEnCursoSuResultadoNoLlegaAlDialogoNuevo" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.001"/>
+  <testcase name="sinCorreoOContrasena_noSePuedeIniciar" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="cerrarElDialogoLoDescarta" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="siElServidorFalla_laRecuperacionPermiteReintentar" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="credencialesIncorrectas_muestranErrorSinNavegar" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <testcase name="conDatosDeOtraCuenta_pideDesinstalar" classname="com.devcris80.prototipo.ui.screens.LoginViewModelTest" time="0.0"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

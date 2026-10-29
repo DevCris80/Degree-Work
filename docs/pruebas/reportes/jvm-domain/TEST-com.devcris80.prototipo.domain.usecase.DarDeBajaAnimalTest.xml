@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.usecase.DarDeBajaAnimalTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.254Z" hostname="fedora" time="0.007">
+  <properties/>
+  <testcase name="elGanaderoDaDeBajaUnAnimal" classname="com.devcris80.prototipo.domain.usecase.DarDeBajaAnimalTest" time="0.003"/>
+  <testcase name="elOperarioNoDaDeBajaUnAnimalAunqueSeLlameAlCasoDeUso" classname="com.devcris80.prototipo.domain.usecase.DarDeBajaAnimalTest" time="0.002"/>
+  <testcase name="sinUsuarioEnElDispositivoNoSeDaDeBaja" classname="com.devcris80.prototipo.domain.usecase.DarDeBajaAnimalTest" time="0.002"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

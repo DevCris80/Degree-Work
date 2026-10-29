@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" tests="8" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:53.072Z" hostname="fedora" time="0.011">
+  <properties/>
+  <testcase name="elOperarioNoPuedeLiberarLaChapetaNiAunqueSeLlameLaAccion" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.003"/>
+  <testcase name="cancelarDesdeDadoDeBaja_vuelveAEsperandoTag" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.001"/>
+  <testcase name="liberarDesdeDadoDeBaja_reresuelveYRegistraConAviso" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.002"/>
+  <testcase name="siCambiaElRolDespuesDeEscanearElPermisoSeActualiza" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.001"/>
+  <testcase name="tagNuncaVisto_emiteRegistrarSinAviso" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.001"/>
+  <testcase name="tagDeAnimalActivo_emiteAbrirAnimal" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.001"/>
+  <testcase name="tagDeAnimalDadoDeBaja_quedaEnEstadoDadoDeBaja" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.001"/>
+  <testcase name="elGanaderoPuedeLiberarLaChapeta" classname="com.devcris80.prototipo.ui.screens.EscanearViewModelTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>

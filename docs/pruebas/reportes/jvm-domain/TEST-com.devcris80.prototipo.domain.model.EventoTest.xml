@@ -1,0 +1,9 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<testsuite name="com.devcris80.prototipo.domain.model.EventoTest" tests="3" skipped="0" failures="0" errors="0" timestamp="2026-10-29T16:26:33.085Z" hostname="fedora" time="0.034">
+  <properties/>
+  <testcase name="unEventoSinCamposDeVacunacionNoTieneResumen" classname="com.devcris80.prototipo.domain.model.EventoTest" time="0.022"/>
+  <testcase name="elResumenDeLaVacunacionJuntaBiologicoDosisYViaLosQueTenga" classname="com.devcris80.prototipo.domain.model.EventoTest" time="0.004"/>
+  <testcase name="unEventoConFechaPosteriorAAhoraEstaProgramado" classname="com.devcris80.prototipo.domain.model.EventoTest" time="0.001"/>
+  <system-out><![CDATA[]]></system-out>
+  <system-err><![CDATA[]]></system-err>
+</testsuite>
