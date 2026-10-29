@@ -1,0 +1,7 @@
+DM-11 | celular 192.168.1.7:8080 | N=10 reintentos=2 chip=DM11SINASOCIAR | prefijo=dm11-20261029113635
+bateria=16%
+pantalla=mWakefulness=Awake
+servicio_activo=3
+registros=0 registros_distintos=0 pendientes=10 pendientes_distintos=10 total=10
+respuestas distintas entre envío y reintento: 0
+RESULTADO: APROBADO (10 de 10 guardados una sola vez)
