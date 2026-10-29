@@ -47,8 +47,8 @@ def main():
         distintas = sorted(k for k in set(fa) & set(fb) if fa[k] != fb[k])
         print(f"{t:<18}{len(fa):>6}{len(fb):>6}  {len(solo_a):>6} {len(solo_b):>6} {len(distintas):>9}")
         for k in distintas[:3]:
-            dif = {c: (fa[k][c], fb[k][c]) for c in fa[k] if fa[k][c] != fb[k][c]}
-            print(f"   {k}: {dif}")
+            # Solo los nombres de las columnas: los valores pueden ser datos personales (por ejemplo, la ubicación de la finca).
+            print(f"   {k}: difieren {[c for c in fa[k] if fa[k][c] != fb[k][c]]}")
         if solo_a or solo_b or distintas:
             iguales = False
     print("RESULTADO:", "LAS BASES SON IGUALES" if iguales else "HAY DIFERENCIAS")
