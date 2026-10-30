@@ -86,11 +86,11 @@ Errores que devuelve, para clasificar un rechazo:
 
 | Código | Cuándo |
 |---|---|
-| `42501` | Fuera de la finca del usuario (RLS), una acción que su rol no permite, una fila a nombre de otro Usuario (RN-19), o un permiso de tabla que no existe (borrar, escribir `usuario`). |
+| `42501` | Fuera de la finca del usuario (RLS), una acción que su rol no permite, una fila a nombre de otro Usuario (RN-19), o un permiso de tabla que no existe (borrar, escribir `usuario`). También lo devuelven `generar_invitacion` y `quitar_operario` a quien no es Ganadero de una finca. |
 | `23505` | Unicidad: una segunda Chapeta activa con el mismo código en la finca (RN-01), o un `id_lectura` repetido en la finca (RN-09, RN-21). |
 | `23503` | Una referencia a un Animal o un Usuario de otra finca, o un Pesaje pendiente asignado sin su Registro (se comprueba al terminar la transacción). |
 | `23514` | Datos inválidos: etapa que no corresponde al sexo, código sin normalizar, peso fuera de 0–1500 kg. |
-| `22xxx` | Datos que no se pueden leer: un UUID o una fecha mal escritos, o una entidad que no se sube (`22023`). Solo los devuelve `subir_cambios`. |
+| `22xxx` | Datos que no se pueden leer: un UUID o una fecha mal escritos, o una entidad que no se sube (`22023`). Solo los devuelve `subir_cambios`, salvo `22023`: también lo devuelven `quitar_operario` (el id no es de un Operario de la finca) y el alta con un código de invitación inválido. |
 | `55000` | Un estado definitivo: deshacer una baja, una Chapeta liberada, una conciliación o un sibling resuelto; o cambiar lo que no se edita (el código de una Chapeta, el peso de un Pesaje pendiente, la finca de un Animal). |
 
 ## Crear cuenta

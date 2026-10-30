@@ -226,7 +226,7 @@ fun ListaAnimalesScreen(
             rol = estado.rol,
             nombreFinca = estado.nombreFinca,
             onInvitarClick = onInvitarClick.takeIf { estado.puedeInvitar },
-            onOperariosClick = onOperariosClick.takeIf { estado.rol?.puedeAdministrar == true },
+            onOperariosClick = onOperariosClick.takeIf { estado.puedeQuitarOperarios },
             onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
             onCerrarSesionClick = { confirmarCierre = true },
             onCerrarPanel = { mostrarConfiguracion = false },

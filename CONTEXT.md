@@ -75,6 +75,10 @@ _Avoid_: Administrador, dueño
 **Operario**:
 El `rol` del `Usuario` que trabaja con el ganado: puede ver animales, escanear, registrar `Animal` y `Evento` y asignar un `Pesaje pendiente`, pero no dar de baja, liberar una `Chapeta`, descartar un `Pesaje pendiente` ni gestionar Usuarios.
 
+**Operario quitado**:
+El `Operario` al que un `Ganadero` le revocó el acceso a la finca (se marca su `fecha_quitado`). Su fila de `Usuario` se conserva, así que los `Registro`, `Evento` y `Pesaje pendiente` que creó siguen a su nombre; el servidor deja de darle la finca y su rol, y su celular cierra la sesión en la próxima sincronización, sin subir lo que capturó antes. Un `Ganadero` no se quita.
+_Avoid_: Eliminado, borrado, baja (la baja es del `Animal`)
+
 **PerfilFinca**:
 La finca a la que pertenecen un `Usuario` y sus `Animal`, identificada por `idPerfilFinca`, con `nombreFinca`, `latitud` y `longitud`. No incluye el nombre del usuario — ese dato vive en `Usuario`.
 _Avoid_: guardar identidad de usuario en esta entidad

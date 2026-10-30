@@ -42,11 +42,11 @@ import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
 import com.devcris80.prototipo.domain.usecase.DarDeBajaRegistro
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
-import com.devcris80.prototipo.domain.usecase.QuitarOperario
 import com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazos
 import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
+import com.devcris80.prototipo.domain.usecase.QuitarOperario
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarEvento
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje

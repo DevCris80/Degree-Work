@@ -24,7 +24,6 @@ import com.devcris80.prototipo.ui.components.DestinoBarra
 import com.devcris80.prototipo.ui.screens.AsociarChapetaScreen
 import com.devcris80.prototipo.ui.screens.BandejaRechazosScreen
 import com.devcris80.prototipo.ui.screens.EditarPesajeScreen
-import com.devcris80.prototipo.ui.screens.OperariosScreen
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EditarAnimalScreen
@@ -35,6 +34,7 @@ import com.devcris80.prototipo.ui.screens.IndicadoresScreen
 import com.devcris80.prototipo.ui.screens.InvitarOperarioScreen
 import com.devcris80.prototipo.ui.screens.ListaAnimalesScreen
 import com.devcris80.prototipo.ui.screens.LoginScreen
+import com.devcris80.prototipo.ui.screens.OperariosScreen
 import com.devcris80.prototipo.ui.screens.PesajeFormScreen
 import com.devcris80.prototipo.ui.screens.PesosScreen
 import com.devcris80.prototipo.ui.screens.RegistrarAnimalScreen

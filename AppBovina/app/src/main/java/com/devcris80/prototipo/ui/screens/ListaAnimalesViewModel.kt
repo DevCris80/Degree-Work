@@ -44,6 +44,8 @@ data class ListaAnimalesUiState(
     val puedeRegistrarUbicacion: Boolean = false,
     /** Solo el Ganadero genera códigos de invitación (RN-18). */
     val puedeInvitar: Boolean = false,
+    /** Solo el Ganadero quita Operarios de la finca (RF-37). */
+    val puedeQuitarOperarios: Boolean = false,
     val animales: List<AnimalConResumen> = emptyList(),
     val filtro: Proposito? = null,
     val pesajesPendientes: Int = 0,
@@ -112,6 +114,7 @@ class ListaAnimalesViewModel(
             rol = usuario?.rol,
             puedeRegistrarUbicacion = usuario?.rol == Rol.GANADERO,
             puedeInvitar = usuario?.rol == Rol.GANADERO,
+            puedeQuitarOperarios = usuario?.rol == Rol.GANADERO,
             animales = animales.filter { filtroActual == null || it.animal.proposito == filtroActual },
             filtro = filtroActual,
             pesajesPendientes = pendientes.size,

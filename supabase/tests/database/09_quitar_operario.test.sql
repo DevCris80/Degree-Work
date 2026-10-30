@@ -7,7 +7,7 @@ create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
 -- Estas pruebas escriben directo en las tablas, como lo hace subir_cambios por dentro (04_subir_cambios).
 select set_config('miganado.subir_cambios', 'si', true);
-select plan(18);
+select plan(22);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
@@ -24,6 +24,7 @@ insert into public.usuario (id_usuario, id_perfil_finca, nombre, rol, fecha_modi
   ('00000000-0000-0000-0000-0000000000b1', '0000000b-0000-0000-0000-000000000000', 'Ganadero B', 'Ganadero', now());
 insert into public.animal (id_animal, id_perfil_finca, nombre, raza, sexo, etapa, fecha_nacimiento, proposito, fecha_modificacion) values
   ('a0000000-0000-0000-0000-000000000001', '0000000a-0000-0000-0000-000000000000', 'Lucero', 'Brahman', 'Hembra', 'Vaca', now(), 'Leche', now());
+insert into public.evento (id_evento, id_animal, id_usuario, tipo_evento, fecha, detalle, fecha_modificacion) values  ('e0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'Vacunación', now(), 'Aftosa', now());
 insert into public.registro (id_registro, id_animal, id_usuario, id_lectura, peso, fecha_medicion, fecha_modificacion) values
   ('f0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', '00000000-0000-0000-0000-0000000000a2', 'lectura-1', 410, now(), now());
 
@@ -55,6 +56,7 @@ select throws_ok($$select public.quitar_operario('00000000-0000-0000-0000-000000
 
 select is((select count(*)::int from public.registro where id_usuario = '00000000-0000-0000-0000-0000000000a2'), 1,
   'sus pesajes siguen a su nombre y a la vista del Ganadero');
+select is((select count(*)::int from public.evento where id_usuario = '00000000-0000-0000-0000-0000000000a2'), 1, 'y sus eventos también');
 select is((select count(*)::int from public.usuario), 3,
   'su fila de Usuario se conserva');
 
@@ -74,6 +76,8 @@ select throws_ok(
   $$insert into public.animal (id_animal, id_perfil_finca, nombre, raza, sexo, etapa, fecha_nacimiento, proposito, fecha_modificacion)
     values ('a0000000-0000-0000-0000-000000000002', '0000000a-0000-0000-0000-000000000000', 'Mariposa', 'Gyr', 'Hembra', 'Ternera', now(), 'Leche', now())$$,
   '42501', null, 'el Operario quitado no escribe en la finca');
+select is(jsonb_array_length(public.descargar_cambios(0, 100) -> 'cambios'), 0,
+  'el Operario quitado no descarga nada de la finca');
 select throws_ok($$select public.generar_invitacion()$$,
   '42501', null, 'el Operario quitado no genera códigos de invitación');
 
@@ -81,6 +85,11 @@ select throws_ok($$select public.generar_invitacion()$$,
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated"}', true);
 select is(public.sigo_en_la_finca(), true, 'el otro Operario sigue en la finca');
 select is((select count(*)::int from public.animal), 1, 'y sigue viendo sus Animales');
+select ok(jsonb_array_length(public.descargar_cambios(0, 100) -> 'cambios') > 0, 'y sigue descargando sus cambios');
+
+set local role anon;
+select throws_ok($$select public.sigo_en_la_finca()$$,
+  '42501', null, 'sin sesión no se pregunta si se sigue en la finca');
 
 select * from finish();
 rollback;
