@@ -160,6 +160,23 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
+    fun elEstadoTraeElRolDeLaPersonaParaElMenuDeConfiguracion() = runTest {
+        suspend fun rol(usuario: Usuario?): Rol? {
+            cuentaRepository.usuario.value = usuario
+            val viewModel = crearViewModel()
+            val estados = mutableListOf<ListaAnimalesUiState>()
+            val job = launch { viewModel.estado.collect { estados.add(it) } }
+            advanceUntilIdle()
+            job.cancel()
+            return estados.last().rol
+        }
+
+        assertEquals(Rol.GANADERO, rol(Usuario("u1", "perfil_local", "Ana", Rol.GANADERO)))
+        assertEquals(Rol.OPERARIO, rol(Usuario("u2", "perfil_local", "Beto", Rol.OPERARIO)))
+        assertEquals(null, rol(null))
+    }
+
+    @Test
     fun onFiltroSeleccionado_filtraLosAnimalesPorProposito() = runTest {
         val leche = animal("Manchas", Proposito.LECHE)
         val carne = animal("Toro", Proposito.CARNE)

@@ -39,6 +39,7 @@ data class AnimalConResumen(
 data class ListaAnimalesUiState(
     val nombreFinca: String = "",
     val nombreUsuario: String = "",
+    val rol: Rol? = null,
     /** Solo el Ganadero edita los datos de la finca (matriz 2.1). */
     val puedeRegistrarUbicacion: Boolean = false,
     /** Solo el Ganadero genera códigos de invitación (RN-18). */
@@ -108,6 +109,7 @@ class ListaAnimalesViewModel(
         ListaAnimalesUiState(
             nombreFinca = perfil?.nombreFinca.orEmpty(),
             nombreUsuario = usuario?.nombre.orEmpty(),
+            rol = usuario?.rol,
             puedeRegistrarUbicacion = usuario?.rol == Rol.GANADERO,
             puedeInvitar = usuario?.rol == Rol.GANADERO,
             animales = animales.filter { filtroActual == null || it.animal.proposito == filtroActual },
