@@ -49,8 +49,8 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-27 | Pesaje manual | Implementado | UI-04, DOM-03, DAT-01 | App |
 | RF-28 | Registrar evento con fecha pasada o futura | Implementado | UI-05, DOM-04, DAT-01 | App |
 | RF-29 | Campos de vacunación y parto | Implementado | UI-05, DOM-04, DAT-01 | App |
-| RF-30 | Editar eventos y pesajes como revisiones | Parcial | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
-| RF-31 | Baja lógica de eventos y pesajes | Parcial | UI-02, DOM-04, DAT-01 | App |
+| RF-30 | Editar eventos y pesajes como revisiones | Implementado | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
+| RF-31 | Baja lógica de eventos y pesajes | Implementado | UI-02, DOM-04, DAT-01 | App |
 | RF-32 | Subir cambios locales | Implementado | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
 | RF-33 | Detectar concurrencia con rev_base (siblings) | Implementado | DAT-05, BD-02, BD-07 | App, Supabase |
 | RF-34 | Mostrar y resolver conflictos | Implementado | UI-07, DOM-04, DAT-05, BD-02 | App, Supabase |
@@ -68,18 +68,18 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 
 | Componente | Nombre | Contenedor | Estado | RF |
 |---|---|---|---|---|
-| UI-01 | Cuenta y acceso | App | Parcial | RF-01, RF-02, RF-04, RF-05, RF-07 |
-| UI-02 | Animales | App | Parcial | RF-06, RF-08, RF-09, RF-10, RF-11, RF-12, RF-13, RF-17, RF-18, RF-19, RF-30, RF-31 |
+| UI-01 | Cuenta y acceso | App | Implementado | RF-01, RF-02, RF-04, RF-05, RF-07 |
+| UI-02 | Animales | App | Implementado | RF-06, RF-08, RF-09, RF-10, RF-11, RF-12, RF-13, RF-17, RF-18, RF-19, RF-30, RF-31 |
 | UI-03 | Escanear | App | Implementado | RF-15, RF-16, RF-19 |
 | UI-04 | Pesajes | App | Implementado | RF-06, RF-25, RF-26, RF-27 |
-| UI-05 | Eventos | App | Parcial | RF-28, RF-29, RF-30 |
+| UI-05 | Eventos | App | Implementado | RF-28, RF-29, RF-30 |
 | UI-06 | Finca y usuarios | App | Implementado | RF-05, RF-14, RF-37 |
 | UI-07 | Sincronización | App | Implementado | RF-34, RF-35 |
 | UI-08 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DOM-01 | Cuenta y permisos | App | Implementado | RF-01, RF-04, RF-06 |
 | DOM-02 | Animales y chapetas | App | Implementado | RF-08, RF-11, RF-12, RF-13, RF-15, RF-16, RF-17, RF-18, RF-19 |
 | DOM-03 | Pesajes | App | Implementado | RF-21, RF-22, RF-23, RF-24, RF-26, RF-27 |
-| DOM-04 | Eventos y revisiones | App | Parcial | RF-28, RF-29, RF-30, RF-31, RF-34 |
+| DOM-04 | Eventos y revisiones | App | Implementado | RF-28, RF-29, RF-30, RF-31, RF-34 |
 | DOM-05 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-01 | Repositorios locales | App | Implementado | RF-08, RF-09, RF-10, RF-11, RF-12, RF-13, RF-14, RF-17, RF-18, RF-19, RF-22, RF-23, RF-26, RF-27, RF-28, RF-29, RF-30, RF-31, RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-02 | Servidor de pesajes | App | Implementado | RF-20, RF-21, RF-25 |
