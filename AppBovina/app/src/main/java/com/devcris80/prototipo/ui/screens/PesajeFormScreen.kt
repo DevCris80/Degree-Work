@@ -90,7 +90,7 @@ fun FormularioPesaje(
     titulo: String,
     peso: String,
     fecha: Long,
-    error: NuevoPesajeError?,
+    error: PesajeError?,
     puedeGuardar: Boolean,
     onPesoCambiado: (String) -> Unit,
     onFechaCambiada: (Long) -> Unit,
@@ -139,11 +139,11 @@ fun FormularioPesaje(
             error?.let {
                 Text(
                     text = when (it) {
-                        NuevoPesajeError.PesoFueraDeRango ->
+                        PesajeError.PesoFueraDeRango ->
                             "El peso debe ser mayor que 0 y de hasta ${Pesaje.PESO_MAXIMO_KG.toInt()} kg."
-                        NuevoPesajeError.FechaFutura -> "La fecha y hora del pesaje no pueden ser futuras."
-                        NuevoPesajeError.AnimalNoDisponible -> "Este animal está dado de baja o ya no existe."
-                        NuevoPesajeError.PesajeNoDisponible -> "Este pesaje ya no está disponible."
+                        PesajeError.FechaFutura -> "La fecha y hora del pesaje no pueden ser futuras."
+                        PesajeError.AnimalNoDisponible -> "Este animal está dado de baja o ya no existe."
+                        PesajeError.PesajeNoDisponible -> "Este pesaje ya no está disponible."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,

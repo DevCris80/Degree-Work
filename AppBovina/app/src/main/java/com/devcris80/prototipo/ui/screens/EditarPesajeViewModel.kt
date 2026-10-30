@@ -22,7 +22,7 @@ data class EditarPesajeUiState(
     val fecha: Long = 0L,
     /** El pesaje ya se leyó de la base: hasta entonces no hay nada que guardar. */
     val cargado: Boolean = false,
-    val error: NuevoPesajeError? = null,
+    val error: PesajeError? = null,
     /** Verdadero desde que se pide guardar o dar de baja hasta que falla: evita repetirlo con un doble toque. */
     val guardando: Boolean = false,
     /** Dar de baja es del Ganadero; al Operario no se le ofrece (matriz 2.1). */
@@ -57,7 +57,7 @@ class EditarPesajeViewModel(
         viewModelScope.launch {
             val registro = registroRepository.findById(idRegistro)
             if (registro == null || registro.fechaBaja != null) {
-                _estado.update { it.copy(error = NuevoPesajeError.PesajeNoDisponible) }
+                _estado.update { it.copy(error = PesajeError.PesajeNoDisponible) }
             } else {
                 _estado.update {
                     it.copy(peso = registro.peso.comoTexto(), fecha = registro.timestamp, cargado = true)
@@ -87,9 +87,9 @@ class EditarPesajeViewModel(
         viewModelScope.launch {
             val error = when (actualizarRegistro(idRegistro, peso, actual.fecha)) {
                 ActualizarRegistro.Resultado.Actualizado -> null
-                ActualizarRegistro.Resultado.PesoFueraDeRango -> NuevoPesajeError.PesoFueraDeRango
-                ActualizarRegistro.Resultado.FechaFutura -> NuevoPesajeError.FechaFutura
-                ActualizarRegistro.Resultado.NoDisponible -> NuevoPesajeError.PesajeNoDisponible
+                ActualizarRegistro.Resultado.PesoFueraDeRango -> PesajeError.PesoFueraDeRango
+                ActualizarRegistro.Resultado.FechaFutura -> PesajeError.FechaFutura
+                ActualizarRegistro.Resultado.NoDisponible -> PesajeError.PesajeNoDisponible
             }
             if (error == null) {
                 _eventos.send(EditarPesajeEvento.Guardado)
@@ -109,14 +109,10 @@ class EditarPesajeViewModel(
                 DarDeBajaRegistro.Resultado.NoPermitido ->
                     _estado.update { it.copy(guardando = false, puedeDarDeBaja = false) }
                 DarDeBajaRegistro.Resultado.NoDisponible ->
-                    _estado.update { it.copy(guardando = false, error = NuevoPesajeError.PesajeNoDisponible) }
+                    _estado.update { it.copy(guardando = false, error = PesajeError.PesajeNoDisponible) }
             }
         }
     }
 
     private fun Float.comoTexto(): String = if (this % 1f == 0f) toInt().toString() else toString()
-
-    private companion object {
-        val FORMATO_PESO = Regex("\\d*\\.?\\d*")
-    }
 }

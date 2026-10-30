@@ -100,7 +100,7 @@ class EditarPesajeViewModelTest {
 
         viewModel.onGuardar()
 
-        assertEquals(NuevoPesajeError.PesoFueraDeRango, viewModel.estado.value.error)
+        assertEquals(PesajeError.PesoFueraDeRango, viewModel.estado.value.error)
         assertFalse(viewModel.estado.value.guardando)
         assertEquals(312.5f, registroRepository.observeByAnimal("animal-1").first().single().peso)
     }
@@ -130,7 +130,7 @@ class EditarPesajeViewModelTest {
     fun unPesajeInexistenteODadoDeBajaNoSeCargaNiSeGuarda() = runTest {
         val viewModel = crearViewModel("no-existe")
 
-        assertEquals(NuevoPesajeError.PesajeNoDisponible, viewModel.estado.value.error)
+        assertEquals(PesajeError.PesajeNoDisponible, viewModel.estado.value.error)
         assertFalse(viewModel.estado.value.cargado)
         assertFalse(viewModel.estado.value.puedeGuardar)
     }
