@@ -109,6 +109,15 @@ Un Operario entra a una finca con un código que genera el Ganadero (CU-04, RF-0
 - `privado.canjear_invitacion` la llama el trigger de `auth.users` cuando el alta trae `codigo_invitacion` (ver Crear cuenta). Ahí la persona todavía no tiene sesión, por eso el canje va dentro del alta y no es una función pública. Bloquea la fila del código, que tiene que estar sin usar y vigente (acepta minúsculas y espacios alrededor); crea el `Usuario` como Operario de la finca del código, guarda la aceptación del texto de la Ley 1581 y marca el código como canjeado. Si algo falla (`22023`), Supabase Auth no da de alta la identidad y el código sigue sin usar.
 - Los metadatos no deciden el rol ni la finca: solo el código. La tabla `invitacion` no se lee ni se escribe por la API, y `privado.canjear_invitacion` no se puede llamar por la API.
 
+## Quitar a un Operario
+
+El Ganadero revoca el acceso de un Operario a la finca (CU-05, RF-37, LIM-06). Está en `20261030120000_quitar_operario.sql`. La fila de `usuario` no se borra: Evento, Registro y Pesaje pendiente la referencian y nadie borra (RNF-04), así que sus registros anteriores siguen a su nombre. Se marca con `usuario.fecha_quitado`.
+
+- `privado.mi_finca()` y `privado.mi_rol()` devuelven nulo para un Usuario quitado. Todas las políticas RLS dependen de ellas: desde ese momento no lee ni escribe nada de la finca ni genera códigos de invitación, y `subir_cambios` rechaza sus cambios. La cuenta de Supabase Auth sigue existiendo.
+- `public.quitar_operario(id_operario uuid)` (`POST /rest/v1/rpc/quitar_operario`, con el JWT del usuario) es `SECURITY DEFINER`. Marca `fecha_quitado` y cambia `fecha_modificacion`, así que el cursor de descarga avanza. Devuelve `42501` si no hay sesión o quien llama no es Ganadero, y `22023` si el id no es de un Operario de su finca (otra finca, un Ganadero, alguien que no existe o que ya estaba quitado).
+- `public.sigo_en_la_finca()` (`POST /rest/v1/rpc/sigo_en_la_finca`, sin argumentos) devuelve si la cuenta de la sesión sigue en una finca. Responde aunque la cuenta ya no pase por RLS. El celular lo llama al empezar cada sincronización: si dice falso, no sube ni baja nada y cierra la sesión.
+- La lista de Operarios que ve el Ganadero se lee directo de `usuario`, que RLS limita a su finca. Trae también a los quitados, con `fecha_quitado`; la app los deja fuera.
+
 ## Subir cambios
 
 El celular llama `POST /rest/v1/rpc/subir_cambios` con `{"lote": [...]}` y el JWT del usuario (ADR-0005). Cada cambio del lote:

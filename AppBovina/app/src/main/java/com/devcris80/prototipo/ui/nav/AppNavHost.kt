@@ -24,6 +24,7 @@ import com.devcris80.prototipo.ui.components.DestinoBarra
 import com.devcris80.prototipo.ui.screens.AsociarChapetaScreen
 import com.devcris80.prototipo.ui.screens.BandejaRechazosScreen
 import com.devcris80.prototipo.ui.screens.EditarPesajeScreen
+import com.devcris80.prototipo.ui.screens.OperariosScreen
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EditarAnimalScreen
@@ -158,6 +159,7 @@ fun AppNavHost() {
                     },
                     onRechazosClick = { navController.navigate(Rutas.Rechazos.ruta) },
                     onInvitarClick = { navController.navigate(Rutas.InvitarOperario.ruta) },
+                    onOperariosClick = { navController.navigate(Rutas.Operarios.ruta) },
                 )
             }
             composable(Rutas.Rechazos.ruta) {
@@ -300,6 +302,9 @@ fun AppNavHost() {
             }
             composable(Rutas.InvitarOperario.ruta) {
                 InvitarOperarioScreen(onVolver = { navController.popBackStack() })
+            }
+            composable(Rutas.Operarios.ruta) {
+                OperariosScreen(onVolver = { navController.popBackStack() })
             }
             composable(Rutas.UbicacionFinca.ruta) {
                 RegistrarUbicacionFincaScreen(

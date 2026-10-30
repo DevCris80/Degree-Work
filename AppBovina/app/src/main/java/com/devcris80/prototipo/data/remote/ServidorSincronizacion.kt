@@ -14,6 +14,9 @@ interface ServidorSincronizacion {
 
     /** Llama `descargar_cambios`: una página de los cambios de la finca con cursor mayor que [desde]. */
     suspend fun descargarCambios(desde: Long, limite: Int): JsonObject
+
+    /** Llama `sigo_en_la_finca`: si la cuenta de la sesión sigue en una finca, o un Ganadero la quitó. */
+    suspend fun sigoEnLaFinca(): Boolean
 }
 
 /** Llama las funciones por PostgREST con el JWT de la sesión guardada. */
@@ -29,4 +32,6 @@ class SupabaseServidorSincronizacion(private val supabase: SupabaseClient) : Ser
                 put("limite", limite)
             },
         ).decodeAs<JsonObject>()
+
+    override suspend fun sigoEnLaFinca(): Boolean = supabase.postgrest.rpc("sigo_en_la_finca").decodeAs<Boolean>()
 }

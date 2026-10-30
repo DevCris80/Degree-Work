@@ -492,4 +492,46 @@ class MotorSincronizacionTest {
         fechaModificacion = 0,
         idVersion = "version-$idRegistro",
     )
+
+    @Test
+    fun unOperarioQuitadoNoSubeNiBajaNadaYSuSesionSeCierra() = runTest {
+        db.animalDao().insert(animal("animal-1", fechaModificacion = 1))
+        servidor.estaEnLaFinca = false
+        var sesionesCerradas = 0
+        val motorDelQuitado = MotorSincronizacion(
+            servidor,
+            db,
+            AlmacenFotosFalso(),
+            FotosLocalesFalsas(),
+            programarTrabajo = {},
+            clock = { 1_000 },
+            alQuitarCuenta = { sesionesCerradas++ },
+        )
+
+        assertEquals(ResultadoSincronizacion.CuentaQuitada, motorDelQuitado.sincronizar())
+
+        assertEquals(1, sesionesCerradas)
+        assertTrue(servidor.lotes.isEmpty())
+        assertTrue(servidor.descargas.isEmpty())
+        assertEquals("lo capturado antes se queda en el celular", listOf("animal-1"), db.animalDao().findPendientes().map { it.idAnimal })
+    }
+
+    @Test
+    fun unaCuentaQueSigueEnLaFincaPreguntaUnaVezYSincronizaConNormalidad() = runTest {
+        var sesionesCerradas = 0
+        val motorNormal = MotorSincronizacion(
+            servidor,
+            db,
+            AlmacenFotosFalso(),
+            FotosLocalesFalsas(),
+            programarTrabajo = {},
+            clock = { 1_000 },
+            alQuitarCuenta = { sesionesCerradas++ },
+        )
+
+        assertEquals(ResultadoSincronizacion.Completa(0, 0, 0), motorNormal.sincronizar())
+
+        assertEquals(1, servidor.consultasDeFinca)
+        assertEquals(0, sesionesCerradas)
+    }
 }

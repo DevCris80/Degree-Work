@@ -162,4 +162,5 @@ private fun ResultadoSincronizacion.aviso(): String = when (this) {
     }
     ResultadoSincronizacion.SinConexion -> "Sin señal. Lo que falta se sincroniza después."
     ResultadoSincronizacion.NoSePudo -> "No se pudo sincronizar. Intenta de nuevo."
+    ResultadoSincronizacion.CuentaQuitada -> "Tu cuenta ya no pertenece a esta finca."
 }

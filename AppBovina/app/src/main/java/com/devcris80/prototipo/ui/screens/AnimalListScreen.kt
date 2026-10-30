@@ -75,6 +75,7 @@ fun ListaAnimalesScreen(
     onRegistrarUbicacionClick: () -> Unit,
     onRechazosClick: () -> Unit,
     onInvitarClick: () -> Unit,
+    onOperariosClick: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         ListaAnimalesViewModel(
@@ -225,6 +226,7 @@ fun ListaAnimalesScreen(
             rol = estado.rol,
             nombreFinca = estado.nombreFinca,
             onInvitarClick = onInvitarClick.takeIf { estado.puedeInvitar },
+            onOperariosClick = onOperariosClick.takeIf { estado.rol?.puedeAdministrar == true },
             onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
             onCerrarSesionClick = { confirmarCierre = true },
             onCerrarPanel = { mostrarConfiguracion = false },

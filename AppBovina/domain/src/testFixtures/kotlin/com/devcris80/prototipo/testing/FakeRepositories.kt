@@ -24,6 +24,9 @@ import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
 import com.devcris80.prototipo.domain.repository.Invitacion
 import com.devcris80.prototipo.domain.repository.InvitacionRepository
+import com.devcris80.prototipo.domain.repository.OperarioRepository
+import com.devcris80.prototipo.domain.repository.ResultadoListaOperarios
+import com.devcris80.prototipo.domain.repository.ResultadoQuitarOperario
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoInvitacion
@@ -385,5 +388,24 @@ class FakeInvitacionRepository : InvitacionRepository {
         generaciones++
         espera?.await()
         return resultado
+    }
+}
+
+class FakeOperarioRepository : OperarioRepository {
+    var lista: ResultadoListaOperarios = ResultadoListaOperarios.Lista(emptyList())
+    var resultadoQuitar: ResultadoQuitarOperario = ResultadoQuitarOperario.Quitado
+    val quitados = mutableListOf<String>()
+
+    /** Si no es nulo, listar espera a que se complete. */
+    var espera: CompletableDeferred<Unit>? = null
+
+    override suspend fun listar(): ResultadoListaOperarios {
+        espera?.await()
+        return lista
+    }
+
+    override suspend fun quitar(idUsuario: String): ResultadoQuitarOperario {
+        quitados += idUsuario
+        return resultadoQuitar
     }
 }
