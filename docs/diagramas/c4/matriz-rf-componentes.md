@@ -1,6 +1,6 @@
 # Matriz de trazabilidad RF – componentes C4
 
-Corte: 28 de octubre de 2026. Fuente de los RF: SRS v0.5 (corte 28-10-2026). Componentes: diagramas C3 `C3_componentes_app.puml` y `C3_componentes_bd.puml`.
+Corte: 30 de octubre de 2026. Fuente de los RF: SRS v0.6 (corte 30-10-2026). Componentes: diagramas C3 `C3_componentes_app.puml` y `C3_componentes_bd.puml`.
 
 KPI de OE2: 100 % de los RF asignados a al menos un componente del modelo C4.
 
@@ -11,8 +11,8 @@ KPI de OE2: 100 % de los RF asignados a al menos un componente del modelo C4.
 | RF en la SRS | 43 |
 | RF asignados a al menos un componente | 43 |
 | Cobertura | **100 %** |
-| RF que solo usan componentes existentes (implementados o parciales) | 41 |
-| RF que dependen de al menos un componente planificado | 2 |
+| RF que solo usan componentes existentes (implementados o parciales) | 43 |
+| RF que dependen de al menos un componente planificado | 0 |
 
 La cobertura mide que la arquitectura asigna cada RF a un componente. No mide implementación: un RF puede quedar asignado a un componente planificado. La implementación se mide con el KPI de OE3.
 
@@ -24,7 +24,7 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-02 | Iniciar sesión con Supabase Auth | Implementado | UI-01, DAT-03 | App |
 | RF-03 | Conservar la sesión de forma segura | Implementado | DAT-03 | App |
 | RF-04 | Autorización de datos personales (Ley 1581) | Implementado | UI-01, DOM-01, DAT-03, BD-06 | App, Supabase |
-| RF-05 | Generar y canjear código de invitación | Pendiente | UI-06, UI-01, DAT-04, BD-06 | App, Supabase |
+| RF-05 | Generar y canjear código de invitación | Implementado | UI-06, UI-01, DAT-04, BD-06 | App, Supabase |
 | RF-06 | Permisos por rol en celular y servidor | Implementado | DOM-01, UI-02, UI-04, BD-03, BD-05, BD-06 | App, Supabase |
 | RF-07 | Recuperar contraseña | Implementado | UI-01, DAT-03 | App |
 | RF-08 | Registrar animal | Implementado | UI-02, DOM-02, DAT-01, DAT-06 | App |
@@ -38,7 +38,7 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-16 | Decidir el destino del código escaneado | Implementado | UI-03, DOM-02 | App |
 | RF-17 | Asociar chapeta al registrar el animal | Implementado | UI-02, DOM-02, DAT-01 | App |
 | RF-18 | Liberar chapeta | Implementado | UI-02, DOM-02, DAT-01 | App |
-| RF-19 | Asociar chapeta a animal existente | Pendiente | UI-02, UI-03, DOM-02, DAT-01 | App |
+| RF-19 | Asociar chapeta a animal existente | Implementado | UI-02, UI-03, DOM-02, DAT-01 | App |
 | RF-20 | Recibir POST /pesaje en servicio en primer plano | Implementado | DAT-02 | App |
 | RF-21 | Validar el pesaje y responder 400 | Implementado | DAT-02, DOM-03 | App |
 | RF-22 | Idempotencia por id_lectura | Implementado | DOM-03, DAT-01 | App |
@@ -49,14 +49,14 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | RF-27 | Pesaje manual | Implementado | UI-04, DOM-03, DAT-01 | App |
 | RF-28 | Registrar evento con fecha pasada o futura | Implementado | UI-05, DOM-04, DAT-01 | App |
 | RF-29 | Campos de vacunación y parto | Implementado | UI-05, DOM-04, DAT-01 | App |
-| RF-30 | Editar eventos y pesajes como revisiones | Pendiente | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
-| RF-31 | Baja lógica de eventos y pesajes | Pendiente | UI-02, DOM-04, DAT-01 | App |
-| RF-32 | Subir cambios locales | Parcial | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
+| RF-30 | Editar eventos y pesajes como revisiones | Parcial | UI-02, UI-05, DOM-04, DAT-01, BD-02 | App, Supabase |
+| RF-31 | Baja lógica de eventos y pesajes | Parcial | UI-02, DOM-04, DAT-01 | App |
+| RF-32 | Subir cambios locales | Implementado | DAT-05, BD-01, BD-05, BD-07 | App, Supabase |
 | RF-33 | Detectar concurrencia con rev_base (siblings) | Implementado | DAT-05, BD-02, BD-07 | App, Supabase |
 | RF-34 | Mostrar y resolver conflictos | Implementado | UI-07, DOM-04, DAT-05, BD-02 | App, Supabase |
-| RF-35 | Bandeja de rechazos | Parcial | UI-07, DAT-05, BD-03 | App, Supabase |
+| RF-35 | Bandeja de rechazos | Implementado | UI-07, DAT-05, BD-03 | App, Supabase |
 | RF-36 | Descargar cambios por cursor | Implementado | DAT-05, BD-04, BD-05, BD-07 | App, Supabase |
-| RF-37 | Quitar a un Operario | Pendiente | UI-06, DAT-04, BD-06 | App, Supabase |
+| RF-37 | Quitar a un Operario | Implementado | UI-06, DAT-04, BD-06 | App, Supabase |
 | RF-38 | Subir y descargar fotos | Implementado | DAT-06, DAT-05 | App |
 | RF-39 | Inventario activo | Implementado | UI-08, DOM-05, DAT-01 | App |
 | RF-40 | Evolución de peso y ganancia diaria | Implementado | UI-08, DOM-05, DAT-01 | App |
@@ -73,18 +73,18 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | UI-03 | Escanear | App | Implementado | RF-15, RF-16, RF-19 |
 | UI-04 | Pesajes | App | Implementado | RF-06, RF-25, RF-26, RF-27 |
 | UI-05 | Eventos | App | Parcial | RF-28, RF-29, RF-30 |
-| UI-06 | Finca y usuarios | App | Parcial | RF-05, RF-14, RF-37 |
+| UI-06 | Finca y usuarios | App | Implementado | RF-05, RF-14, RF-37 |
 | UI-07 | Sincronización | App | Implementado | RF-34, RF-35 |
 | UI-08 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DOM-01 | Cuenta y permisos | App | Implementado | RF-01, RF-04, RF-06 |
-| DOM-02 | Animales y chapetas | App | Parcial | RF-08, RF-11, RF-12, RF-13, RF-15, RF-16, RF-17, RF-18, RF-19 |
+| DOM-02 | Animales y chapetas | App | Implementado | RF-08, RF-11, RF-12, RF-13, RF-15, RF-16, RF-17, RF-18, RF-19 |
 | DOM-03 | Pesajes | App | Implementado | RF-21, RF-22, RF-23, RF-24, RF-26, RF-27 |
 | DOM-04 | Eventos y revisiones | App | Parcial | RF-28, RF-29, RF-30, RF-31, RF-34 |
 | DOM-05 | Indicadores | App | Implementado | RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-01 | Repositorios locales | App | Implementado | RF-08, RF-09, RF-10, RF-11, RF-12, RF-13, RF-14, RF-17, RF-18, RF-19, RF-22, RF-23, RF-26, RF-27, RF-28, RF-29, RF-30, RF-31, RF-39, RF-40, RF-41, RF-42, RF-43 |
 | DAT-02 | Servidor de pesajes | App | Implementado | RF-20, RF-21, RF-25 |
 | DAT-03 | Sesión y autenticación | App | Implementado | RF-01, RF-02, RF-03, RF-04, RF-07 |
-| DAT-04 | Funciones de finca | App | Planificado | RF-05, RF-37 |
+| DAT-04 | Funciones de finca | App | Implementado | RF-05, RF-37 |
 | DAT-05 | Motor de sincronización | App | Implementado | RF-32, RF-33, RF-34, RF-35, RF-36, RF-38 |
 | DAT-06 | Gestor de fotos | App | Implementado | RF-08, RF-38 |
 | BD-01 | Función subir_cambios | Supabase | Implementado | RF-32 |
@@ -92,12 +92,12 @@ La cobertura mide que la arquitectura asigna cada RF a un componente. No mide im
 | BD-03 | Clasificador de resultados | Supabase | Implementado | RF-06, RF-35 |
 | BD-04 | Función descargar_cambios | Supabase | Implementado | RF-36 |
 | BD-05 | Políticas RLS | Supabase | Implementado | RF-06, RF-32, RF-36 |
-| BD-06 | Funciones de finca | Supabase | Parcial | RF-01, RF-04, RF-05, RF-06, RF-37 |
+| BD-06 | Funciones de finca | Supabase | Implementado | RF-01, RF-04, RF-05, RF-06, RF-37 |
 | BD-07 | Tablas (datos, revisiones, siblings, cursor) | Supabase | Implementado | RF-32, RF-33, RF-36 |
 
 ## 4. Notas
 
 - RF-06 tiene dos barreras: la verificación de rol en el dominio (DOM-01), que funciona sin señal, y las políticas RLS (BD-05), que aplican porque las funciones de sincronización corren como el usuario (`SECURITY INVOKER`). Las funciones de finca (BD-06) corren con `SECURITY DEFINER` y validan rol y finca dentro de la función.
-- RF-01 y RF-04 se ejecutan en el servidor: la app registra la identidad en Supabase Auth (DAT-03) con la finca y la autorización como metadatos, y un trigger llama `crear_finca` (BD-06) en la misma transacción. RF-05 y RF-37 se ejecutarán con las funciones de invitación (BD-06), llamadas desde DAT-04. Ninguno pasa por la sincronización.
+- RF-01 y RF-04 se ejecutan en el servidor: la app registra la identidad en Supabase Auth (DAT-03) con la finca y la autorización como metadatos, y un trigger llama `crear_finca` (BD-06) en la misma transacción. RF-05 y RF-37 se ejecutan con las funciones de invitación y de quitar Operarios (BD-06), llamadas desde DAT-04. Ninguno pasa por la sincronización.
 - No hay un servicio de sincronización propio: PostgREST verifica el JWT y ejecuta las funciones de Postgres (ADR-0005).
 - El estado de cada componente corresponde a la rama `main` del repositorio en la fecha de corte.
