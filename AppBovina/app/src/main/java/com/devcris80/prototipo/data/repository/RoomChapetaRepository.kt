@@ -24,6 +24,9 @@ class RoomChapetaRepository(
     override fun observeActivaByAnimal(idAnimal: String): Flow<Chapeta?> =
         chapetaDao.observeActivaByAnimal(idAnimal).map { it?.toDomain() }
 
+    override suspend fun findActivaByAnimal(idAnimal: String): Chapeta? =
+        chapetaDao.findActivaByAnimal(idAnimal)?.toDomain()
+
     override suspend fun liberar(idChapeta: String, fecha: Long) =
         chapetaDao.desasociar(idChapeta, fecha, fechaModificacion = clock())
 }

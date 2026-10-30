@@ -23,7 +23,6 @@ import androidx.compose.material.icons.filled.Numbers
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Pets
 import androidx.compose.material.icons.filled.PhotoLibrary
-import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
 import androidx.compose.material3.Card
 import androidx.compose.material3.CardDefaults
@@ -73,6 +72,7 @@ import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.CampoConIcono
 import com.devcris80.prototipo.ui.components.FotoAnimal
+import com.devcris80.prototipo.ui.components.OfertaPesajesPendientesDialog
 import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.theme.Prototipo1Theme
@@ -463,28 +463,7 @@ private fun RegistrarAnimalContent(
     }
 
     estado.ofertaPesajesPendientes?.let { oferta ->
-        AlertDialog(
-            onDismissRequest = { onOfertaPesajesPendientesRespondida(false) },
-            title = {
-                Text("¿Asignar los ${oferta.pesajes.size} pesajes pendientes de ${oferta.codigo} a ${oferta.nombreAnimal}?")
-            },
-            text = {
-                Column {
-                    oferta.pesajes.forEach { pendiente ->
-                        Text(
-                            text = "${pendiente.peso} kg · ${formatoFecha.format(Date(pendiente.timestamp))}",
-                            style = MaterialTheme.typography.bodySmall,
-                        )
-                    }
-                }
-            },
-            confirmButton = {
-                TextButton(onClick = { onOfertaPesajesPendientesRespondida(true) }) { Text("Sí") }
-            },
-            dismissButton = {
-                TextButton(onClick = { onOfertaPesajesPendientesRespondida(false) }) { Text("No") }
-            },
-        )
+        OfertaPesajesPendientesDialog(oferta = oferta, onRespondida = onOfertaPesajesPendientesRespondida)
     }
 }
 

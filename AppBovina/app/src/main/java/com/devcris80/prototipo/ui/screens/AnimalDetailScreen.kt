@@ -69,6 +69,7 @@ fun DetalleAnimalScreen(
     onNuevoEventoClick: () -> Unit,
     onNuevoPesajeClick: () -> Unit,
     onEditarClick: () -> Unit = {},
+    onAsociarChapetaClick: () -> Unit = {},
     onAnimalClick: (idAnimal: String) -> Unit = {},
     onResolverConflictoClick: (entidad: EntidadConRevisiones, idFila: String) -> Unit = { _, _ -> },
 ) {
@@ -351,6 +352,15 @@ fun DetalleAnimalScreen(
                     modifier = Modifier.fillMaxWidth(),
                     icon = Icons.Filled.Add,
                 )
+            }
+            if (animal.activo && chapeta == null) {
+                item {
+                    BovinaSecondaryButton(
+                        texto = "Asociar chapeta",
+                        onClick = onAsociarChapetaClick,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
             }
             item {
                 chapeta?.takeIf { estado.puedeAdministrar }?.let { chapetaActual ->

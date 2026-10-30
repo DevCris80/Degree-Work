@@ -131,7 +131,7 @@ class EscanearViewModelTest {
     }
 
     @Test
-    fun liberarDesdeDadoDeBaja_reresuelveYRegistraConAviso() = runTest {
+    fun liberarDesdeDadoDeBaja_reresuelveYOfreceRegistrarOAsociarConAviso() = runTest {
         val canela = animal("Canela", fechaBaja = 5L)
         animalRepository.set(canela)
         val activa = chapeta(canela.idAnimal, "04A1B2C3")
@@ -141,17 +141,51 @@ class EscanearViewModelTest {
         viewModel.onLiberarChapeta()
 
         assertEquals(
-            EscanearEvento.Registrar("04A1B2C3", "Este tag estuvo asociado a Canela"),
-            viewModel.eventos.first(),
+            EscanearUiState.CodigoSinChapeta("04A1B2C3", "Este tag estuvo asociado a Canela"),
+            viewModel.estado.value,
         )
         assertEquals(2L, chapetaRepository.chapeta(activa.idChapeta)!!.fechaDesasociacion)
     }
 
     @Test
-    fun tagNuncaVisto_emiteRegistrarSinAviso() = runTest {
+    fun tagNuncaVisto_ofreceRegistrarOAsociar() = runTest {
         viewModel.onCodigoLeido("FFEEDD00")
 
-        assertEquals(EscanearEvento.Registrar("FFEEDD00", null), viewModel.eventos.first())
+        assertEquals(EscanearUiState.CodigoSinChapeta("FFEEDD00", null), viewModel.estado.value)
+    }
+
+    @Test
+    fun registrarNuevoDesdeUnTagSinChapeta_emiteRegistrarConElAviso() = runTest {
+        val canela = animal("Canela")
+        animalRepository.set(canela)
+        chapetaRepository.set(chapeta(canela.idAnimal, "04A1B2C3", fechaDesasociacion = 4L))
+        viewModel.onCodigoLeido("04A1B2C3")
+
+        viewModel.onRegistrarNuevo()
+
+        assertEquals(
+            EscanearEvento.Registrar("04A1B2C3", "Este tag estuvo asociado a Canela"),
+            viewModel.eventos.first(),
+        )
+        assertEquals(EscanearUiState.EsperandoTag, viewModel.estado.value)
+    }
+
+    @Test
+    fun asociarAUnoExistenteDesdeUnTagSinChapeta_emiteAsociarConElCodigo() = runTest {
+        viewModel.onCodigoLeido("FFEEDD00")
+
+        viewModel.onAsociarAExistente()
+
+        assertEquals(EscanearEvento.Asociar("FFEEDD00"), viewModel.eventos.first())
+        assertEquals(EscanearUiState.EsperandoTag, viewModel.estado.value)
+    }
+
+    @Test
+    fun registrarOAsociarSinUnTagSinChapeta_noHaceNada() = runTest {
+        viewModel.onRegistrarNuevo()
+        viewModel.onAsociarAExistente()
+
+        assertEquals(EscanearUiState.EsperandoTag, viewModel.estado.value)
     }
 
     @Test

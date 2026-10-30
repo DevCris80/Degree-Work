@@ -40,4 +40,13 @@ sealed class Rutas(val ruta: String) {
     data object EstadoServicio : Rutas("servicio")
     data object UbicacionFinca : Rutas("ubicacion-finca")
     data object InvitarOperario : Rutas("invitar-operario")
+    data object AsociarChapeta : Rutas("asociar-chapeta?idAnimal={idAnimal}&codigo={codigo}") {
+        fun crear(idAnimal: String? = null, codigo: String? = null): String {
+            val params = listOfNotNull(
+                idAnimal?.let { "idAnimal=${Uri.encode(it)}" },
+                codigo?.let { "codigo=${Uri.encode(it)}" },
+            )
+            return if (params.isEmpty()) "asociar-chapeta" else "asociar-chapeta?${params.joinToString("&")}"
+        }
+    }
 }

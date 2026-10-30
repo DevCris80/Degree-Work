@@ -104,6 +104,8 @@ class FakeChapetaRepository : ChapetaRepository {
         porAnimal.getOrPut(idAnimal) {
             MutableStateFlow(todas.value.firstOrNull { it.idAnimal == idAnimal && it.fechaDesasociacion == null })
         }
+    override suspend fun findActivaByAnimal(idAnimal: String): Chapeta? =
+        todas.value.firstOrNull { it.idAnimal == idAnimal && it.fechaDesasociacion == null }
     override suspend fun liberar(idChapeta: String, fecha: Long) {
         liberadas.add(idChapeta)
         todas.value = todas.value.map { if (it.idChapeta == idChapeta) it.copy(fechaDesasociacion = fecha) else it }
