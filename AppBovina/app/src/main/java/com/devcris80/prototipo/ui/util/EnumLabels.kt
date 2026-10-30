@@ -4,6 +4,7 @@ import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
 import com.devcris80.prototipo.domain.model.MotivoPesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
+import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.model.Sexo
 
 /** Traduce los enum del dominio a las etiquetas en español que ya usaba la UI. */
@@ -32,3 +33,8 @@ fun MotivoPesajePendiente.aEtiqueta(): String = when (this) {
 
 /** El nombre de un Animal, marcado si está dado de baja (por ejemplo, un padre que ya salió de la finca). */
 fun Animal.nombreConBaja(): String = if (activo) nombre else "$nombre (dado de baja)"
+
+fun Rol.aEtiqueta(): String = when (this) {
+    Rol.GANADERO -> "Ganadero"
+    Rol.OPERARIO -> "Operario"
+}

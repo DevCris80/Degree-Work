@@ -2,6 +2,7 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
@@ -15,13 +16,13 @@ import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowForward
-import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.CheckCircle
 import androidx.compose.material.icons.filled.FilterList
 import androidx.compose.material.icons.filled.Insights
 import androidx.compose.material.icons.filled.MonitorWeight
 import androidx.compose.material.icons.filled.Search
+import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.Sync
 import androidx.compose.material.icons.filled.Warning
 import androidx.compose.material3.AlertDialog
@@ -89,6 +90,7 @@ fun ListaAnimalesScreen(
     }
     val estado by viewModel.estado.collectAsState()
     var confirmarCierre by remember { mutableStateOf(false) }
+    var mostrarConfiguracion by remember { mutableStateOf(false) }
     val snackbar = remember { SnackbarHostState() }
     LaunchedEffect(estado.avisoSincronizacion) {
         estado.avisoSincronizacion?.let {
@@ -105,116 +107,127 @@ fun ListaAnimalesScreen(
             item.codigoChapeta?.contains(busqueda, ignoreCase = true) == true
     }
 
-    Scaffold(
-        topBar = {
-            BovinaTopBar(titulo = "Animales", mostrarLogo = true) {
-                IconButton(onClick = viewModel::onSincronizar, enabled = !estado.sincronizando) {
-                    if (estado.sincronizando) {
-                        CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
-                    } else {
-                        Icon(Icons.Filled.Sync, contentDescription = "Sincronizar ahora")
+    Box(modifier = Modifier.fillMaxSize()) {
+        Scaffold(
+            topBar = {
+                BovinaTopBar(titulo = "Animales", mostrarLogo = true) {
+                    IconButton(onClick = viewModel::onSincronizar, enabled = !estado.sincronizando) {
+                        if (estado.sincronizando) {
+                            CircularProgressIndicator(modifier = Modifier.size(20.dp), strokeWidth = 2.dp)
+                        } else {
+                            Icon(Icons.Filled.Sync, contentDescription = "Sincronizar ahora")
+                        }
+                    }
+                    IconButton(onClick = onIndicadoresClick) {
+                        Icon(Icons.Filled.Insights, contentDescription = "Indicadores")
+                    }
+                    IconButton(onClick = { mostrarConfiguracion = true }) {
+                        Icon(Icons.Filled.Settings, contentDescription = "Configuración")
                     }
                 }
-                IconButton(onClick = onIndicadoresClick) {
-                    Icon(Icons.Filled.Insights, contentDescription = "Indicadores")
-                }
-                IconButton(onClick = { confirmarCierre = true }) {
-                    Icon(Icons.AutoMirrored.Filled.Logout, contentDescription = "Cerrar sesión")
-                }
-            }
-        },
-        snackbarHost = { SnackbarHost(snackbar) },
-        floatingActionButton = {
-            ExtendedFloatingActionButton(
-                onClick = onNuevoAnimalClick,
-                shape = CircleShape,
-                containerColor = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-            ) {
-                Icon(Icons.Filled.Add, contentDescription = null)
-                Text(
-                    text = "  Registrar",
-                    style = MaterialTheme.typography.labelLarge,
-                )
-            }
-        },
-    ) { innerPadding ->
-        LazyColumn(
-            modifier = Modifier
-                .fillMaxSize()
-                .padding(innerPadding)
-                .padding(horizontal = BovinaScreenGutter),
-            verticalArrangement = Arrangement.spacedBy(12.dp),
-            contentPadding = PaddingValues(bottom = 96.dp, top = 4.dp),
-        ) {
-            // Un Rechazo espera a una persona (RN-24): va primero.
-            if (estado.rechazosAbiertos > 0) {
-                item {
-                    AvisoEnLista(
-                        texto = if (estado.rechazosAbiertos == 1) "1 cambio rechazado" else "${estado.rechazosAbiertos} cambios rechazados",
-                        onClick = onRechazosClick,
-                        fondo = MaterialTheme.colorScheme.errorContainer,
-                        color = MaterialTheme.colorScheme.onErrorContainer,
-                    )
-                }
-            }
-            if (estado.pesajesPendientes > 0) {
-                item {
-                    AvisoEnLista(
-                        texto = "${estado.pesajesPendientes} pesajes pendientes",
-                        onClick = onPesajesPendientesClick,
-                        fondo = MaterialTheme.colorScheme.tertiaryContainer,
-                        color = MaterialTheme.colorScheme.onTertiaryContainer,
-                    )
-                }
-            }
-            item {
-                ResumenFinca(
-                    nombreUsuario = estado.nombreUsuario,
-                    nombreFinca = estado.nombreFinca,
-                    totalAnimales = estado.animales.size,
-                    onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
-                    onInvitarClick = onInvitarClick.takeIf { estado.puedeInvitar },
-                    rechazosAbiertos = estado.rechazosAbiertos,
-                    cambiosSinSubir = estado.cambiosSinSubir,
-                )
-            }
-            item {
-                Row(
-                    verticalAlignment = Alignment.CenterVertically,
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
+            },
+            snackbarHost = { SnackbarHost(snackbar) },
+            floatingActionButton = {
+                ExtendedFloatingActionButton(
+                    onClick = onNuevoAnimalClick,
+                    shape = CircleShape,
+                    containerColor = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
                 ) {
-                    BovinaTextField(
-                        value = busqueda,
-                        onValueChange = { busqueda = it },
-                        modifier = Modifier.weight(1f),
-                        placeholder = "Buscar por chapeta o nombre...",
-                        leadingIcon = Icons.Filled.Search,
+                    Icon(Icons.Filled.Add, contentDescription = null)
+                    Text(
+                        text = "  Registrar",
+                        style = MaterialTheme.typography.labelLarge,
                     )
-                    IconButton(onClick = {}) {
-                        Icon(Icons.Filled.FilterList, contentDescription = "Filtros")
-                    }
                 }
-            }
-            item {
-                LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                    items(FILTROS_PROPOSITO) { proposito ->
-                        BovinaFilterChip(
-                            texto = proposito?.aEtiqueta() ?: "Todos",
-                            seleccionado = estado.filtro == proposito,
-                            onClick = { viewModel.onFiltroSeleccionado(proposito) },
+            },
+        ) { innerPadding ->
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .padding(innerPadding)
+                    .padding(horizontal = BovinaScreenGutter),
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+                contentPadding = PaddingValues(bottom = 96.dp, top = 4.dp),
+            ) {
+                // Un Rechazo espera a una persona (RN-24): va primero.
+                if (estado.rechazosAbiertos > 0) {
+                    item {
+                        AvisoEnLista(
+                            texto = if (estado.rechazosAbiertos == 1) "1 cambio rechazado" else "${estado.rechazosAbiertos} cambios rechazados",
+                            onClick = onRechazosClick,
+                            fondo = MaterialTheme.colorScheme.errorContainer,
+                            color = MaterialTheme.colorScheme.onErrorContainer,
                         )
                     }
                 }
-            }
-            items(listaFiltrada, key = { it.animal.idAnimal }) { item ->
-                TarjetaAnimal(
-                    item = item,
-                    enConflicto = item.animal.idAnimal in estado.animalesEnConflicto,
-                    onClick = { onAnimalClick(item.animal.idAnimal) },
-                )
+                if (estado.pesajesPendientes > 0) {
+                    item {
+                        AvisoEnLista(
+                            texto = "${estado.pesajesPendientes} pesajes pendientes",
+                            onClick = onPesajesPendientesClick,
+                            fondo = MaterialTheme.colorScheme.tertiaryContainer,
+                            color = MaterialTheme.colorScheme.onTertiaryContainer,
+                        )
+                    }
+                }
+                item {
+                    ResumenFinca(
+                        nombreUsuario = estado.nombreUsuario,
+                        nombreFinca = estado.nombreFinca,
+                        totalAnimales = estado.animales.size,
+                        rechazosAbiertos = estado.rechazosAbiertos,
+                        cambiosSinSubir = estado.cambiosSinSubir,
+                    )
+                }
+                item {
+                    Row(
+                        verticalAlignment = Alignment.CenterVertically,
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        BovinaTextField(
+                            value = busqueda,
+                            onValueChange = { busqueda = it },
+                            modifier = Modifier.weight(1f),
+                            placeholder = "Buscar por chapeta o nombre...",
+                            leadingIcon = Icons.Filled.Search,
+                        )
+                        IconButton(onClick = {}) {
+                            Icon(Icons.Filled.FilterList, contentDescription = "Filtros")
+                        }
+                    }
+                }
+                item {
+                    LazyRow(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                        items(FILTROS_PROPOSITO) { proposito ->
+                            BovinaFilterChip(
+                                texto = proposito?.aEtiqueta() ?: "Todos",
+                                seleccionado = estado.filtro == proposito,
+                                onClick = { viewModel.onFiltroSeleccionado(proposito) },
+                            )
+                        }
+                    }
+                }
+                items(listaFiltrada, key = { it.animal.idAnimal }) { item ->
+                    TarjetaAnimal(
+                        item = item,
+                        enConflicto = item.animal.idAnimal in estado.animalesEnConflicto,
+                        onClick = { onAnimalClick(item.animal.idAnimal) },
+                    )
+                }
             }
         }
+
+        PanelConfiguracion(
+            visible = mostrarConfiguracion,
+            nombreUsuario = estado.nombreUsuario,
+            rol = estado.rol,
+            nombreFinca = estado.nombreFinca,
+            onInvitarClick = onInvitarClick.takeIf { estado.puedeInvitar },
+            onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
+            onCerrarSesionClick = { confirmarCierre = true },
+            onCerrar = { mostrarConfiguracion = false },
+        )
     }
 
     if (confirmarCierre) {
@@ -240,8 +253,6 @@ private fun ResumenFinca(
     nombreUsuario: String,
     nombreFinca: String,
     totalAnimales: Int,
-    onRegistrarUbicacionClick: (() -> Unit)?,
-    onInvitarClick: (() -> Unit)?,
     rechazosAbiertos: Int,
     cambiosSinSubir: Int,
 ) {
@@ -299,19 +310,6 @@ private fun ResumenFinca(
                 style = MaterialTheme.typography.labelMedium,
                 color = color,
             )
-        }
-        if (onRegistrarUbicacionClick != null || onInvitarClick != null) {
-            Row(
-                modifier = Modifier.fillMaxWidth().padding(top = 12.dp),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                if (onInvitarClick != null) {
-                    TextButton(onClick = onInvitarClick) { Text(text = "Invitar a un Operario") }
-                }
-                if (onRegistrarUbicacionClick != null) {
-                    TextButton(onClick = onRegistrarUbicacionClick) { Text(text = "Registrar ubicación de la finca") }
-                }
-            }
         }
     }
 }
