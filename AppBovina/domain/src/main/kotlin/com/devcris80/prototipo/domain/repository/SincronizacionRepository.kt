@@ -40,6 +40,12 @@ sealed interface ResultadoSincronizacion {
      */
     data object SinConexion : ResultadoSincronizacion
 
+    /**
+     * El servidor dice que la cuenta ya no pertenece a la finca (un Ganadero quitó a este Operario, RF-37). No subió ni
+     * descargó nada y la sesión se cerró. Lo capturado en este celular antes de eso no llega al servidor (LIM-06).
+     */
+    data object CuentaQuitada : ResultadoSincronizacion
+
     /** El servidor respondió con un error inesperado. */
     data object NoSePudo : ResultadoSincronizacion
 }

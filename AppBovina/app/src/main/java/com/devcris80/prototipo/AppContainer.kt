@@ -18,6 +18,7 @@ import com.devcris80.prototipo.data.repository.RoomRechazoRepository
 import com.devcris80.prototipo.data.repository.RoomRegistroRepository
 import com.devcris80.prototipo.data.repository.RoomTransaccion
 import com.devcris80.prototipo.data.repository.SupabaseInvitacionRepository
+import com.devcris80.prototipo.data.repository.SupabaseOperarioRepository
 import com.devcris80.prototipo.data.repository.SupabaseSesionRepository
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
@@ -25,6 +26,7 @@ import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.InvitacionRepository
+import com.devcris80.prototipo.domain.repository.OperarioRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
@@ -44,6 +46,7 @@ import com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazos
 import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
+import com.devcris80.prototipo.domain.usecase.QuitarOperario
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarEvento
 import com.devcris80.prototipo.domain.usecase.RegistrarPesaje
@@ -86,6 +89,7 @@ class AppContainer(context: Context) {
         SupabaseAlmacenFotos(supabase),
         FotosEnArchivos(context),
         programarTrabajo = ProgramadorSincronizacion(context)::programar,
+        alQuitarCuenta = { sesionRepository.cerrarSesion() },
     )
 
     val registrarPesaje = RegistrarPesaje(
@@ -112,6 +116,8 @@ class AppContainer(context: Context) {
     val liberarChapeta = LiberarChapeta(chapetaRepository, cuentaRepository)
     val crearCuenta = CrearCuenta(sesionRepository)
     val invitacionRepository: InvitacionRepository = SupabaseInvitacionRepository(supabase)
+    val operarioRepository: OperarioRepository = SupabaseOperarioRepository(supabase)
+    val quitarOperario = QuitarOperario(operarioRepository, cuentaRepository)
     val observarPesajesPendientes =
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository)
     val asignarPesajesPendientes = AsignarPesajesPendientes(

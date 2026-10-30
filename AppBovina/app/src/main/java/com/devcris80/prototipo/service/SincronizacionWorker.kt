@@ -25,6 +25,8 @@ class SincronizacionWorker(context: Context, params: WorkerParameters) : Corouti
                 is ResultadoSincronizacion.Completa ->
                     if (sincronizacion.observeEstado().first().cambiosSinSubir == 0) break
                 ResultadoSincronizacion.SinConexion, ResultadoSincronizacion.NoSePudo -> return reintentar()
+                // La sesión ya se cerró: no hay nada más que sincronizar ni que reintentar.
+                ResultadoSincronizacion.CuentaQuitada -> return Result.success()
             }
         }
         // Las fotos, después de los datos y aparte: una que no pasa no los detiene.

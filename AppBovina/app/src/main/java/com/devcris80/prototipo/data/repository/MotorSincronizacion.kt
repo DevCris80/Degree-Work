@@ -56,6 +56,7 @@ class MotorSincronizacion(
     private val tamanoLote: Int = TAMANO_LOTE,
     private val tamanoPagina: Int = TAMANO_PAGINA,
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
+    private val alQuitarCuenta: suspend () -> Unit = {},
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
     private val bandeja = BandejaDeRechazos(database.rechazoDao(), clock, nuevoIdRechazo)
@@ -66,6 +67,11 @@ class MotorSincronizacion(
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
         salvoCancelacion(
             bloque = {
+                // Un Operario quitado no sube nada: su sesión se cierra y lo capturado antes se queda en el celular (LIM-06).
+                if (!servidor.sigoEnLaFinca()) {
+                    alQuitarCuenta()
+                    return@salvoCancelacion ResultadoSincronizacion.CuentaQuitada
+                }
                 val subida = tablas.fold(ResultadoSincronizacion.Completa(0, 0, 0)) { conteo, tabla -> conteo + subir(tabla) }
                 descargar()
                 subida

@@ -291,6 +291,38 @@ class ListaAnimalesViewModelTest {
     }
 
     @Test
+    fun sincronizarConLaCuentaQuitada_avisaYNoDejaProgramadoElTrabajo() = runTest {
+        sincronizacionRepository.resultado = ResultadoSincronizacion.CuentaQuitada
+        val viewModel = crearViewModel()
+        val estados = mutableListOf<ListaAnimalesUiState>()
+        val job = launch { viewModel.estado.collect { estados.add(it) } }
+
+        viewModel.onSincronizar()
+        advanceUntilIdle()
+
+        assertEquals(0, sincronizacionRepository.programaciones)
+        assertEquals("Tu cuenta ya no pertenece a esta finca.", estados.last().avisoSincronizacion)
+        job.cancel()
+    }
+
+    @Test
+    fun soloElGanaderoPuedeQuitarOperarios() = runTest {
+        suspend fun puede(usuario: Usuario?): Boolean {
+            cuentaRepository.usuario.value = usuario
+            val viewModel = crearViewModel()
+            val estados = mutableListOf<ListaAnimalesUiState>()
+            val job = launch { viewModel.estado.collect { estados.add(it) } }
+            advanceUntilIdle()
+            job.cancel()
+            return estados.last().puedeQuitarOperarios
+        }
+
+        assertEquals(true, puede(Usuario("u1", "perfil_local", "Ana", Rol.GANADERO)))
+        assertEquals(false, puede(Usuario("u2", "perfil_local", "Beto", Rol.OPERARIO)))
+        assertEquals("sin Usuario no hay permiso", false, puede(null))
+    }
+
+    @Test
     fun mientrasSincroniza_otroToqueNoVuelveASubir() = runTest {
         sincronizacionRepository.espera = CompletableDeferred()
         val viewModel = crearViewModel()

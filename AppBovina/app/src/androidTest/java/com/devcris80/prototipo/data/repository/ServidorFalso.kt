@@ -31,6 +31,15 @@ internal class ServidorFalso : ServidorSincronizacion {
     /** Si no es nulo, se llama antes de responder cada página; puede lanzar una excepción. */
     var antesDeDescargar: (() -> Unit)? = null
 
+    /** Lo que contesta `sigo_en_la_finca`: falso cuando un Ganadero quitó a este Usuario. */
+    var estaEnLaFinca = true
+    var consultasDeFinca = 0
+
+    override suspend fun sigoEnLaFinca(): Boolean {
+        consultasDeFinca++
+        return estaEnLaFinca
+    }
+
     override suspend fun subirCambios(lote: JsonArray): JsonArray {
         lotes += lote
         return responder(lote)

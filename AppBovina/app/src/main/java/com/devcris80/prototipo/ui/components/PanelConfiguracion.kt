@@ -11,6 +11,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.Logout
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.GroupRemove
 import androidx.compose.material.icons.filled.LocationOn
 import androidx.compose.material.icons.filled.PersonAdd
 import androidx.compose.material3.HorizontalDivider
@@ -39,6 +40,7 @@ fun PanelConfiguracion(
     rol: Rol?,
     nombreFinca: String,
     onInvitarClick: (() -> Unit)?,
+    onOperariosClick: (() -> Unit)?,
     onRegistrarUbicacionClick: (() -> Unit)?,
     onCerrarSesionClick: () -> Unit,
     onCerrarPanel: () -> Unit,
@@ -69,6 +71,13 @@ fun PanelConfiguracion(
                 icono = Icons.Filled.PersonAdd,
                 texto = "Invitar a un Operario",
                 onClick = alElegir(onInvitarClick),
+            )
+        }
+        if (onOperariosClick != null) {
+            OpcionDelPanel(
+                icono = Icons.Filled.GroupRemove,
+                texto = "Quitar a un Operario",
+                onClick = alElegir(onOperariosClick),
             )
         }
         if (onRegistrarUbicacionClick != null) {
