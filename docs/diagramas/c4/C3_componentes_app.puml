@@ -18,21 +18,21 @@ System_Ext(bascula, "Báscula IoT (ESP32)", "UID y peso simulados")
 Container_Boundary(app, "App MiGanado (Kotlin, Jetpack Compose)") {
 
   Boundary(ui, "Capa de presentación (pantallas Compose + ViewModel)", "paquete ui") {
-    Component(uiCuenta, "UI-01 Cuenta y acceso", "Compose, ViewModel", "Estado: parcial. Crear cuenta con la autorización Ley 1581, iniciar sesión y recuperar la contraseña. Falta canjear un código de invitación.", $tags="parcial")
-    Component(uiAnimales, "UI-02 Animales", "Compose, ViewModel", "Estado: parcial. Lista, detalle con historial y genealogía, registro, edición, baja y liberación de chapeta. Falta asociar chapeta.", $tags="parcial")
+    Component(uiCuenta, "UI-01 Cuenta y acceso", "Compose, ViewModel", "Crear cuenta con la autorización Ley 1581, o unirse a una finca con un código de invitación; iniciar sesión y recuperar la contraseña.")
+    Component(uiAnimales, "UI-02 Animales", "Compose, ViewModel", "Estado: parcial. Lista, detalle con historial y genealogía, registro, edición, baja, liberación y asociación de chapeta, y edición y baja de pesajes. Falta editar y dar de baja un evento.", $tags="parcial")
     Component(uiEscanear, "UI-03 Escanear", "Compose, NfcAdapter (modo lector NFC-A)", "Lee el UID de la chapeta y decide el destino del código.")
     Component(uiPesajes, "UI-04 Pesajes", "Compose, ViewModel", "Inicia y detiene el servicio de pesaje, concilia pendientes y registra el pesaje manual. Oculta al Operario lo que su rol no permite.")
     Component(uiEventos, "UI-05 Eventos", "Compose, ViewModel", "Estado: parcial. Lista de los eventos de la finca, con los programados primero, y registro con fecha pasada o futura y los campos de vacunación y parto. Faltan edición y baja.", $tags="parcial")
-    Component(uiFinca, "UI-06 Finca y usuarios", "Compose, ViewModel, ubicación del sistema", "Estado: parcial. Ubicación de la finca, que solo registra el Ganadero. Faltan la invitación y quitar un Operario.", $tags="parcial")
+    Component(uiFinca, "UI-06 Finca y usuarios", "Compose, ViewModel, ubicación del sistema", "Ubicación de la finca, que solo registra el Ganadero; invitar a un Operario con un código y quitarlo de la finca.")
     Component(uiSync, "UI-07 Sincronización", "Compose, ViewModel", "Aviso en la lista de los cambios por subir, en conflicto o rechazados, botón para sincronizar, resolución de conflictos y bandeja de rechazos.")
     Component(uiInd, "UI-08 Indicadores", "Compose, ViewModel", "Inventario, evolución de peso, pendientes, eventos por mes y completitud del historial, calculados sobre Room.")
   }
 
   Boundary(dom, "Capa de dominio (módulo :domain, Kotlin puro)", "módulo Gradle") {
     Component(domCuenta, "DOM-01 Cuenta y permisos", "Kotlin", "CrearCuenta y la política de permisos por rol (Rol.puedeAdministrar), que se verifica sin señal.")
-    Component(domAnimales, "DOM-02 Animales y chapetas", "Kotlin", "Estado: parcial. RegistrarAnimal (con padre y madre), ActualizarAnimal, DarDeBajaAnimal, LiberarChapeta, ResolverDestinoEscaneo y normalización del código. Falta asociar chapeta.", $tags="parcial")
+    Component(domAnimales, "DOM-02 Animales y chapetas", "Kotlin", "RegistrarAnimal (con padre y madre), ActualizarAnimal, DarDeBajaAnimal, LiberarChapeta, AsociarChapeta, ResolverDestinoEscaneo y normalización del código.")
     Component(domPesajes, "DOM-03 Pesajes", "Kotlin", "RegistrarPesaje (idempotente, hora = recepción − antiguedad_ms), RegistrarPesajeManual, asignar y descartar pendientes.")
-    Component(domEventos, "DOM-04 Eventos y revisiones", "Kotlin", "Estado: parcial. RegistrarEvento (campos de cada tipo y cría del parto) y ResolverConflicto. Faltan edición con rev_base y baja lógica de eventos y pesajes.", $tags="parcial")
+    Component(domEventos, "DOM-04 Eventos y revisiones", "Kotlin", "Estado: parcial. RegistrarEvento (campos de cada tipo y cría del parto), ResolverConflicto, y la edición con rev_base y la baja lógica de pesajes. Faltan las de eventos.", $tags="parcial")
     Component(domInd, "DOM-05 Indicadores", "Kotlin", "ObservarIndicadoresHato y ObservarEvolucionPeso: inventario, ganancia diaria de peso, pendientes, eventos por mes y completitud del historial.")
   }
 
@@ -40,7 +40,7 @@ Container_Boundary(app, "App MiGanado (Kotlin, Jetpack Compose)") {
     Component(repos, "DAT-01 Repositorios locales", "Room DAO, transacciones", "Única puerta a Room: escribe con sincronizado = false, fechaModificacion y los campos de revisión (rev, revBase, idVersion). Guarda también los siblings, los rechazos y el estado de sincronización.")
     Component(srvPesaje, "DAT-02 Servidor de pesajes", "NanoHTTPD en servicio en primer plano", "POST /pesaje en el puerto 8080: valida el cuerpo y responde 201, 202, 400, 503 o 500.")
     Component(sesion, "DAT-03 Sesión y autenticación", "supabase-kt Auth, almacenamiento cifrado con Android Keystore", "Guarda y renueva el JWT fuera de Room.")
-    Component(funciones, "DAT-04 Funciones de finca", "supabase-kt PostgREST (rpc)", "Llamará generar_invitacion, canjear_invitacion y quitar_operario. Crear la cuenta no pasa por aquí: la finca la crea el servidor al registrarse (DAT-03).", $tags="planificado")
+    Component(funciones, "DAT-04 Funciones de finca", "supabase-kt PostgREST (rpc)", "Llama generar_invitacion y quitar_operario, y lista los Operarios. Crear la cuenta y canjear un código no pasan por aquí: el servidor crea la finca o une a la persona a una finca al registrarse (DAT-03).")
     Component(motorSync, "DAT-05 Motor de sincronización", "WorkManager, supabase-kt PostgREST (rpc)", "Sube por lotes las filas con sincronizado = false, aplica la respuesta por fila (aceptada, sibling o rechazada) y descarga por cursor. Corre como un trabajo único de WorkManager cuando hay señal.")
     Component(fotos, "DAT-06 Gestor de fotos", "FileProvider, conversión a WebP", "Captura y guarda la foto local, la convierte a WebP, la sube y descarga las de otros dispositivos.")
   }
@@ -61,7 +61,7 @@ Rel(uiPesajes, domPesajes, "Asigna y descarta pendientes")
 Rel(uiEventos, repos, "Observa eventos", "Flow")
 Rel(uiEventos, domEventos, "Registra eventos")
 Rel(uiEventos, domEventos, "Edita y da de baja", $tags="planificado")
-Rel(uiFinca, funciones, "Invita, quita y crea la finca", $tags="planificado")
+Rel(uiFinca, funciones, "Invita y quita Operarios")
 Rel(uiSync, motorSync, "Sincronizar ahora; consulta estado")
 Rel(uiSync, domEventos, "Resuelve un conflicto")
 Rel(uiInd, domInd, "Pide los indicadores")
@@ -73,8 +73,7 @@ Rel(domAnimales, repos, "Lee y escribe")
 Rel(domPesajes, repos, "Lee y escribe")
 Rel(domEventos, repos, "Lee y escribe")
 Rel(domInd, repos, "Lee")
-Rel(domCuenta, sesion, "Inicia sesión y crea la identidad con la finca y la autorización")
-Rel(domCuenta, funciones, "Canjea el código de invitación", $tags="planificado")
+Rel(domCuenta, sesion, "Inicia sesión y crea la identidad con la finca o el código de invitación, y la autorización")
 
 Rel(repos, room, "Lee y escribe", "SQL")
 Rel(motorSync, repos, "Lee pendientes y aplica cambios")
@@ -83,7 +82,7 @@ Rel(motorSync, rest, "Llama subir_cambios y descargar_cambios", "HTTPS/JSON + JW
 Rel(motorSync, fotos, "Sube y descarga fotos pendientes")
 Rel(fotos, storage, "Sube y descarga WebP", "HTTPS + JWT")
 Rel(sesion, auth, "Crea cuenta, inicia y renueva sesión", "HTTPS")
-Rel(funciones, rest, "Llama las funciones", "HTTPS/JSON + JWT", $tags="planificado")
+Rel(funciones, rest, "Llama las funciones", "HTTPS/JSON + JWT")
 
 SHOW_LEGEND()
 @enduml
