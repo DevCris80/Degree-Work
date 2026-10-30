@@ -21,6 +21,7 @@ import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
 import com.devcris80.prototipo.ui.components.BovinaBottomBar
 import com.devcris80.prototipo.ui.components.DestinoBarra
+import com.devcris80.prototipo.ui.screens.AsociarChapetaScreen
 import com.devcris80.prototipo.ui.screens.BandejaRechazosScreen
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
@@ -198,6 +199,7 @@ fun AppNavHost() {
                     onNuevoEventoClick = { navController.navigate(Rutas.NuevoEvento.crear(idAnimal)) },
                     onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
                     onEditarClick = { navController.navigate(Rutas.EditarAnimal.crear(idAnimal)) },
+                    onAsociarChapetaClick = { navController.navigate(Rutas.AsociarChapeta.crear(idAnimal = idAnimal)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
                     onResolverConflictoClick = { entidad, idFila ->
                         navController.navigate(Rutas.ResolverConflicto.crear(entidad, idFila))
@@ -250,6 +252,29 @@ fun AppNavHost() {
                 EscanearScreen(
                     onAbrirAnimal = { idAnimal -> navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) },
                     onRegistrar = { codigo, aviso -> navController.navigate(Rutas.NuevoAnimal.crear(codigo, aviso)) },
+                    onAsociar = { codigo -> navController.navigate(Rutas.AsociarChapeta.crear(codigo = codigo)) },
+                )
+            }
+            composable(
+                route = Rutas.AsociarChapeta.ruta,
+                arguments = listOf(
+                    navArgument("idAnimal") { type = NavType.StringType; nullable = true; defaultValue = null },
+                    navArgument("codigo") { type = NavType.StringType; nullable = true; defaultValue = null },
+                ),
+            ) { entry ->
+                // Desde el Detalle se vuelve a él; desde Escanear se abre el Detalle del animal que recibió la chapeta.
+                val desdeDetalle = entry.arguments?.getString("idAnimal") != null
+                AsociarChapetaScreen(
+                    onAsociada = { idAnimal ->
+                        if (desdeDetalle) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) {
+                                popUpTo(Rutas.AsociarChapeta.ruta) { inclusive = true }
+                            }
+                        }
+                    },
+                    onVolver = { navController.popBackStack() },
                 )
             }
             composable(Rutas.Eventos.ruta) {

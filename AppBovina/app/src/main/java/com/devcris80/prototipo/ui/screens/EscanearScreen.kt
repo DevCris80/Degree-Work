@@ -1,8 +1,6 @@
 package com.devcris80.prototipo.ui.screens
 
-import android.app.Activity
 import android.content.Intent
-import android.nfc.NfcAdapter
 import android.provider.Settings
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -20,36 +18,30 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
-import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
-import androidx.compose.runtime.mutableStateOf
-import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.platform.LocalContext
-import androidx.compose.ui.platform.LocalLifecycleOwner
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.Lifecycle
-import androidx.lifecycle.LifecycleEventObserver
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.BovinaSecondaryButton
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
+import com.devcris80.prototipo.ui.util.EstadoNfc
+import com.devcris80.prototipo.ui.util.LectorNfc
 import com.devcris80.prototipo.ui.util.appViewModel
-
-private val FLAGS_LECTURA_TAG = NfcAdapter.FLAG_READER_NFC_A or NfcAdapter.FLAG_READER_SKIP_NDEF_CHECK
 
 @Composable
 fun EscanearScreen(
     onAbrirAnimal: (idAnimal: String) -> Unit,
     onRegistrar: (codigo: String, aviso: String?) -> Unit,
+    onAsociar: (codigo: String) -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         EscanearViewModel(container.resolverDestinoEscaneo, container.liberarChapeta, container.cuentaRepository)
@@ -58,46 +50,15 @@ fun EscanearScreen(
     val puedeLiberarChapeta by viewModel.puedeLiberarChapeta.collectAsState(initial = false)
 
     val context = LocalContext.current
-    val activity = context as? Activity
-    val lifecycleOwner = LocalLifecycleOwner.current
-    val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
-    var nfcActivo by remember { mutableStateOf(nfcAdapter?.isEnabled == true) }
+    val estadoNfc = LectorNfc(onCodigoLeido = viewModel::onCodigoLeido)
 
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
             when (evento) {
                 is EscanearEvento.AbrirAnimal -> onAbrirAnimal(evento.idAnimal)
                 is EscanearEvento.Registrar -> onRegistrar(evento.codigo, evento.aviso)
+                is EscanearEvento.Asociar -> onAsociar(evento.codigo)
             }
-        }
-    }
-
-    DisposableEffect(lifecycleOwner, nfcAdapter, activity) {
-        val observer = LifecycleEventObserver { _, evento ->
-            if (activity == null || nfcAdapter == null) return@LifecycleEventObserver
-            when (evento) {
-                Lifecycle.Event.ON_RESUME -> {
-                    nfcActivo = nfcAdapter.isEnabled
-                    if (nfcAdapter.isEnabled) {
-                        nfcAdapter.enableReaderMode(
-                            activity,
-                            { tag ->
-                                val codigo = tag.id.toCodigoHex()
-                                activity.runOnUiThread { viewModel.onCodigoLeido(codigo) }
-                            },
-                            FLAGS_LECTURA_TAG,
-                            null,
-                        )
-                    }
-                }
-                Lifecycle.Event.ON_PAUSE -> nfcAdapter.disableReaderMode(activity)
-                else -> Unit
-            }
-        }
-        lifecycleOwner.lifecycle.addObserver(observer)
-        onDispose {
-            lifecycleOwner.lifecycle.removeObserver(observer)
-            if (activity != null && nfcAdapter != null) nfcAdapter.disableReaderMode(activity)
         }
     }
 
@@ -112,7 +73,8 @@ fun EscanearScreen(
             horizontalAlignment = Alignment.CenterHorizontally,
         ) {
             val dadoDeBaja = estado as? EscanearUiState.AnimalDadoDeBaja
-            if (nfcAdapter != null && nfcActivo) {
+            val sinChapeta = estado as? EscanearUiState.CodigoSinChapeta
+            if (estadoNfc == EstadoNfc.LISTO) {
                 PillBadge(
                     texto = "Antena NFC lista",
                     containerColor = MaterialTheme.colorScheme.primary,
@@ -121,12 +83,12 @@ fun EscanearScreen(
             }
             RadarNfc()
             when {
-                nfcAdapter == null -> Text(
+                estadoNfc == EstadoNfc.SIN_NFC -> Text(
                     text = "Este celular no tiene NFC",
                     style = MaterialTheme.typography.headlineMedium,
                     textAlign = TextAlign.Center,
                 )
-                !nfcActivo -> {
+                estadoNfc == EstadoNfc.APAGADO -> {
                     Text(
                         text = "Active NFC en ajustes para escanear",
                         style = MaterialTheme.typography.headlineMedium,
@@ -157,6 +119,35 @@ fun EscanearScreen(
                             textAlign = TextAlign.Center,
                         )
                     }
+                    BovinaSecondaryButton(
+                        texto = "Cancelar",
+                        onClick = { viewModel.onCancelar() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                }
+                sinChapeta != null -> {
+                    Text(
+                        text = "La chapeta ${sinChapeta.codigo} no está asociada a ningún animal.",
+                        style = MaterialTheme.typography.titleMedium,
+                        textAlign = TextAlign.Center,
+                    )
+                    sinChapeta.aviso?.let { aviso ->
+                        Text(
+                            text = aviso,
+                            style = MaterialTheme.typography.bodyMedium,
+                            textAlign = TextAlign.Center,
+                        )
+                    }
+                    BovinaPrimaryButton(
+                        texto = "Registrar animal nuevo",
+                        onClick = { viewModel.onRegistrarNuevo() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    BovinaSecondaryButton(
+                        texto = "Asociar a un animal existente",
+                        onClick = { viewModel.onAsociarAExistente() },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
                     BovinaSecondaryButton(
                         texto = "Cancelar",
                         onClick = { viewModel.onCancelar() },
@@ -214,6 +205,3 @@ private fun RadarNfc() {
         }
     }
 }
-
-private fun ByteArray.toCodigoHex(): String =
-    joinToString(separator = "") { (it.toInt() and 0xFF).toString(16).padStart(2, '0').uppercase() }

@@ -20,11 +20,15 @@ sealed interface EscanearUiState {
     data object EsperandoTag : EscanearUiState
     data object Resolviendo : EscanearUiState
     data class AnimalDadoDeBaja(val idChapeta: String, val nombreAnimal: String, val codigo: String) : EscanearUiState
+
+    /** El tag no tiene Chapeta activa: se registra un Animal nuevo o se asocia a uno existente. [aviso] dice de quién fue. */
+    data class CodigoSinChapeta(val codigo: String, val aviso: String?) : EscanearUiState
 }
 
 sealed interface EscanearEvento {
     data class AbrirAnimal(val idAnimal: String) : EscanearEvento
     data class Registrar(val codigo: String, val aviso: String?) : EscanearEvento
+    data class Asociar(val codigo: String) : EscanearEvento
 }
 
 /**
@@ -61,6 +65,16 @@ class EscanearViewModel(
         }
     }
 
+    fun onRegistrarNuevo() {
+        val actual = _estado.value as? EscanearUiState.CodigoSinChapeta ?: return
+        viewModelScope.launch { volverAEsperarYEmitir(EscanearEvento.Registrar(actual.codigo, actual.aviso)) }
+    }
+
+    fun onAsociarAExistente() {
+        val actual = _estado.value as? EscanearUiState.CodigoSinChapeta ?: return
+        viewModelScope.launch { volverAEsperarYEmitir(EscanearEvento.Asociar(actual.codigo)) }
+    }
+
     fun onCancelar() {
         _estado.value = EscanearUiState.EsperandoTag
     }
@@ -73,10 +87,11 @@ class EscanearViewModel(
                 destino.nombreAnimal,
                 destino.codigo,
             )
-            is DestinoEscaneo.RegistrarConAviso -> volverAEsperarYEmitir(
-                EscanearEvento.Registrar(destino.codigo, "Este tag estuvo asociado a ${destino.nombreAnimalAnterior}"),
+            is DestinoEscaneo.RegistrarConAviso -> _estado.value = EscanearUiState.CodigoSinChapeta(
+                destino.codigo,
+                "Este tag estuvo asociado a ${destino.nombreAnimalAnterior}",
             )
-            is DestinoEscaneo.RegistrarNuevo -> volverAEsperarYEmitir(EscanearEvento.Registrar(destino.codigo, null))
+            is DestinoEscaneo.RegistrarNuevo -> _estado.value = EscanearUiState.CodigoSinChapeta(destino.codigo, null)
         }
     }
 

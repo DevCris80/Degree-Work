@@ -4,13 +4,13 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.devcris80.prototipo.domain.model.Animal
 import com.devcris80.prototipo.domain.model.Etapa
-import com.devcris80.prototipo.domain.model.PesajePendiente
 import com.devcris80.prototipo.domain.model.Proposito
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
+import com.devcris80.prototipo.ui.components.OfertaPesajesPendientes
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -56,13 +56,6 @@ data class RegistrarAnimalUiState(
 sealed interface RegistrarAnimalEvento {
     data object Guardado : RegistrarAnimalEvento
 }
-
-data class OfertaPesajesPendientes(
-    val idAnimal: String,
-    val nombreAnimal: String,
-    val codigo: String,
-    val pesajes: List<PesajePendiente>,
-)
 
 /** Estado del formulario Registrar Animal: validación, etapas según sexo, y guardado con RegistrarAnimal. */
 class RegistrarAnimalViewModel(

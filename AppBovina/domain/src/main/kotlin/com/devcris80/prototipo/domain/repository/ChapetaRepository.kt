@@ -15,5 +15,7 @@ interface ChapetaRepository {
 
     fun observeActivaByAnimal(idAnimal: String): Flow<Chapeta?>
 
+    suspend fun findActivaByAnimal(idAnimal: String): Chapeta?
+
     suspend fun liberar(idChapeta: String, fecha: Long)
 }

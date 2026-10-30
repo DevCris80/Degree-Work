@@ -32,6 +32,7 @@ import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
 import com.devcris80.prototipo.domain.repository.Transaccion
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
+import com.devcris80.prototipo.domain.usecase.AsociarChapeta
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.ActualizarAnimal
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
@@ -98,6 +99,8 @@ class AppContainer(context: Context) {
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
+    val asociarChapeta =
+        AsociarChapeta(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val actualizarAnimal = ActualizarAnimal(animalRepository, transaccion)
     val registrarEvento = RegistrarEvento(animalRepository, eventoRepository, cuentaRepository, transaccion)
     val resolverConflicto = ResolverConflicto(conflictoRepository)
