@@ -2,10 +2,13 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
+import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.CalendarMonth
 import androidx.compose.material.icons.filled.CheckCircle
@@ -45,7 +48,6 @@ import java.util.Date
 import java.util.Locale
 
 /** Formulario del pesaje manual de un Animal (CU-16): peso, y fecha y hora del pesaje. */
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun PesajeFormScreen(
     onGuardado: () -> Unit,
@@ -56,10 +58,6 @@ fun PesajeFormScreen(
         NuevoPesajeViewModel(idAnimal, container.registrarPesajeManual)
     }
     val estado by viewModel.estado.collectAsState()
-    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
-    val formatoHora = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
-    var mostrarSelectorFecha by remember { mutableStateOf(false) }
-    var mostrarSelectorHora by remember { mutableStateOf(false) }
 
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
@@ -69,45 +67,83 @@ fun PesajeFormScreen(
         }
     }
 
+    FormularioPesaje(
+        titulo = "Registrar pesaje",
+        peso = estado.peso,
+        fecha = estado.fecha,
+        error = estado.error,
+        puedeGuardar = estado.puedeGuardar && !estado.guardando,
+        onPesoCambiado = viewModel::onPesoCambiado,
+        onFechaCambiada = viewModel::onFechaCambiada,
+        onGuardar = viewModel::onGuardar,
+        onVolver = onVolver,
+    )
+}
+
+/**
+ * El formulario de un pesaje, sin estado propio: peso y fecha y hora. Lo usan Registrar pesaje y Editar pesaje;
+ * [accionesExtra] va debajo de Guardar.
+ */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun FormularioPesaje(
+    titulo: String,
+    peso: String,
+    fecha: Long,
+    error: PesajeError?,
+    puedeGuardar: Boolean,
+    onPesoCambiado: (String) -> Unit,
+    onFechaCambiada: (Long) -> Unit,
+    onGuardar: () -> Unit,
+    onVolver: () -> Unit,
+    accionesExtra: @Composable ColumnScope.() -> Unit = {},
+) {
+    val formatoFecha = remember { SimpleDateFormat("dd/MM/yyyy", Locale.getDefault()) }
+    val formatoHora = remember { SimpleDateFormat("HH:mm", Locale.getDefault()) }
+    var mostrarSelectorFecha by remember { mutableStateOf(false) }
+    var mostrarSelectorHora by remember { mutableStateOf(false) }
+
     Scaffold(
-        topBar = { BovinaTopBar(titulo = "Registrar pesaje", onVolver = onVolver) },
+        topBar = { BovinaTopBar(titulo = titulo, onVolver = onVolver) },
     ) { innerPadding ->
         Column(
             modifier = Modifier
                 .fillMaxSize()
                 .padding(innerPadding)
+                .verticalScroll(rememberScrollState())
                 .padding(BovinaScreenGutter),
             verticalArrangement = Arrangement.spacedBy(16.dp),
         ) {
             CampoConIcono(
                 label = "Peso (kg)",
-                value = estado.peso,
-                onValueChange = viewModel::onPesoCambiado,
+                value = peso,
+                onValueChange = onPesoCambiado,
                 icon = Icons.Filled.MonitorWeight,
                 keyboardType = KeyboardType.Decimal,
             )
             Text("Fecha y hora del pesaje", style = MaterialTheme.typography.labelLarge)
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 BovinaSecondaryButton(
-                    texto = formatoFecha.format(Date(estado.fecha)),
+                    texto = formatoFecha.format(Date(fecha)),
                     onClick = { mostrarSelectorFecha = true },
                     modifier = Modifier.weight(1f),
                     icon = Icons.Filled.CalendarMonth,
                 )
                 BovinaSecondaryButton(
-                    texto = formatoHora.format(Date(estado.fecha)),
+                    texto = formatoHora.format(Date(fecha)),
                     onClick = { mostrarSelectorHora = true },
                     modifier = Modifier.weight(1f),
                     icon = Icons.Filled.Schedule,
                 )
             }
-            estado.error?.let { error ->
+            error?.let {
                 Text(
-                    text = when (error) {
-                        NuevoPesajeError.PesoFueraDeRango ->
+                    text = when (it) {
+                        PesajeError.PesoFueraDeRango ->
                             "El peso debe ser mayor que 0 y de hasta ${Pesaje.PESO_MAXIMO_KG.toInt()} kg."
-                        NuevoPesajeError.FechaFutura -> "La fecha y hora del pesaje no pueden ser futuras."
-                        NuevoPesajeError.AnimalNoDisponible -> "Este animal está dado de baja o ya no existe."
+                        PesajeError.FechaFutura -> "La fecha y hora del pesaje no pueden ser futuras."
+                        PesajeError.AnimalNoDisponible -> "Este animal está dado de baja o ya no existe."
+                        PesajeError.PesajeNoDisponible -> "Este pesaje ya no está disponible."
                     },
                     style = MaterialTheme.typography.bodyMedium,
                     color = MaterialTheme.colorScheme.error,
@@ -115,24 +151,25 @@ fun PesajeFormScreen(
             }
             BovinaPrimaryButton(
                 texto = "Guardar",
-                onClick = viewModel::onGuardar,
-                enabled = estado.puedeGuardar && !estado.guardando,
+                onClick = onGuardar,
+                enabled = puedeGuardar,
                 modifier = Modifier.fillMaxWidth(),
                 icon = Icons.Filled.CheckCircle,
             )
+            accionesExtra()
         }
     }
 
     if (mostrarSelectorFecha) {
         DialogoFechaHastaHoy(
-            fecha = estado.fecha,
-            onAceptar = viewModel::onFechaCambiada,
+            fecha = fecha,
+            onAceptar = onFechaCambiada,
             onCerrar = { mostrarSelectorFecha = false },
         )
     }
 
     if (mostrarSelectorHora) {
-        val actual = Calendar.getInstance().apply { timeInMillis = estado.fecha }
+        val actual = Calendar.getInstance().apply { timeInMillis = fecha }
         val selectorState = rememberTimePickerState(
             initialHour = actual.get(Calendar.HOUR_OF_DAY),
             initialMinute = actual.get(Calendar.MINUTE),
@@ -142,7 +179,7 @@ fun PesajeFormScreen(
             onDismissRequest = { mostrarSelectorHora = false },
             confirmButton = {
                 TextButton(onClick = {
-                    viewModel.onFechaCambiada(conHora(estado.fecha, selectorState.hour, selectorState.minute))
+                    onFechaCambiada(conHora(fecha, selectorState.hour, selectorState.minute))
                     mostrarSelectorHora = false
                 }) { Text("Aceptar") }
             },

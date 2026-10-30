@@ -35,7 +35,9 @@ import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.AsociarChapeta
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.ActualizarAnimal
+import com.devcris80.prototipo.domain.usecase.ActualizarRegistro
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
+import com.devcris80.prototipo.domain.usecase.DarDeBajaRegistro
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
 import com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazos
@@ -96,6 +98,8 @@ class AppContainer(context: Context) {
     )
     val registrarPesajeManual =
         RegistrarPesajeManual(animalRepository, registroRepository, cuentaRepository, transaccion)
+    val actualizarRegistro = ActualizarRegistro(animalRepository, registroRepository, transaccion)
+    val darDeBajaRegistro = DarDeBajaRegistro(registroRepository, cuentaRepository)
     val resolverDestinoEscaneo = ResolverDestinoEscaneo(chapetaRepository, animalRepository)
     val registrarAnimal =
         RegistrarAnimal(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)

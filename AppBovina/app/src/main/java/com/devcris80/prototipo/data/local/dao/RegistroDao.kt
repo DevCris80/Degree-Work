@@ -33,6 +33,14 @@ interface RegistroDao {
     @Query("SELECT * FROM registro WHERE idAnimal = :idAnimal")
     suspend fun findAllByAnimal(idAnimal: String): List<RegistroEntity>
 
+    // Editar y dar de baja son modificaciones: la fila vuelve a quedar pendiente de sincronizar (ADR-0004).
+    // El Animal, el autor y el idLectura no se tocan: el servidor tampoco los deja cambiar.
+    @Query("UPDATE registro SET peso = :peso, timestamp = :timestamp, " + EDICION_LOCAL + " WHERE idRegistro = :idRegistro")
+    suspend fun editar(idRegistro: String, peso: Float, timestamp: Long, idVersion: String, fechaModificacion: Long)
+
+    @Query("UPDATE registro SET fechaBaja = :fecha, " + EDICION_LOCAL + " WHERE idRegistro = :idRegistro")
+    suspend fun darDeBaja(idRegistro: String, fecha: Long, idVersion: String, fechaModificacion: Long)
+
     @Update
     suspend fun update(registro: RegistroEntity)
 

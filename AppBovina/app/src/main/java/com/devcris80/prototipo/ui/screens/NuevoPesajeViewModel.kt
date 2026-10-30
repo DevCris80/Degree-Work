@@ -12,10 +12,16 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
-sealed interface NuevoPesajeError {
-    data object PesoFueraDeRango : NuevoPesajeError
-    data object FechaFutura : NuevoPesajeError
-    data object AnimalNoDisponible : NuevoPesajeError
+/** El peso como se digita en un formulario de pesaje: solo dígitos y un punto decimal, sin separador de miles. */
+internal val FORMATO_PESO = Regex("\\d*\\.?\\d*")
+
+sealed interface PesajeError {
+    data object PesoFueraDeRango : PesajeError
+    data object FechaFutura : PesajeError
+    data object AnimalNoDisponible : PesajeError
+
+    /** Solo al editar: el pesaje no existe o ya está dado de baja. */
+    data object PesajeNoDisponible : PesajeError
 }
 
 data class NuevoPesajeUiState(
@@ -23,7 +29,7 @@ data class NuevoPesajeUiState(
     val peso: String = "",
     /** Fecha y hora del pesaje. */
     val fecha: Long,
-    val error: NuevoPesajeError? = null,
+    val error: PesajeError? = null,
     /** Verdadero desde que se pide guardar hasta que falla: evita guardar dos veces con un doble toque. */
     val guardando: Boolean = false,
 ) {
@@ -62,9 +68,9 @@ class NuevoPesajeViewModel(
         viewModelScope.launch {
             val error = when (registrarPesajeManual(idAnimal, peso, actual.fecha)) {
                 RegistrarPesajeManual.Resultado.Registrado -> null
-                RegistrarPesajeManual.Resultado.PesoFueraDeRango -> NuevoPesajeError.PesoFueraDeRango
-                RegistrarPesajeManual.Resultado.FechaFutura -> NuevoPesajeError.FechaFutura
-                RegistrarPesajeManual.Resultado.AnimalNoDisponible -> NuevoPesajeError.AnimalNoDisponible
+                RegistrarPesajeManual.Resultado.PesoFueraDeRango -> PesajeError.PesoFueraDeRango
+                RegistrarPesajeManual.Resultado.FechaFutura -> PesajeError.FechaFutura
+                RegistrarPesajeManual.Resultado.AnimalNoDisponible -> PesajeError.AnimalNoDisponible
             }
             if (error == null) {
                 _eventos.send(NuevoPesajeEvento.Guardado)
@@ -72,9 +78,5 @@ class NuevoPesajeViewModel(
                 _estado.update { it.copy(error = error, guardando = false) }
             }
         }
-    }
-
-    private companion object {
-        val FORMATO_PESO = Regex("\\d*\\.?\\d*")
     }
 }

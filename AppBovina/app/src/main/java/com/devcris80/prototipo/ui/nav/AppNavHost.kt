@@ -23,6 +23,7 @@ import com.devcris80.prototipo.ui.components.BovinaBottomBar
 import com.devcris80.prototipo.ui.components.DestinoBarra
 import com.devcris80.prototipo.ui.screens.AsociarChapetaScreen
 import com.devcris80.prototipo.ui.screens.BandejaRechazosScreen
+import com.devcris80.prototipo.ui.screens.EditarPesajeScreen
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
 import com.devcris80.prototipo.ui.screens.EditarAnimalScreen
@@ -200,6 +201,7 @@ fun AppNavHost() {
                     onNuevoPesajeClick = { navController.navigate(Rutas.NuevoPesaje.crear(idAnimal)) },
                     onEditarClick = { navController.navigate(Rutas.EditarAnimal.crear(idAnimal)) },
                     onAsociarChapetaClick = { navController.navigate(Rutas.AsociarChapeta.crear(idAnimal = idAnimal)) },
+                    onEditarPesajeClick = { idRegistro -> navController.navigate(Rutas.EditarPesaje.crear(idRegistro)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
                     onResolverConflictoClick = { entidad, idFila ->
                         navController.navigate(Rutas.ResolverConflicto.crear(entidad, idFila))
@@ -245,6 +247,15 @@ fun AppNavHost() {
             ) {
                 PesajeFormScreen(
                     onGuardado = { navController.popBackStack() },
+                    onVolver = { navController.popBackStack() },
+                )
+            }
+            composable(
+                route = Rutas.EditarPesaje.ruta,
+                arguments = listOf(navArgument("idRegistro") { type = NavType.StringType }),
+            ) {
+                EditarPesajeScreen(
+                    onTerminado = { navController.popBackStack() },
                     onVolver = { navController.popBackStack() },
                 )
             }

@@ -70,6 +70,7 @@ fun DetalleAnimalScreen(
     onNuevoPesajeClick: () -> Unit,
     onEditarClick: () -> Unit = {},
     onAsociarChapetaClick: () -> Unit = {},
+    onEditarPesajeClick: (idRegistro: String) -> Unit = {},
     onAnimalClick: (idAnimal: String) -> Unit = {},
     onResolverConflictoClick: (entidad: EntidadConRevisiones, idFila: String) -> Unit = { _, _ -> },
 ) {
@@ -303,6 +304,9 @@ fun DetalleAnimalScreen(
                     val indice = listaRegistros.indexOf(registro)
                     val anterior = listaRegistros.getOrNull(indice + 1)
                     val delta = anterior?.let { registro.peso - it.peso }
+                    val enConflicto = registro.idRegistro in estado.registrosEnConflicto
+                    val resolver = { onResolverConflictoClick(EntidadConRevisiones.REGISTRO, registro.idRegistro) }
+                    val editar = { onEditarPesajeClick(registro.idRegistro) }
                     FilaDetalle(
                         icono = Icons.Filled.MonitorWeight,
                         destacada = indice == 0,
@@ -315,12 +319,19 @@ fun DetalleAnimalScreen(
                         } else {
                             "Base inicial"
                         },
-                        enConflicto = registro.idRegistro in estado.registrosEnConflicto,
-                        onClick = { onResolverConflictoClick(EntidadConRevisiones.REGISTRO, registro.idRegistro) },
+                        enConflicto = enConflicto,
+                        // Un pesaje en Conflicto se resuelve; los demás de un animal activo se editan.
+                        onClick = when {
+                            enConflicto -> resolver
+                            animal.activo -> editar
+                            else -> null
+                        },
                     )
                 }
             } else {
                 items(listaEventos, key = { it.idEvento }) { evento ->
+                    val enConflicto = evento.idEvento in estado.eventosEnConflicto
+                    val resolver = { onResolverConflictoClick(EntidadConRevisiones.EVENTO, evento.idEvento) }
                     FilaDetalle(
                         icono = Icons.Filled.EventAvailable,
                         destacada = false,
@@ -330,8 +341,9 @@ fun DetalleAnimalScreen(
                         valor = formatoFecha.format(Date(evento.fecha)) +
                             if (evento.estaProgramado(ahora)) " · Programado" else "",
                         valorSecundario = null,
-                        enConflicto = evento.idEvento in estado.eventosEnConflicto,
-                        onClick = { onResolverConflictoClick(EntidadConRevisiones.EVENTO, evento.idEvento) },
+                        enConflicto = enConflicto,
+                        // Solo una fila en Conflicto abre la pantalla de resolver; las demás no se tocan.
+                        onClick = if (enConflicto) resolver else null,
                     )
                 }
             }
@@ -486,10 +498,9 @@ private fun FilaDetalle(
     valor: String,
     valorSecundario: String?,
     enConflicto: Boolean,
-    onClick: () -> Unit,
+    onClick: (() -> Unit)?,
 ) {
-    // Solo una fila en Conflicto abre la pantalla de resolver; las demás no se tocan.
-    BovinaCard(modifier = Modifier.fillMaxWidth(), onClick = if (enConflicto) onClick else null) {
+    BovinaCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,

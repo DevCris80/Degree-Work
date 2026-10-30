@@ -96,7 +96,7 @@ class NuevoPesajeViewModelTest {
             viewModel.onPesoCambiado(peso)
             viewModel.onGuardar()
 
-            assertEquals(NuevoPesajeError.PesoFueraDeRango, viewModel.estado.value.error)
+            assertEquals(PesajeError.PesoFueraDeRango, viewModel.estado.value.error)
         }
         assertEquals(emptyList<Registro>(), registros())
     }
@@ -140,7 +140,7 @@ class NuevoPesajeViewModelTest {
 
         viewModel.onGuardar()
 
-        assertEquals(NuevoPesajeError.FechaFutura, viewModel.estado.value.error)
+        assertEquals(PesajeError.FechaFutura, viewModel.estado.value.error)
         assertEquals(emptyList<Registro>(), registros())
     }
 
@@ -152,7 +152,7 @@ class NuevoPesajeViewModelTest {
 
         viewModel.onGuardar()
 
-        assertEquals(NuevoPesajeError.AnimalNoDisponible, viewModel.estado.value.error)
+        assertEquals(PesajeError.AnimalNoDisponible, viewModel.estado.value.error)
         assertEquals(emptyList<Registro>(), registros())
     }
 

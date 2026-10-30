@@ -145,10 +145,24 @@ class FakeRegistroRepository : RegistroRepository {
     }
     override suspend fun findByIdLectura(idLectura: String): Registro? =
         porAnimal.values.flatMap { it.value }.firstOrNull { it.idLectura == idLectura }
+    // Como el repositorio real: los dados de baja no salen, pero siguen guardados.
     override fun observeByAnimal(idAnimal: String): Flow<List<Registro>> =
         porAnimal.getOrPut(idAnimal) { MutableStateFlow(emptyList()) }
+            .map { registros -> registros.filter { it.fechaBaja == null } }
     override fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?> =
         observeByAnimal(idAnimal).map { it.firstOrNull() }
+    override suspend fun findById(idRegistro: String): Registro? =
+        porAnimal.values.flatMap { it.value }.firstOrNull { it.idRegistro == idRegistro }
+    override suspend fun update(registro: Registro) = reemplazar(registro.idRegistro) {
+        it.copy(peso = registro.peso, timestamp = registro.timestamp)
+    }
+    override suspend fun darDeBaja(idRegistro: String, fecha: Long) = reemplazar(idRegistro) { it.copy(fechaBaja = fecha) }
+
+    private fun reemplazar(idRegistro: String, cambio: (Registro) -> Registro) {
+        porAnimal.values.forEach { flow ->
+            flow.value = flow.value.map { if (it.idRegistro == idRegistro) cambio(it) else it }
+        }
+    }
 }
 
 class FakeEventoRepository : EventoRepository {
