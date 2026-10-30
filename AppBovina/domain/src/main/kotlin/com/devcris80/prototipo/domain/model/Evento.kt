@@ -35,12 +35,17 @@ data class Evento(
      * El tipo sin lo que no lo cambia: mayúsculas, tildes y espacios. [tipoEvento] es texto libre,
      * así que "Vacunación" y " vacunacion" son el mismo tipo.
      */
-    val claveDeTipo: String
-        get() = Normalizer.normalize(tipoEscrito, Normalizer.Form.NFD).replace(TILDES, "").lowercase(Locale.ROOT)
+    val claveDeTipo: String get() = claveDe(tipoEscrito)
+
+    /** El [TipoEvento] del Evento, o nulo si su tipo es otro texto (los anteriores o los de otro celular). */
+    val tipoConocido: TipoEvento? get() = TipoEvento.entries.firstOrNull { claveDe(it.nombre) == claveDeTipo }
 
     private companion object {
         val ESPACIOS = Regex("\\s+")
         val TILDES = Regex("\\p{M}")
+
+        fun claveDe(tipo: String): String =
+            Normalizer.normalize(tipo, Normalizer.Form.NFD).replace(TILDES, "").lowercase(Locale.ROOT)
     }
 }
 

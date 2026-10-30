@@ -14,4 +14,14 @@ interface EventoRepository {
      * Animales dados de baja: filtrarlos le toca a quien los use.
      */
     fun observeActivos(): Flow<List<Evento>>
+
+    suspend fun findById(idEvento: String): Evento?
+
+    /**
+     * Guarda el título, la fecha y los campos de vacunación del Evento. Nada más cambia: ni el Animal, ni el autor,
+     * ni el tipo, ni la cría.
+     */
+    suspend fun update(evento: Evento)
+
+    suspend fun darDeBaja(idEvento: String, fecha: Long)
 }

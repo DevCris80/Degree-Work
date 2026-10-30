@@ -20,4 +20,20 @@ class RoomEventoRepository(
 
     override fun observeActivos(): Flow<List<Evento>> =
         eventoDao.observeActivos().map { eventos -> eventos.map { it.toDomain() } }
+
+    override suspend fun findById(idEvento: String): Evento? = eventoDao.findById(idEvento)?.toDomain()
+
+    override suspend fun update(evento: Evento) = eventoDao.editar(
+        idEvento = evento.idEvento,
+        detalle = evento.detalle,
+        fecha = evento.fecha,
+        biologico = evento.biologico,
+        dosis = evento.dosis,
+        via = evento.via,
+        idVersion = nuevoIdVersion(),
+        fechaModificacion = clock(),
+    )
+
+    override suspend fun darDeBaja(idEvento: String, fecha: Long) =
+        eventoDao.darDeBaja(idEvento, fecha, idVersion = nuevoIdVersion(), fechaModificacion = clock())
 }
