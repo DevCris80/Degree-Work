@@ -33,6 +33,9 @@ sealed class Rutas(val ruta: String) {
     data object EditarPesaje : Rutas("pesajes/{idRegistro}/editar") {
         fun crear(idRegistro: String) = "pesajes/$idRegistro/editar"
     }
+    data object EditarEvento : Rutas("eventos/{idEvento}/editar") {
+        fun crear(idEvento: String) = "eventos/$idEvento/editar"
+    }
     data object ResolverConflicto : Rutas("conflicto/{entidad}/{idFila}") {
         fun crear(entidad: EntidadConRevisiones, idFila: String) = "conflicto/${entidad.name}/$idFila"
     }

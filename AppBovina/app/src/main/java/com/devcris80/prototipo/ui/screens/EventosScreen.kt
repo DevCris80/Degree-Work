@@ -43,18 +43,20 @@ import java.util.Locale
 @Composable
 fun EventosScreen(
     onRegistrarClick: () -> Unit,
+    onEventoClick: (idEvento: String) -> Unit,
 ) {
     val viewModel = appViewModel { container ->
         EventosViewModel(container.eventoRepository, container.animalRepository)
     }
     val estado by viewModel.estado.collectAsState()
-    EventosContent(eventos = estado.eventos, onRegistrarClick = onRegistrarClick)
+    EventosContent(eventos = estado.eventos, onRegistrarClick = onRegistrarClick, onEventoClick = onEventoClick)
 }
 
 @Composable
 private fun EventosContent(
     eventos: List<EventoItemUi>,
     onRegistrarClick: () -> Unit,
+    onEventoClick: (idEvento: String) -> Unit,
 ) {
     Scaffold(
         topBar = { BovinaTopBar(titulo = "Eventos", mostrarLogo = true) },
@@ -92,7 +94,7 @@ private fun EventosContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = BovinaScreenGutter),
             ) {
-                items(eventos, key = { it.idEvento }) { evento -> TarjetaEvento(evento) }
+                items(eventos, key = { it.idEvento }) { evento -> TarjetaEvento(evento, onClick = { onEventoClick(evento.idEvento) }) }
             }
         }
     }
@@ -101,8 +103,8 @@ private fun EventosContent(
 private val formatoFechaHora = SimpleDateFormat("dd/MM/yyyy HH:mm", Locale.getDefault())
 
 @Composable
-private fun TarjetaEvento(evento: EventoItemUi) {
-    BovinaCard(modifier = Modifier.fillMaxWidth()) {
+private fun TarjetaEvento(evento: EventoItemUi, onClick: () -> Unit) {
+    BovinaCard(modifier = Modifier.fillMaxWidth(), onClick = onClick) {
         Row(
             modifier = Modifier.fillMaxWidth(),
             verticalAlignment = Alignment.CenterVertically,
@@ -149,6 +151,7 @@ private fun EventosConDatosPreview() {
                 EventoItemUi("e2", "Parto", "Sin complicaciones", "Mariposa", 1_700_000_000_000L, programado = false),
             ),
             onRegistrarClick = {},
+            onEventoClick = {},
         )
     }
 }
@@ -156,5 +159,5 @@ private fun EventosConDatosPreview() {
 @Preview(showBackground = true)
 @Composable
 private fun EventosVacioPreview() {
-    Prototipo1Theme { EventosContent(eventos = emptyList(), onRegistrarClick = {}) }
+    Prototipo1Theme { EventosContent(eventos = emptyList(), onRegistrarClick = {}, onEventoClick = {}) }
 }

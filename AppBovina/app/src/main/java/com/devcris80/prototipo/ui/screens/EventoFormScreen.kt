@@ -121,30 +121,41 @@ fun EventoFormScreen(
     }
 
     if (mostrarSelectorHora) {
-        val actual = Calendar.getInstance().apply { timeInMillis = estado.fecha }
-        val selectorState = rememberTimePickerState(
-            initialHour = actual.get(Calendar.HOUR_OF_DAY),
-            initialMinute = actual.get(Calendar.MINUTE),
-            is24Hour = true,
-        )
-        AlertDialog(
-            onDismissRequest = { mostrarSelectorHora = false },
-            confirmButton = {
-                TextButton(onClick = {
-                    viewModel.onFechaCambiada(conHora(estado.fecha, selectorState.hour, selectorState.minute))
-                    mostrarSelectorHora = false
-                }) { Text("Aceptar") }
-            },
-            dismissButton = {
-                TextButton(onClick = { mostrarSelectorHora = false }) { Text("Cancelar") }
-            },
-            text = { TimePicker(state = selectorState) },
+        DialogoHora(
+            fecha = estado.fecha,
+            onAceptar = viewModel::onFechaCambiada,
+            onCerrar = { mostrarSelectorHora = false },
         )
     }
 }
 
-private val formatoDia = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
-private val formatoHora = SimpleDateFormat("HH:mm", Locale.getDefault())
+/** Elige la hora de [fecha] sin cambiar su día. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+internal fun DialogoHora(fecha: Long, onAceptar: (Long) -> Unit, onCerrar: () -> Unit) {
+    val actual = Calendar.getInstance().apply { timeInMillis = fecha }
+    val selectorState = rememberTimePickerState(
+        initialHour = actual.get(Calendar.HOUR_OF_DAY),
+        initialMinute = actual.get(Calendar.MINUTE),
+        is24Hour = true,
+    )
+    AlertDialog(
+        onDismissRequest = onCerrar,
+        confirmButton = {
+            TextButton(onClick = {
+                onAceptar(conHora(fecha, selectorState.hour, selectorState.minute))
+                onCerrar()
+            }) { Text("Aceptar") }
+        },
+        dismissButton = {
+            TextButton(onClick = onCerrar) { Text("Cancelar") }
+        },
+        text = { TimePicker(state = selectorState) },
+    )
+}
+
+internal val formatoDia = SimpleDateFormat("dd/MM/yyyy", Locale.getDefault())
+internal val formatoHora = SimpleDateFormat("HH:mm", Locale.getDefault())
 
 @Composable
 private fun EventoFormContent(
@@ -285,7 +296,7 @@ private fun EventoFormContent(
 }
 
 @Composable
-private fun CampoConEtiqueta(
+internal fun CampoConEtiqueta(
     etiqueta: String,
     modifier: Modifier = Modifier,
     contenido: @Composable () -> Unit,
@@ -302,7 +313,7 @@ private fun CampoConEtiqueta(
 
 /** Un [CampoSelector] que despliega las [opciones] (texto y valor) y devuelve el valor de la elegida. */
 @Composable
-private fun SelectorDeLista(
+internal fun SelectorDeLista(
     valor: String?,
     marcador: String,
     opciones: List<Pair<String, String>>,
@@ -327,7 +338,7 @@ private fun SelectorDeLista(
 }
 
 @Composable
-private fun CuadroDeTipo(titulo: String, icono: ImageVector, contenido: @Composable () -> Unit) {
+internal fun CuadroDeTipo(titulo: String, icono: ImageVector, contenido: @Composable () -> Unit) {
     Column(
         modifier = Modifier
             .fillMaxWidth()
@@ -358,11 +369,28 @@ private fun DetallesBiologico(
     onBiologicoCambiado: (String) -> Unit,
     onDosisCambiada: (String) -> Unit,
     onViaSeleccionada: (String) -> Unit,
+) = CamposDeVacunacion(
+    biologico = estado.biologico,
+    dosis = estado.dosis,
+    via = estado.via,
+    onBiologicoCambiado = onBiologicoCambiado,
+    onDosisCambiada = onDosisCambiada,
+    onViaSeleccionada = onViaSeleccionada,
+)
+
+@Composable
+internal fun CamposDeVacunacion(
+    biologico: String,
+    dosis: String,
+    via: String?,
+    onBiologicoCambiado: (String) -> Unit,
+    onDosisCambiada: (String) -> Unit,
+    onViaSeleccionada: (String) -> Unit,
 ) {
     CuadroDeTipo(titulo = "Detalles del biológico y dosis", icono = Icons.Filled.Vaccines) {
         CampoConEtiqueta("Biológico o medicamento") {
             BovinaTextField(
-                value = estado.biologico,
+                value = biologico,
                 onValueChange = onBiologicoCambiado,
                 placeholder = "Nombre del biológico",
             )
@@ -370,14 +398,14 @@ private fun DetallesBiologico(
         Row(horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             CampoConEtiqueta("Dosis por cabeza", Modifier.weight(1f)) {
                 BovinaTextField(
-                    value = estado.dosis,
+                    value = dosis,
                     onValueChange = onDosisCambiada,
                     placeholder = "Ej: 2 ml",
                 )
             }
             CampoConEtiqueta("Vía de aplicación", Modifier.weight(1f)) {
                 SelectorDeLista(
-                    valor = estado.via,
+                    valor = via,
                     marcador = "Seleccionar",
                     opciones = VIAS_DE_APLICACION.map { it to it },
                     onElegida = onViaSeleccionada,

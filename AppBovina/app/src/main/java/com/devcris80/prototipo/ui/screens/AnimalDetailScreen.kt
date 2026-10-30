@@ -71,6 +71,7 @@ fun DetalleAnimalScreen(
     onEditarClick: () -> Unit = {},
     onAsociarChapetaClick: () -> Unit = {},
     onEditarPesajeClick: (idRegistro: String) -> Unit = {},
+    onEditarEventoClick: (idEvento: String) -> Unit = {},
     onAnimalClick: (idAnimal: String) -> Unit = {},
     onResolverConflictoClick: (entidad: EntidadConRevisiones, idFila: String) -> Unit = { _, _ -> },
 ) {
@@ -332,6 +333,7 @@ fun DetalleAnimalScreen(
                 items(listaEventos, key = { it.idEvento }) { evento ->
                     val enConflicto = evento.idEvento in estado.eventosEnConflicto
                     val resolver = { onResolverConflictoClick(EntidadConRevisiones.EVENTO, evento.idEvento) }
+                    val editar = { onEditarEventoClick(evento.idEvento) }
                     FilaDetalle(
                         icono = Icons.Filled.EventAvailable,
                         destacada = false,
@@ -342,8 +344,12 @@ fun DetalleAnimalScreen(
                             if (evento.estaProgramado(ahora)) " · Programado" else "",
                         valorSecundario = null,
                         enConflicto = enConflicto,
-                        // Solo una fila en Conflicto abre la pantalla de resolver; las demás no se tocan.
-                        onClick = if (enConflicto) resolver else null,
+                        // Un evento en Conflicto se resuelve; los demás de un animal activo se editan.
+                        onClick = when {
+                            enConflicto -> resolver
+                            animal.activo -> editar
+                            else -> null
+                        },
                     )
                 }
             }
