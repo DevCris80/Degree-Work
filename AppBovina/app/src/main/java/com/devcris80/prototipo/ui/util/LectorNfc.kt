@@ -29,7 +29,7 @@ fun LectorNfc(onCodigoLeido: (String) -> Unit): EstadoNfc {
     val lifecycleOwner = LocalLifecycleOwner.current
     val nfcAdapter = remember { NfcAdapter.getDefaultAdapter(context) }
     var nfcActivo by remember { mutableStateOf(nfcAdapter?.isEnabled == true) }
-    val alLeer by rememberUpdatedState(onCodigoLeido)
+    val lecturaActual by rememberUpdatedState(onCodigoLeido)
 
     DisposableEffect(lifecycleOwner, nfcAdapter, activity) {
         val observer = LifecycleEventObserver { _, evento ->
@@ -42,7 +42,7 @@ fun LectorNfc(onCodigoLeido: (String) -> Unit): EstadoNfc {
                             activity,
                             { tag ->
                                 val codigo = tag.id.toCodigoHex()
-                                activity.runOnUiThread { alLeer(codigo) }
+                                activity.runOnUiThread { lecturaActual(codigo) }
                             },
                             FLAGS_LECTURA_TAG,
                             null,

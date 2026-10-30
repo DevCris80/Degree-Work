@@ -261,9 +261,19 @@ fun AppNavHost() {
                     navArgument("idAnimal") { type = NavType.StringType; nullable = true; defaultValue = null },
                     navArgument("codigo") { type = NavType.StringType; nullable = true; defaultValue = null },
                 ),
-            ) {
+            ) { entry ->
+                // Desde el Detalle se vuelve a él; desde Escanear se abre el Detalle del animal que recibió la chapeta.
+                val desdeDetalle = entry.arguments?.getString("idAnimal") != null
                 AsociarChapetaScreen(
-                    onAsociada = { navController.popBackStack() },
+                    onAsociada = { idAnimal ->
+                        if (desdeDetalle) {
+                            navController.popBackStack()
+                        } else {
+                            navController.navigate(Rutas.DetalleAnimal.crear(idAnimal)) {
+                                popUpTo(Rutas.AsociarChapeta.ruta) { inclusive = true }
+                            }
+                        }
+                    },
                     onVolver = { navController.popBackStack() },
                 )
             }

@@ -7,6 +7,7 @@ import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.AsociarChapeta
+import com.devcris80.prototipo.ui.components.OfertaPesajesPendientes
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -36,7 +37,7 @@ data class AsociarChapetaUiState(
 }
 
 sealed interface AsociarChapetaEvento {
-    data object Asociada : AsociarChapetaEvento
+    data class Asociada(val idAnimal: String) : AsociarChapetaEvento
 }
 
 /**
@@ -97,7 +98,7 @@ class AsociarChapetaViewModel(
                 is AsociarChapeta.Resultado.Asociada -> {
                     if (resultado.pesajesPendientes.isEmpty()) {
                         _estado.update { it.copy(guardando = false) }
-                        _eventos.send(AsociarChapetaEvento.Asociada)
+                        _eventos.send(AsociarChapetaEvento.Asociada(idAnimal))
                     } else {
                         _estado.update {
                             it.copy(
@@ -113,11 +114,11 @@ class AsociarChapetaViewModel(
                     }
                 }
                 is AsociarChapeta.Resultado.CodigoYaActivo ->
-                    falla("La chapeta ${resultado.codigo} ya está asociada a otro animal.")
+                    terminarConError("La chapeta ${resultado.codigo} ya está asociada a otro animal.")
                 AsociarChapeta.Resultado.AnimalYaTieneChapeta ->
-                    falla("Este animal ya tiene una chapeta activa. Libérela antes de asociar otra.")
-                AsociarChapeta.Resultado.AnimalNoDisponible -> falla("Este animal ya no está disponible.")
-                AsociarChapeta.Resultado.CodigoVacio -> falla("Escriba o escanee el código de la chapeta.")
+                    terminarConError("Este animal ya tiene una chapeta activa. Libérela antes de asociar otra.")
+                AsociarChapeta.Resultado.AnimalNoDisponible -> terminarConError("Este animal ya no está disponible.")
+                AsociarChapeta.Resultado.CodigoVacio -> terminarConError("Escriba o escanee el código de la chapeta.")
             }
         }
     }
@@ -134,9 +135,9 @@ class AsociarChapetaViewModel(
                     -> _estado.update { it.copy(errorAsignacionPendientes = true) }
                 }
             }
-            _eventos.send(AsociarChapetaEvento.Asociada)
+            _eventos.send(AsociarChapetaEvento.Asociada(oferta.idAnimal))
         }
     }
 
-    private fun falla(mensaje: String) = _estado.update { it.copy(guardando = false, error = mensaje) }
+    private fun terminarConError(mensaje: String) = _estado.update { it.copy(guardando = false, error = mensaje) }
 }

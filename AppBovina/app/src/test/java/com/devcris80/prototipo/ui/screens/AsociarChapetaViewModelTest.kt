@@ -134,7 +134,7 @@ class AsociarChapetaViewModelTest {
 
         viewModel.onAsociar()
 
-        assertEquals(AsociarChapetaEvento.Asociada, viewModel.eventos.first())
+        assertEquals(AsociarChapetaEvento.Asociada("a-1"), viewModel.eventos.first())
         assertEquals("04A1", chapetaRepository.findActivaByAnimal("a-1")!!.codigo)
     }
 
@@ -193,7 +193,7 @@ class AsociarChapetaViewModelTest {
         assertEquals(setOf(1_000L, 2_000L), registros.map { it.timestamp }.toSet())
         assertEquals(2, registros.size)
         assertNull(viewModel.estado.value.ofertaPesajesPendientes)
-        assertEquals(AsociarChapetaEvento.Asociada, viewModel.eventos.first())
+        assertEquals(AsociarChapetaEvento.Asociada("a-1"), viewModel.eventos.first())
     }
 
     @Test
@@ -206,6 +206,6 @@ class AsociarChapetaViewModelTest {
 
         assertTrue(registroRepository.observeByAnimal("a-1").first().isEmpty())
         assertEquals("AAAA", chapetaRepository.findActivaByAnimal("a-1")!!.codigo)
-        assertEquals(AsociarChapetaEvento.Asociada, viewModel.eventos.first())
+        assertEquals(AsociarChapetaEvento.Asociada("a-1"), viewModel.eventos.first())
     }
 }

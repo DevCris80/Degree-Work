@@ -39,7 +39,7 @@ import com.devcris80.prototipo.ui.util.appViewModel
  */
 @Composable
 fun AsociarChapetaScreen(
-    onAsociada: () -> Unit,
+    onAsociada: (idAnimal: String) -> Unit,
     onVolver: () -> Unit,
 ) {
     val viewModel = appViewModel { container ->
@@ -61,7 +61,7 @@ fun AsociarChapetaScreen(
     LaunchedEffect(viewModel) {
         viewModel.eventos.collect { evento ->
             when (evento) {
-                AsociarChapetaEvento.Asociada -> onAsociada()
+                is AsociarChapetaEvento.Asociada -> onAsociada(evento.idAnimal)
             }
         }
     }

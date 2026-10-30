@@ -7,10 +7,18 @@ import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.remember
-import com.devcris80.prototipo.ui.screens.OfertaPesajesPendientes
+import com.devcris80.prototipo.domain.model.PesajePendiente
 import java.text.SimpleDateFormat
 import java.util.Date
 import java.util.Locale
+
+/** Los Pesajes pendientes de un codigo que se ofrecen asignar al Animal que recibe su Chapeta. */
+data class OfertaPesajesPendientes(
+    val idAnimal: String,
+    val nombreAnimal: String,
+    val codigo: String,
+    val pesajes: List<PesajePendiente>,
+)
 
 /**
  * Ofrece asignar a un Animal los Pesajes pendientes del codigo de su Chapeta, con la hora en que se midió cada uno.
