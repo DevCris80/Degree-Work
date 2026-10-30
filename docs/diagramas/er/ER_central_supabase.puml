@@ -39,6 +39,7 @@ entity usuario {
   *id_perfil_finca : uuid <<FK>>
   *nombre : text
   *rol : text <<CHECK Ganadero | Operario>>
+  fecha_quitado : timestamptz
   *fecha_modificacion : timestamptz
   *cursor_descarga : bigint
 }
@@ -153,8 +154,23 @@ entity aceptacion_datos {
   *fecha_aceptacion : timestamptz
 }
 
+entity invitacion {
+  *id_invitacion : uuid <<PK>>
+  --
+  *id_perfil_finca : uuid <<FK>>
+  *codigo : text <<UNIQUE, mayúsculas>>
+  *id_usuario_creador : uuid <<FK auth.users>>
+  *fecha_creacion : timestamptz
+  *fecha_vencimiento : timestamptz
+  id_usuario_canje : uuid <<FK auth.users>>
+  fecha_canje : timestamptz
+}
+
 auth_users ||--o| usuario
 auth_users ||--o{ aceptacion_datos
+auth_users ||--o{ invitacion : crea
+auth_users |o--o| invitacion : canjea
+perfil_finca ||--o{ invitacion
 perfil_finca ||--o{ usuario
 perfil_finca ||--o{ animal
 animal |o--o{ animal : padre / madre
@@ -197,6 +213,7 @@ legend bottom left
   Por simplicidad no se dibujan las FK hacia perfil_finca de chapeta, evento, registro, pesaje_pendiente, revision y sibling.
   Sin sincronizado, rev_base ni id_version en las filas: son estado local de cada celular.
   Fotos: bucket «fotos» de Storage, un archivo <finca>/<id_animal>.webp por animal.
-  Planificada y aún sin migración: tabla invitacion (RN-18).
+  aceptacion_datos e invitacion solo existen en el servidor: ni se leen ni se escriben por la API, y no viajan en la descarga.
+  usuario.fecha_quitado: el Ganadero quitó al Operario de la finca; la fila se conserva (RN-04).
 endlegend
 @enduml
