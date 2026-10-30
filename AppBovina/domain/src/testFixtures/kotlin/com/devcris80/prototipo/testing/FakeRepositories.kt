@@ -185,7 +185,13 @@ class FakeEventoRepository : EventoRepository {
         todos.map { lista -> lista.filter { it.fechaBaja == null }.sortedByDescending { it.fecha } }
     override suspend fun findById(idEvento: String): Evento? = todos.value.firstOrNull { it.idEvento == idEvento }
     override suspend fun update(evento: Evento) = reemplazar(evento.idEvento) {
-        it.copy(detalle = evento.detalle, fecha = evento.fecha, biologico = evento.biologico, dosis = evento.dosis, via = evento.via)
+        it.copy(
+            detalle = evento.detalle,
+            fecha = evento.fecha,
+            biologico = evento.biologico,
+            dosis = evento.dosis,
+            via = evento.via,
+        )
     }
     override suspend fun darDeBaja(idEvento: String, fecha: Long) = reemplazar(idEvento) { it.copy(fechaBaja = fecha) }
 

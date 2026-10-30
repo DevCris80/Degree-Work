@@ -36,18 +36,21 @@ class ActualizarEvento(
             ?: return@ejecutar Resultado.NoDisponible
         if (animalRepository.findById(evento.idAnimal)?.activo != true) return@ejecutar Resultado.NoDisponible
         val titulo = detalle.trim()
-        val esVacunacion = evento.tipoConocido == TipoEvento.VACUNACION
+        val tipo = evento.tipoConocido
+        val esVacunacion = tipo == TipoEvento.VACUNACION
         val biologicoDeLaVacuna = biologico.takeIf { esVacunacion }.limpio()
         if (titulo.isEmpty() || (esVacunacion && biologicoDeLaVacuna == null)) return@ejecutar Resultado.FaltanDatos
-        eventoRepository.update(
+        // Un Evento de otro tipo (de un celular con otra versión) conserva sus campos: la pantalla no los edita.
+        val conCamposDelTipo = if (tipo == null) {
+            evento
+        } else {
             evento.copy(
-                detalle = titulo,
-                fecha = fecha,
                 biologico = biologicoDeLaVacuna,
                 dosis = dosis.takeIf { esVacunacion }.limpio(),
                 via = via.takeIf { esVacunacion }.limpio(),
-            ),
-        )
+            )
+        }
+        eventoRepository.update(conCamposDelTipo.copy(detalle = titulo, fecha = fecha))
         Resultado.Actualizado
     }
 }

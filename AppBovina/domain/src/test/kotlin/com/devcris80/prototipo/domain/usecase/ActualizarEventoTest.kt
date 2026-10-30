@@ -116,4 +116,27 @@ class ActualizarEventoTest {
         assertNull(editado.via)
         assertEquals(cria, animalRepository.findById("cria-1"))
     }
+
+    @Test
+    fun unEventoDeOtroTipoConservaSusCamposAlEditarlo() = runTest {
+        conAnimal()
+        eventoRepository.set(
+            "vaca-1",
+            listOf(
+                Evento(
+                    "evento-1", "vaca-1", "usuario-1", "Tratamiento", 1_000L, "Antibiótico",
+                    biologico = "Penicilina", dosis = "5 ml", via = "Intramuscular",
+                ),
+            ),
+        )
+
+        val resultado = actualizarEvento("evento-1", "Antibiótico corregido", 2_000L)
+
+        assertEquals(Resultado.Actualizado, resultado)
+        val editado = evento()
+        assertEquals("Antibiótico corregido", editado.detalle)
+        assertEquals("Penicilina", editado.biologico)
+        assertEquals("5 ml", editado.dosis)
+        assertEquals("Intramuscular", editado.via)
+    }
 }

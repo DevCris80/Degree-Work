@@ -93,7 +93,7 @@ class EditarEventoViewModel(
                         dosis = evento.dosis.orEmpty(),
                         via = evento.via,
                         nombreAnimal = animalRepository.findById(evento.idAnimal)?.nombre,
-                        nombreCria = evento.idCriaResultante?.let { idCria -> animalRepository.findById(idCria)?.nombre },
+                        nombreCria = evento.idCriaResultante?.let { animalRepository.findById(it)?.nombre },
                         cargado = true,
                     )
                 }

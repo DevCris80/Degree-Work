@@ -94,7 +94,9 @@ private fun EventosContent(
                 verticalArrangement = Arrangement.spacedBy(12.dp),
                 contentPadding = PaddingValues(vertical = BovinaScreenGutter),
             ) {
-                items(eventos, key = { it.idEvento }) { evento -> TarjetaEvento(evento, onClick = { onEventoClick(evento.idEvento) }) }
+                items(eventos, key = { it.idEvento }) { evento ->
+                    TarjetaEvento(evento, onClick = { onEventoClick(evento.idEvento) })
+                }
             }
         }
     }

@@ -248,8 +248,10 @@ private fun EventoFormContent(
                         )
                     }
                     when (estado.tipo) {
-                        TipoEvento.VACUNACION -> DetallesBiologico(
-                            estado = estado,
+                        TipoEvento.VACUNACION -> CamposDeVacunacion(
+                            biologico = estado.biologico,
+                            dosis = estado.dosis,
+                            via = estado.via,
                             onBiologicoCambiado = onBiologicoCambiado,
                             onDosisCambiada = onDosisCambiada,
                             onViaSeleccionada = onViaSeleccionada,
@@ -362,21 +364,6 @@ internal fun CuadroDeTipo(titulo: String, icono: ImageVector, contenido: @Compos
         contenido()
     }
 }
-
-@Composable
-private fun DetallesBiologico(
-    estado: NuevoEventoUiState,
-    onBiologicoCambiado: (String) -> Unit,
-    onDosisCambiada: (String) -> Unit,
-    onViaSeleccionada: (String) -> Unit,
-) = CamposDeVacunacion(
-    biologico = estado.biologico,
-    dosis = estado.dosis,
-    via = estado.via,
-    onBiologicoCambiado = onBiologicoCambiado,
-    onDosisCambiada = onDosisCambiada,
-    onViaSeleccionada = onViaSeleccionada,
-)
 
 @Composable
 internal fun CamposDeVacunacion(
