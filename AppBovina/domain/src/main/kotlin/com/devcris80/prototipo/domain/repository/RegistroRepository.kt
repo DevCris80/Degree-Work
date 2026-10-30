@@ -12,4 +12,11 @@ interface RegistroRepository {
     fun observeByAnimal(idAnimal: String): Flow<List<Registro>>
 
     fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?>
+
+    suspend fun findById(idRegistro: String): Registro?
+
+    /** Guarda el peso y la hora de medición del Registro. Nada más cambia: ni el Animal, ni el autor, ni el idLectura. */
+    suspend fun update(registro: Registro)
+
+    suspend fun darDeBaja(idRegistro: String, fecha: Long)
 }

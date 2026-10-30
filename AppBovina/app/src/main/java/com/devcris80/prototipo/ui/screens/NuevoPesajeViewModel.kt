@@ -16,6 +16,9 @@ sealed interface NuevoPesajeError {
     data object PesoFueraDeRango : NuevoPesajeError
     data object FechaFutura : NuevoPesajeError
     data object AnimalNoDisponible : NuevoPesajeError
+
+    /** Solo al editar: el pesaje no existe o ya está dado de baja. */
+    data object PesajeNoDisponible : NuevoPesajeError
 }
 
 data class NuevoPesajeUiState(

@@ -23,4 +23,17 @@ class RoomRegistroRepository(
 
     override fun observeUltimoByAnimal(idAnimal: String): Flow<Registro?> =
         registroDao.observeUltimoByAnimal(idAnimal).map { it?.toDomain() }
+
+    override suspend fun findById(idRegistro: String): Registro? = registroDao.findById(idRegistro)?.toDomain()
+
+    override suspend fun update(registro: Registro) = registroDao.editar(
+        idRegistro = registro.idRegistro,
+        peso = registro.peso,
+        timestamp = registro.timestamp,
+        idVersion = nuevoIdVersion(),
+        fechaModificacion = clock(),
+    )
+
+    override suspend fun darDeBaja(idRegistro: String, fecha: Long) =
+        registroDao.darDeBaja(idRegistro, fecha, idVersion = nuevoIdVersion(), fechaModificacion = clock())
 }

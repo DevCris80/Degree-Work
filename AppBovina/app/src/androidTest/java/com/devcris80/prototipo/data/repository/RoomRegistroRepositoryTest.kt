@@ -50,4 +50,42 @@ class RoomRegistroRepositoryTest {
         assertEquals(listOf("registro-2", "registro-1"), delAnimal.map { it.idRegistro })
         assertEquals("registro-2", repositorio.observeUltimoByAnimal("animal-1").first()?.idRegistro)
     }
+
+    @Test
+    fun editarUnPesajeSincronizadoCambiaPesoYHoraLoDejaPendienteYConservaSuIdLectura() = runTest {
+        db.registroDao().insert(
+            Registro("registro-1", "animal-1", "usuario-1", "lectura-1", 400f, 1L).toEntity(fechaModificacion = 0, idVersion = "del-servidor")
+                .copy(rev = 3, sincronizado = true),
+        )
+        val repositorio = RoomRegistroRepository(db.registroDao(), clock = { 100 }, nuevoIdVersion = { "version-1" })
+
+        repositorio.update(Registro("registro-1", "animal-1", "usuario-1", "otra-lectura", 420.5f, 2L))
+
+        val editado = db.registroDao().findById("registro-1")!!
+        assertEquals(420.5f, editado.peso)
+        assertEquals(2L, editado.timestamp)
+        assertEquals("lectura-1", editado.idLectura)
+        assertEquals(false, editado.sincronizado)
+        assertEquals(3, editado.revBase)
+        assertEquals("version-1", editado.idVersion)
+        assertEquals(100L, editado.fechaModificacion)
+    }
+
+    @Test
+    fun unPesajeDadoDeBajaSaleDelHistorialPeroSigueEnLaBaseYPendienteDeSubir() = runTest {
+        db.registroDao().insert(
+            Registro("registro-1", "animal-1", "usuario-1", null, 400f, 1L).toEntity(fechaModificacion = 0, idVersion = "del-servidor")
+                .copy(rev = 2, sincronizado = true),
+        )
+        val repositorio = RoomRegistroRepository(db.registroDao(), clock = { 100 }, nuevoIdVersion = { "version-1" })
+
+        repositorio.darDeBaja("registro-1", fecha = 50)
+
+        assertEquals(emptyList<Registro>(), repositorio.observeByAnimal("animal-1").first())
+        val guardado = db.registroDao().findById("registro-1")!!
+        assertEquals(50L, guardado.fechaBaja)
+        assertEquals(false, guardado.sincronizado)
+        assertEquals(2, guardado.revBase)
+        assertEquals(400f, repositorio.findById("registro-1")!!.peso)
+    }
 }
