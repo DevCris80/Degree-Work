@@ -8,7 +8,8 @@ import com.devcris80.prototipo.domain.repository.SesionRepository
 
 /**
  * Crea la cuenta de una finca nueva (CU-01): la identidad en Supabase Auth y, en el servidor, la finca con su
- * primer Usuario Ganadero (RN-20). Sin aceptar el texto de autorización de la Ley 1581 (RF-04), o con el formulario
+ * primer Usuario Ganadero (RN-20). Con un código de invitación (CU-04) la une, como Operario, a la finca que lo
+ * generó. Sin aceptar el texto de autorización de la Ley 1581 (RF-04), o con el formulario
  * incompleto, no llama al servidor. La contraseña se envía tal cual; el resto, sin espacios de más.
  */
 class CrearCuenta(private val sesionRepository: SesionRepository) {
@@ -21,6 +22,15 @@ class CrearCuenta(private val sesionRepository: SesionRepository) {
 
     suspend operator fun invoke(cuenta: CuentaNueva): Resultado {
         cuenta.faltaParaCrear?.let { return Resultado.Incompleta(it) }
+        if (cuenta.conCodigo) {
+            return Resultado.DelServidor(sesionRepository.unirseAFinca(
+                nombre = cuenta.nombre.trim(),
+                codigoInvitacion = cuenta.codigoInvitacion.trim(),
+                correo = cuenta.correo.trim(),
+                contrasena = cuenta.contrasena,
+                versionAutorizacion = AutorizacionDatos.VERSION,
+            ))
+        }
         return Resultado.DelServidor(sesionRepository.crearCuenta(
             nombre = cuenta.nombre.trim(),
             nombreFinca = cuenta.nombreFinca.trim(),

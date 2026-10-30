@@ -15,11 +15,13 @@ import androidx.compose.material.icons.filled.Home
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Person
 import androidx.compose.material.icons.filled.Shield
+import androidx.compose.material.icons.filled.VpnKey
 import androidx.compose.material.icons.filled.WifiOff
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Checkbox
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
@@ -106,18 +108,37 @@ fun CrearCuentaScreen(
 
             BovinaCard(modifier = Modifier.fillMaxWidth()) {
                 Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {
+                    // CU-04: con un código la persona se une a una finca que ya existe, y no escribe el nombre de una.
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Switch(checked = estado.tengoCodigo, onCheckedChange = viewModel::onTengoCodigoCambiado)
+                        Text(
+                            text = "Tengo un código de invitación",
+                            style = MaterialTheme.typography.bodyMedium,
+                            modifier = Modifier.padding(start = 12.dp),
+                        )
+                    }
                     CampoConIcono(
                         label = "Nombre completo",
                         value = estado.nombreGanadero,
                         onValueChange = viewModel::onNombreGanaderoCambiado,
                         icon = Icons.Filled.Person,
                     )
-                    CampoConIcono(
-                        label = "Nombre de la finca",
-                        value = estado.nombreFinca,
-                        onValueChange = viewModel::onNombreFincaCambiado,
-                        icon = Icons.Filled.Home,
-                    )
+                    if (estado.tengoCodigo) {
+                        CampoConIcono(
+                            label = "Código de invitación",
+                            value = estado.codigoInvitacion,
+                            onValueChange = viewModel::onCodigoInvitacionCambiado,
+                            icon = Icons.Filled.VpnKey,
+                            helperText = "Te lo da el Ganadero de la finca. Vale por 7 días y una sola vez.",
+                        )
+                    } else {
+                        CampoConIcono(
+                            label = "Nombre de la finca",
+                            value = estado.nombreFinca,
+                            onValueChange = viewModel::onNombreFincaCambiado,
+                            icon = Icons.Filled.Home,
+                        )
+                    }
                     CampoConIcono(
                         label = "Correo electrónico",
                         value = estado.correo,

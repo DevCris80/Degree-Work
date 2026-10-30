@@ -17,12 +17,14 @@ import com.devcris80.prototipo.data.repository.RoomPesajePendienteRepository
 import com.devcris80.prototipo.data.repository.RoomRechazoRepository
 import com.devcris80.prototipo.data.repository.RoomRegistroRepository
 import com.devcris80.prototipo.data.repository.RoomTransaccion
+import com.devcris80.prototipo.data.repository.SupabaseInvitacionRepository
 import com.devcris80.prototipo.data.repository.SupabaseSesionRepository
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
+import com.devcris80.prototipo.domain.repository.InvitacionRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
@@ -102,6 +104,7 @@ class AppContainer(context: Context) {
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository, cuentaRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository, cuentaRepository)
     val crearCuenta = CrearCuenta(sesionRepository)
+    val invitacionRepository: InvitacionRepository = SupabaseInvitacionRepository(supabase)
     val observarPesajesPendientes =
         ObservarPesajesPendientes(pesajePendienteRepository, chapetaRepository, animalRepository)
     val asignarPesajesPendientes = AsignarPesajesPendientes(

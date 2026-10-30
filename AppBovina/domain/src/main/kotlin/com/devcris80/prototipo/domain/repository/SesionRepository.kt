@@ -32,6 +32,19 @@ interface SesionRepository {
         versionAutorizacion: String,
     ): ResultadoCreacionCuenta
 
+    /**
+     * Crea la identidad en Supabase Auth con un código de invitación y, en el mismo alta, el Usuario Operario de la
+     * finca que generó el código y la aceptación de [versionAutorizacion]; después deja la finca y el Usuario en el
+     * dispositivo. Un código usado, vencido o inexistente no crea la cuenta (RN-18).
+     */
+    suspend fun unirseAFinca(
+        nombre: String,
+        codigoInvitacion: String,
+        correo: String,
+        contrasena: String,
+        versionAutorizacion: String,
+    ): ResultadoCreacionCuenta
+
     /** Olvida la sesión; los datos de la finca quedan en el dispositivo. */
     suspend fun cerrarSesion()
 }
@@ -49,6 +62,9 @@ sealed interface ResultadoCreacionCuenta {
 
     /** El dispositivo ya tiene los datos de otra finca: hay que desinstalar la app para empezar limpio. */
     data object OtraCuentaEnElDispositivo : ResultadoCreacionCuenta
+
+    /** El servidor no aceptó el código de invitación: no existe, ya se usó o venció. */
+    data object CodigoRechazado : ResultadoCreacionCuenta
 
     /** El servidor respondió con un error inesperado. */
     data object NoSePudo : ResultadoCreacionCuenta

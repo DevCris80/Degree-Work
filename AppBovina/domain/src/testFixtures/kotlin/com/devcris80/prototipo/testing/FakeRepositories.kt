@@ -22,8 +22,11 @@ import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
 import com.devcris80.prototipo.domain.repository.RechazoRepository
 import com.devcris80.prototipo.domain.repository.RegistroRepository
+import com.devcris80.prototipo.domain.repository.Invitacion
+import com.devcris80.prototipo.domain.repository.InvitacionRepository
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoInvitacion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.ResultadoSincronizacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
@@ -229,6 +232,28 @@ class FakeSesionRepository : SesionRepository {
         if (resultadoCreacion == ResultadoCreacionCuenta.Exito) guardada.value = true
         return resultadoCreacion
     }
+
+    data class UnionAFinca(
+        val nombre: String,
+        val codigoInvitacion: String,
+        val correo: String,
+        val contrasena: String,
+        val versionAutorizacion: String,
+    )
+
+    val uniones = mutableListOf<UnionAFinca>()
+
+    override suspend fun unirseAFinca(
+        nombre: String,
+        codigoInvitacion: String,
+        correo: String,
+        contrasena: String,
+        versionAutorizacion: String,
+    ): ResultadoCreacionCuenta {
+        uniones.add(UnionAFinca(nombre, codigoInvitacion, correo, contrasena, versionAutorizacion))
+        if (resultadoCreacion == ResultadoCreacionCuenta.Exito) guardada.value = true
+        return resultadoCreacion
+    }
     override suspend fun recuperarContrasena(correo: String): ResultadoRecuperacion {
         recuperaciones.add(correo)
         pausaRecuperacion?.await()
@@ -327,5 +352,22 @@ class FakeRechazoRepository : RechazoRepository {
     override suspend fun cerrar(idRechazo: String) {
         cerrados += idRechazo
         abiertos.value = abiertos.value.filterNot { it.idRechazo == idRechazo }
+    }
+}
+
+class FakeInvitacionRepository : InvitacionRepository {
+    var resultado: ResultadoInvitacion =
+        ResultadoInvitacion.Generada(
+            Invitacion("ABCD2345", 1_800_000_000_000),
+        )
+    var generaciones = 0
+
+    /** Si no es nulo, generar espera a que se complete. */
+    var espera: CompletableDeferred<Unit>? = null
+
+    override suspend fun generar(): ResultadoInvitacion {
+        generaciones++
+        espera?.await()
+        return resultado
     }
 }

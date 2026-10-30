@@ -42,7 +42,7 @@ Lo crea una sola vez el dueño del proyecto:
 3. `npx supabase@2.122.0 db push --linked` aplica las migraciones pendientes. Se repite con cada migración nueva que llegue a `main`. Desde ese momento, esas migraciones ya no se editan: un cambio es una migración nueva.
 4. `npx supabase@2.122.0 test db --linked` corre las mismas pruebas pgTAP contra la nube. Cada archivo trabaja dentro de una transacción que se deshace, así que no deja datos.
 
-La cuenta de una finca nueva se crea desde la app, en Crear cuenta (ver abajo). Mientras no existan las invitaciones (CU-04), un Operario de prueba se arma a mano:
+La cuenta de una finca nueva se crea desde la app, en Crear cuenta, y la de un Operario con un código de invitación (ver abajo). Un Operario de prueba también se puede armar a mano:
 
 1. En Authentication → Users, crear el usuario con correo y contraseña, y copiar su id.
 2. En el SQL Editor, que corre como `postgres` y no pasa por RLS, crear su `Usuario` con ese id en una finca que ya exista:
@@ -95,11 +95,19 @@ Errores que devuelve, para clasificar un rechazo:
 
 ## Crear cuenta
 
-El celular registra la identidad con Supabase Auth (`POST /auth/v1/signup`) y manda como metadatos del registro (`data`) `{"nombre": "...", "nombre_finca": "...", "version_autorizacion": "0.1-provisional"}` (CU-01, RN-20). El trigger `crear_finca` de `auth.users` llama `privado.crear_finca` en la misma transacción del alta: crea la finca, su primer `Usuario` con rol Ganadero y una fila en `aceptacion_datos` con la versión del texto de la Ley 1581 y su fecha (RF-04, RNF-13). Si algo falla, Supabase Auth no da de alta la identidad. Después el celular lee su finca y su Usuario como al iniciar sesión.
+El celular registra la identidad con Supabase Auth (`POST /auth/v1/signup`) y manda como metadatos del registro (`data`) `{"nombre": "...", "nombre_finca": "...", "version_autorizacion": "0.1-provisional"}` (CU-01, RN-20), o con `"codigo_invitacion": "..."` en lugar de `nombre_finca` (CU-04, ver Invitaciones). El trigger `crear_finca` de `auth.users` llama `privado.crear_finca` en la misma transacción del alta: crea la finca, su primer `Usuario` con rol Ganadero y una fila en `aceptacion_datos` con la versión del texto de la Ley 1581 y su fecha (RF-04, RNF-13). Si algo falla, Supabase Auth no da de alta la identidad. Después el celular lee su finca y su Usuario como al iniciar sesión.
 
-- La versión tiene que estar en `privado.texto_autorizacion`; sin ella, o sin el nombre de la persona o de la finca, el alta falla con `22023`. Cambiar el texto de la app es una migración que agrega su versión.
+- La versión tiene que estar en `privado.texto_autorizacion`; sin ella, o sin el nombre de la persona o de la finca, el alta falla con `22023`. También con `22023` falla un alta que trae `nombre_finca` y `codigo_invitacion` a la vez, o un código que no existe, ya se usó o venció. Cambiar el texto de la app es una migración que agrega su versión.
 - Los metadatos no deciden el rol ni la finca: el primer Usuario siempre es Ganadero de una finca nueva. Un alta sin `nombre_finca` (un Operario creado a mano) no crea finca.
-- `aceptacion_datos` y `texto_autorizacion` solo existen en el servidor: no se leen ni se escriben por la API, y no viajan en la descarga. `privado.crear_finca` no se puede llamar por la API.
+- `aceptacion_datos`, `texto_autorizacion` e `invitacion` solo existen en el servidor: no se leen ni se escriben por la API, y no viajan en la descarga. `privado.crear_finca` no se puede llamar por la API.
+
+## Invitaciones
+
+Un Operario entra a una finca con un código que genera el Ganadero (CU-04, RF-05, RN-18). Las dos piezas están en `20261029120000_invitaciones.sql`:
+
+- `public.generar_invitacion()` (`POST /rest/v1/rpc/generar_invitacion`, sin argumentos, con el JWT del usuario) devuelve `{"codigo": "...", "fecha_vencimiento": "..."}`: ocho caracteres sin los confusos (sin 0, O, 1, I ni L), de un solo uso y con 7 días de vigencia. Es `SECURITY DEFINER` y comprueba el rol: un Operario, alguien sin finca o una llamada sin sesión reciben `42501`.
+- `privado.canjear_invitacion` la llama el trigger de `auth.users` cuando el alta trae `codigo_invitacion` (ver Crear cuenta). Ahí la persona todavía no tiene sesión, por eso el canje va dentro del alta y no es una función pública. Bloquea la fila del código, que tiene que estar sin usar y vigente (acepta minúsculas y espacios alrededor); crea el `Usuario` como Operario de la finca del código, guarda la aceptación del texto de la Ley 1581 y marca el código como canjeado. Si algo falla (`22023`), Supabase Auth no da de alta la identidad y el código sigue sin usar.
+- Los metadatos no deciden el rol ni la finca: solo el código. La tabla `invitacion` no se lee ni se escribe por la API, y `privado.canjear_invitacion` no se puede llamar por la API.
 
 ## Subir cambios
 
