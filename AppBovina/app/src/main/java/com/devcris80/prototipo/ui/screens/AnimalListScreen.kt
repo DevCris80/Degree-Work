@@ -55,6 +55,7 @@ import com.devcris80.prototipo.ui.components.BovinaTextField
 import com.devcris80.prototipo.ui.components.BovinaTopBar
 import com.devcris80.prototipo.ui.components.FotoAnimal
 import com.devcris80.prototipo.ui.components.MarcaEnConflicto
+import com.devcris80.prototipo.ui.components.PanelConfiguracion
 import com.devcris80.prototipo.ui.components.PillBadge
 import com.devcris80.prototipo.ui.theme.BovinaForest
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
@@ -226,7 +227,7 @@ fun ListaAnimalesScreen(
             onInvitarClick = onInvitarClick.takeIf { estado.puedeInvitar },
             onRegistrarUbicacionClick = onRegistrarUbicacionClick.takeIf { estado.puedeRegistrarUbicacion },
             onCerrarSesionClick = { confirmarCierre = true },
-            onCerrar = { mostrarConfiguracion = false },
+            onCerrarPanel = { mostrarConfiguracion = false },
         )
     }
 

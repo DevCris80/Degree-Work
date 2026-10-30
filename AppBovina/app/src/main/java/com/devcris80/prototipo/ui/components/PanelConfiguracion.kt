@@ -1,4 +1,4 @@
-package com.devcris80.prototipo.ui.screens
+package com.devcris80.prototipo.ui.components
 
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
@@ -25,7 +25,6 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.domain.model.Rol
-import com.devcris80.prototipo.ui.components.PanelLateralDerecho
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.aEtiqueta
 
@@ -42,9 +41,14 @@ fun PanelConfiguracion(
     onInvitarClick: (() -> Unit)?,
     onRegistrarUbicacionClick: (() -> Unit)?,
     onCerrarSesionClick: () -> Unit,
-    onCerrar: () -> Unit,
+    onCerrarPanel: () -> Unit,
 ) {
-    PanelLateralDerecho(visible = visible, onCerrar = onCerrar) {
+    // Elegir una opción cierra el panel y luego hace lo suyo.
+    fun alElegir(accion: () -> Unit): () -> Unit = {
+        onCerrarPanel()
+        accion()
+    }
+    PanelLateralDerecho(visible = visible, onCerrar = onCerrarPanel) {
         Row(
             modifier = Modifier.fillMaxWidth().padding(start = BovinaScreenGutter, end = 8.dp, top = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
@@ -54,7 +58,7 @@ fun PanelConfiguracion(
                 style = MaterialTheme.typography.titleLarge,
                 modifier = Modifier.weight(1f),
             )
-            IconButton(onClick = onCerrar) {
+            IconButton(onClick = onCerrarPanel) {
                 Icon(Icons.Filled.Close, contentDescription = "Cerrar el menú")
             }
         }
@@ -64,20 +68,14 @@ fun PanelConfiguracion(
             OpcionDelPanel(
                 icono = Icons.Filled.PersonAdd,
                 texto = "Invitar a un Operario",
-                onClick = {
-                    onCerrar()
-                    onInvitarClick()
-                },
+                onClick = alElegir(onInvitarClick),
             )
         }
         if (onRegistrarUbicacionClick != null) {
             OpcionDelPanel(
                 icono = Icons.Filled.LocationOn,
                 texto = "Registrar ubicación de la finca",
-                onClick = {
-                    onCerrar()
-                    onRegistrarUbicacionClick()
-                },
+                onClick = alElegir(onRegistrarUbicacionClick),
             )
         }
         Spacer(modifier = Modifier.weight(1f))
@@ -86,10 +84,7 @@ fun PanelConfiguracion(
             icono = Icons.AutoMirrored.Filled.Logout,
             texto = "Cerrar sesión",
             color = MaterialTheme.colorScheme.error,
-            onClick = {
-                onCerrar()
-                onCerrarSesionClick()
-            },
+            onClick = alElegir(onCerrarSesionClick),
         )
         Spacer(modifier = Modifier.height(8.dp))
     }
