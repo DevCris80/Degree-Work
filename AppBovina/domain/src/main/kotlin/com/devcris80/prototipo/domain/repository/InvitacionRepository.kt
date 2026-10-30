@@ -1,7 +1,10 @@
 package com.devcris80.prototipo.domain.repository
 
-/** Un código de invitación a la finca (CU-04): de un solo uso, vence a los 7 días. */
-data class Invitacion(val codigo: String, val venceEn: Long)
+/**
+ * Un código de invitación a la finca (CU-04): de un solo uso, vence a los 7 días. [venceEnMillis] son milisegundos
+ * desde 1970 (UTC).
+ */
+data class Invitacion(val codigo: String, val venceEnMillis: Long)
 
 /**
  * Las invitaciones a la finca viven solo en el servidor (RN-18): generar una necesita señal y el rol Ganadero.

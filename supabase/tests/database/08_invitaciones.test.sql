@@ -5,11 +5,12 @@ begin;
 set local role postgres;
 create extension if not exists pgtap with schema extensions;
 set local search_path = public, extensions;
-select plan(24);
+select plan(25);
 
 insert into auth.users (id, email) values
   ('00000000-0000-0000-0000-0000000000a1', 'ganadero.a@test'),
-  ('00000000-0000-0000-0000-0000000000a2', 'operario.a@test');
+  ('00000000-0000-0000-0000-0000000000a2', 'operario.a@test'),
+  ('00000000-0000-0000-0000-0000000000a3', 'sinfinca.a@test');
 insert into public.perfil_finca (id_perfil_finca, nombre_finca, fecha_modificacion) values
   ('0000000a-0000-0000-0000-000000000000', 'Finca A', now()),
   ('0000000b-0000-0000-0000-000000000000', 'Finca B', now());
@@ -31,6 +32,9 @@ select throws_ok($$select privado.canjear_invitacion('00000000-0000-0000-0000-00
 
 select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a2","role":"authenticated"}', true);
 select throws_ok($$select public.generar_invitacion()$$, '42501', null, 'un Operario no genera códigos');
+
+select set_config('request.jwt.claims', '{"sub":"00000000-0000-0000-0000-0000000000a3","role":"authenticated"}', true);
+select throws_ok($$select public.generar_invitacion()$$, '42501', null, 'quien no tiene finca no genera códigos');
 
 set local role anon;
 select throws_ok($$select public.generar_invitacion()$$, '42501', null, 'sin sesión no se generan códigos');

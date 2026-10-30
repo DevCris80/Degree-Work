@@ -98,6 +98,6 @@ private fun ResultadoCreacionCuenta.mensaje(): String? = when (this) {
     ResultadoCreacionCuenta.OtraCuentaEnElDispositivo ->
         "Este celular tiene los datos de otra cuenta. Desinstala la app para empezar limpio."
     ResultadoCreacionCuenta.CodigoRechazado ->
-        "El código no sirve: no existe, ya se usó o venció. Pídele uno nuevo al Ganadero de la finca."
+        "No se pudo unir a la finca. Revisa que el código esté vigente y sin usar, o inténtalo de nuevo."
     ResultadoCreacionCuenta.NoSePudo -> "No se pudo crear la cuenta. Inténtalo de nuevo en un momento."
 }

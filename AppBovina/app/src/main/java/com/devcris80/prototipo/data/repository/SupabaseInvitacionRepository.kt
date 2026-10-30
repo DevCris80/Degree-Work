@@ -21,7 +21,7 @@ class SupabaseInvitacionRepository(private val supabase: SupabaseClient) : Invit
         ResultadoInvitacion.Generada(
             Invitacion(
                 codigo = respuesta.getValue("codigo").jsonPrimitive.content,
-                venceEn = Instant.parse(respuesta.getValue("fecha_vencimiento").jsonPrimitive.content)
+                venceEnMillis = Instant.parse(respuesta.getValue("fecha_vencimiento").jsonPrimitive.content)
                     .toEpochMilliseconds(),
             ),
         )

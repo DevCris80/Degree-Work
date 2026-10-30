@@ -62,16 +62,17 @@ fun InvitarOperarioScreen(onVolver: () -> Unit) {
             )
 
             estado.invitacion?.let { invitacion ->
+                val vence = formatoFecha.format(Date(invitacion.venceEnMillis))
                 CodigoGenerado(
                     invitacion = invitacion,
-                    vence = formatoFecha.format(Date(invitacion.venceEn)),
+                    vence = vence,
                     onCompartir = {
                         val envio = Intent(Intent.ACTION_SEND).apply {
                             type = "text/plain"
                             putExtra(
                                 Intent.EXTRA_TEXT,
                                 "Tu código para unirte a mi finca en MiGanado: ${invitacion.codigo}. " +
-                                    "Vence el ${formatoFecha.format(Date(invitacion.venceEn))}.",
+                                    "Vence el $vence.",
                             )
                         }
                         contexto.startActivity(Intent.createChooser(envio, "Compartir código"))
