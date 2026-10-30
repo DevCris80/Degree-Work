@@ -399,8 +399,8 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | **C5. Eventos** | | | | | | |
 | RF-28 | Registrar un evento de tipo vacunación o parto, con la fecha y hora del evento (pasada o futura) y un detalle. Un evento con fecha futura queda programado hasta que esa fecha llega. | M | Implementado | EQUIPO / NORMA (Ley 1659) | OE3 | CU-17 |
 | RF-29 | Registrar los campos de cada tipo: vacunación (biológico, dosis y vía de aplicación) y parto (cría resultante, que queda con el animal del evento como madre o padre). | C | Implementado | EQUIPO | OE3 | CU-17 |
-| RF-30 | Permitir editar eventos y pesajes, guardando cada versión como revisión. | S | Parcial | EQUIPO | OE3 | CU-18 |
-| RF-31 | Dar de baja eventos y pesajes (baja lógica). | C | Parcial | NORMA (Ley 1659) | OE3 | CU-19 |
+| RF-30 | Permitir editar eventos y pesajes, guardando cada versión como revisión. | S | Implementado | EQUIPO | OE3 | CU-18 |
+| RF-31 | Dar de baja eventos y pesajes (baja lógica). | C | Implementado | NORMA (Ley 1659) | OE3 | CU-19 |
 | **C6. Sincronización** | | | | | | |
 | RF-32 | Subir los cambios locales al servicio de sincronización cuando hay señal. | M | Implementado | EQUIPO | OE2, OE3 | CU-20 |
 | RF-33 | Detectar ediciones concurrentes con `rev_base` y guardarlas como siblings. | S | Implementado | EQUIPO | OE2, OE3 | CU-20 |
@@ -757,14 +757,14 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-30 |
 | Objetivo / Fuente | OE3 / EQUIPO |
 | Actor | Ganadero, Operario |
-| Prioridad / Estado | S / Parcial: se edita un pesaje (#96); falta editar un evento (#142). |
+| Prioridad / Estado | S / Implementado: se editan los pesajes (#96) y los eventos (#142). Un evento conserva su tipo, su animal y la cría de un parto; en un parto no se piden los campos de vacunación. |
 | Precondiciones | El evento o pesaje no está dado de baja. |
 | Flujo principal | 1. En el historial del animal, el usuario abre un evento o pesaje y elige Editar.<br>2. Modifica los campos (mismas validaciones del registro).<br>3. Guarda; el sistema crea una nueva versión con `rev_base` igual a la revisión que tenía el celular. |
 | Flujos alternos y excepciones | 2a. Pesaje del ESP32: se conserva su `id_lectura`. |
 | Offline / sincronización | Funciona sin señal. Puede generar un conflicto al sincronizar. |
 | Reglas | RN-07, RN-15, RN-16 |
 | Criterios de aceptación | 1. **Dado** un pesaje editado, **entonces** el historial muestra el valor nuevo y la versión anterior se conserva como revisión. |
-| Trazas | Issues #96, #142 · `EditarPesajeScreen` (pesajes) · `ActualizarRegistroTest`, `EditarPesajeViewModelTest` |
+| Trazas | Issues #96, #142 · `EditarPesajeScreen`, `EditarEventoScreen` · `ActualizarRegistroTest`, `EditarPesajeViewModelTest`, `ActualizarEventoTest`, `EditarEventoViewModelTest`, `RoomEventoRepositoryTest` |
 
 <a id="cu-19"></a>**CU-19 — Dar de baja evento o pesaje**
 
@@ -773,12 +773,12 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RF cubiertos | RF-31 |
 | Objetivo / Fuente | OE3 / NORMA (Ley 1659) |
 | Actor | Ganadero |
-| Prioridad / Estado | C / Parcial: se da de baja un pesaje (#96); falta dar de baja un evento (#142). |
+| Prioridad / Estado | C / Implementado: se da de baja un pesaje (#96) y un evento (#142), con confirmación y solo el Ganadero. |
 | Flujo principal | 1. En el historial, el usuario elige Dar de baja sobre un evento o pesaje.<br>2. Confirma.<br>3. El sistema registra `fechaBaja`; el elemento deja de aparecer en el historial. |
 | Offline / sincronización | Funciona sin señal. |
 | Reglas | RN-04 |
 | Criterios de aceptación | 1. **Dado** un pesaje dado de baja, **entonces** no aparece en el historial ni en los indicadores, y sigue en la base de datos. |
-| Trazas | Issues #96, #142 · `EditarPesajeScreen` (pesajes) · `DarDeBajaRegistroTest`, `EditarPesajeViewModelTest` |
+| Trazas | Issues #96, #142 · `EditarPesajeScreen`, `EditarEventoScreen` · `DarDeBajaRegistroTest`, `EditarPesajeViewModelTest`, `DarDeBajaEventoTest`, `EditarEventoViewModelTest`, `RoomEventoRepositoryTest` |
 
 ##### C6. Sincronización
 
@@ -869,7 +869,7 @@ App en Jetpack Compose con Material 3 y navegación inferior de cuatro pestañas
 | Registrar pesaje manual | CU-16 | Implementada |
 | Editar animal | CU-08 | Implementada |
 | Asociar chapeta | CU-11 | Implementada |
-| Editar y dar de baja un pesaje | CU-18, CU-19 | Implementada; falta editar y dar de baja un evento (#142) |
+| Editar y dar de baja un pesaje o un evento | CU-18, CU-19 | Implementada |
 | Datos de la finca (ubicación) | CU-23 | Implementada |
 | Usuarios e invitación | CU-04, CU-05 | Implementada |
 | Conflictos | CU-21 | Implementada |
@@ -1145,8 +1145,8 @@ Resumen del contrato de pesaje:
 | RF-27 | CU-16 | CAMPO | ⚠ | OE3 | S | Implementado | P `NuevoPesajeViewModelTest` | #95 |
 | RF-28 | CU-17 | EQUIPO / NORMA | — | OE3 | M | Implementado | P `NuevoEventoViewModelTest`, `EventosViewModelTest`, `ObservarIndicadoresHatoTest` | #39, #44, #128 |
 | RF-29 | CU-17 | EQUIPO | — | OE3 | C | Implementado | P `RegistrarEventoTest`, `MappersEventoTest`, `RoomEventoRepositoryTest`, `04_subir_cambios` | #128 (reemplaza a #22) |
-| RF-30 | CU-18 | EQUIPO | — | OE3 | S | Parcial | P `ActualizarRegistroTest`, `EditarPesajeViewModelTest` (pesajes) | #96, #142 |
-| RF-31 | CU-19 | NORMA | — | OE3 | C | Parcial | P `DarDeBajaRegistroTest`, `EditarPesajeViewModelTest` (pesajes) | #96, #142 |
+| RF-30 | CU-18 | EQUIPO | — | OE3 | S | Implementado | P `ActualizarRegistroTest`, `EditarPesajeViewModelTest`, `ActualizarEventoTest`, `EditarEventoViewModelTest`, `RoomEventoRepositoryTest` | #96, #142 |
+| RF-31 | CU-19 | NORMA | — | OE3 | C | Implementado | P `DarDeBajaRegistroTest`, `EditarPesajeViewModelTest`, `DarDeBajaEventoTest`, `EditarEventoViewModelTest`, `RoomEventoRepositoryTest` | #96, #142 |
 | RF-32 | CU-20 | EQUIPO | — | OE2, OE3 | M | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest`, `DisparosDeSincronizacionTest`; D DM-05 | #81, #83 |
 | RF-33 | CU-20 | EQUIPO | — | OE2, OE3 | S | Implementado | P `04_subir_cambios`, `MotorSincronizacionTest` | #80, #81 |
 | RF-34 | CU-21 | EQUIPO | — | OE2, OE3 | S | Implementado | P `ResolverConflictoTest`, `ResolverConflictoViewModelTest`, `RoomConflictoRepositoryTest` | #84 |

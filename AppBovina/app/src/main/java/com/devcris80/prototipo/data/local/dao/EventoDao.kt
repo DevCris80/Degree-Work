@@ -33,6 +33,26 @@ interface EventoDao {
     @Update
     suspend fun update(evento: EventoEntity)
 
+    // Editar y dar de baja son modificaciones: la fila vuelve a quedar pendiente de sincronizar (ADR-0004).
+    // El Animal, el autor, el tipo y la cría no se tocan.
+    @Query(
+        "UPDATE evento SET detalle = :detalle, fecha = :fecha, biologico = :biologico, dosis = :dosis, via = :via, " +
+            EDICION_LOCAL + " WHERE idEvento = :idEvento",
+    )
+    suspend fun editar(
+        idEvento: String,
+        detalle: String,
+        fecha: Long,
+        biologico: String?,
+        dosis: String?,
+        via: String?,
+        idVersion: String,
+        fechaModificacion: Long,
+    )
+
+    @Query("UPDATE evento SET fechaBaja = :fecha, " + EDICION_LOCAL + " WHERE idEvento = :idEvento")
+    suspend fun darDeBaja(idEvento: String, fecha: Long, idVersion: String, fechaModificacion: Long)
+
     // Ver AnimalDao.rebasar.
     @Query("UPDATE evento SET rev = :rev, revBase = :rev WHERE idEvento = :idEvento")
     suspend fun rebasar(idEvento: String, rev: Int)

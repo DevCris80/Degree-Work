@@ -23,6 +23,7 @@ import com.devcris80.prototipo.ui.components.BovinaBottomBar
 import com.devcris80.prototipo.ui.components.DestinoBarra
 import com.devcris80.prototipo.ui.screens.AsociarChapetaScreen
 import com.devcris80.prototipo.ui.screens.BandejaRechazosScreen
+import com.devcris80.prototipo.ui.screens.EditarEventoScreen
 import com.devcris80.prototipo.ui.screens.EditarPesajeScreen
 import com.devcris80.prototipo.ui.screens.CrearCuentaScreen
 import com.devcris80.prototipo.ui.screens.DetalleAnimalScreen
@@ -204,6 +205,7 @@ fun AppNavHost() {
                     onEditarClick = { navController.navigate(Rutas.EditarAnimal.crear(idAnimal)) },
                     onAsociarChapetaClick = { navController.navigate(Rutas.AsociarChapeta.crear(idAnimal = idAnimal)) },
                     onEditarPesajeClick = { idRegistro -> navController.navigate(Rutas.EditarPesaje.crear(idRegistro)) },
+                    onEditarEventoClick = { idEvento -> navController.navigate(Rutas.EditarEvento.crear(idEvento)) },
                     onAnimalClick = { otro -> navController.navigate(Rutas.DetalleAnimal.crear(otro)) },
                     onResolverConflictoClick = { entidad, idFila ->
                         navController.navigate(Rutas.ResolverConflicto.crear(entidad, idFila))
@@ -253,6 +255,15 @@ fun AppNavHost() {
                 )
             }
             composable(
+                route = Rutas.EditarEvento.ruta,
+                arguments = listOf(navArgument("idEvento") { type = NavType.StringType }),
+            ) {
+                EditarEventoScreen(
+                    onTerminado = { navController.popBackStack() },
+                    onVolver = { navController.popBackStack() },
+                )
+            }
+            composable(
                 route = Rutas.EditarPesaje.ruta,
                 arguments = listOf(navArgument("idRegistro") { type = NavType.StringType }),
             ) {
@@ -293,6 +304,7 @@ fun AppNavHost() {
             composable(Rutas.Eventos.ruta) {
                 EventosScreen(
                     onRegistrarClick = { navController.navigate(Rutas.NuevoEvento.crear()) },
+                    onEventoClick = { idEvento -> navController.navigate(Rutas.EditarEvento.crear(idEvento)) },
                 )
             }
             composable(Rutas.EstadoServicio.ruta) {

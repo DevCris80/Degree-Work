@@ -37,8 +37,10 @@ import com.devcris80.prototipo.domain.usecase.AsignarPesajesPendientes
 import com.devcris80.prototipo.domain.usecase.AsociarChapeta
 import com.devcris80.prototipo.domain.usecase.CrearCuenta
 import com.devcris80.prototipo.domain.usecase.ActualizarAnimal
+import com.devcris80.prototipo.domain.usecase.ActualizarEvento
 import com.devcris80.prototipo.domain.usecase.ActualizarRegistro
 import com.devcris80.prototipo.domain.usecase.DarDeBajaAnimal
+import com.devcris80.prototipo.domain.usecase.DarDeBajaEvento
 import com.devcris80.prototipo.domain.usecase.DarDeBajaRegistro
 import com.devcris80.prototipo.domain.usecase.DescartarPesajePendiente
 import com.devcris80.prototipo.domain.usecase.LiberarChapeta
@@ -111,6 +113,8 @@ class AppContainer(context: Context) {
         AsociarChapeta(animalRepository, chapetaRepository, pesajePendienteRepository, transaccion)
     val actualizarAnimal = ActualizarAnimal(animalRepository, transaccion)
     val registrarEvento = RegistrarEvento(animalRepository, eventoRepository, cuentaRepository, transaccion)
+    val actualizarEvento = ActualizarEvento(animalRepository, eventoRepository, transaccion)
+    val darDeBajaEvento = DarDeBajaEvento(eventoRepository, cuentaRepository)
     val resolverConflicto = ResolverConflicto(conflictoRepository)
     val darDeBajaAnimal = DarDeBajaAnimal(animalRepository, cuentaRepository)
     val liberarChapeta = LiberarChapeta(chapetaRepository, cuentaRepository)

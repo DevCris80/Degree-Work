@@ -178,10 +178,26 @@ class FakeEventoRepository : EventoRepository {
     override suspend fun insert(evento: Evento) {
         todos.value = listOf(evento) + todos.value
     }
+    // Como el repositorio real: los dados de baja no salen, pero siguen guardados.
     override fun observeByAnimal(idAnimal: String): Flow<List<Evento>> =
-        todos.map { lista -> lista.filter { it.idAnimal == idAnimal } }
+        todos.map { lista -> lista.filter { it.idAnimal == idAnimal && it.fechaBaja == null } }
     override fun observeActivos(): Flow<List<Evento>> =
         todos.map { lista -> lista.filter { it.fechaBaja == null }.sortedByDescending { it.fecha } }
+    override suspend fun findById(idEvento: String): Evento? = todos.value.firstOrNull { it.idEvento == idEvento }
+    override suspend fun update(evento: Evento) = reemplazar(evento.idEvento) {
+        it.copy(
+            detalle = evento.detalle,
+            fecha = evento.fecha,
+            biologico = evento.biologico,
+            dosis = evento.dosis,
+            via = evento.via,
+        )
+    }
+    override suspend fun darDeBaja(idEvento: String, fecha: Long) = reemplazar(idEvento) { it.copy(fechaBaja = fecha) }
+
+    private fun reemplazar(idEvento: String, cambio: (Evento) -> Evento) {
+        todos.value = todos.value.map { if (it.idEvento == idEvento) cambio(it) else it }
+    }
 }
 
 class FakePesajePendienteRepository : PesajePendienteRepository {
