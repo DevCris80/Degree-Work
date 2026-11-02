@@ -180,6 +180,7 @@ Especificar los requisitos funcionales y no funcionales de MiGanado, el prototip
 | Operario | Rol del Usuario que trabaja con el ganado, con permisos restringidos (ver 2.1). |
 | PerfilFinca | La finca a la que pertenecen los Usuarios y los Animales. |
 | Crear cuenta | Acto por el que una persona se convierte en Usuario. |
+| Cuenta guardada | Usuario con la sesión cerrada cuyos datos siguen en el celular. No sincroniza hasta que vuelva a iniciar sesión; se quita desde Iniciar sesión solo si no le queda nada por subir. |
 
 **Términos de sincronización**
 
@@ -318,12 +319,12 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | ID | Limitación | Norma afectada | Impacto | Requisitos afectados | Trabajo futuro |
 |---|---|---|---|---|---|
 | LIM-01 | La identificación usa tags NFC de 13,56 MHz leídos con el NFC del celular. Las chapetas oficiales usan RFID LF 134,2 kHz. | ISO 11784/11785; SINIGAN | El sistema no lee chapetas oficiales ni puede integrarse con SINIGAN tal como está. | RF-15 a RF-19 | Lector LF externo conectado al celular. |
-| LIM-02 | Requieren señal: crear cuenta, primer inicio de sesión en un dispositivo, recuperar contraseña, canjear un código de invitación, sincronizar y subir fotos. | — | Excepción deliberada a offline-first (ADR-0002). | RF-01 a RF-03, RF-05, RF-07, RF-32 a RF-38 | — |
+| LIM-02 | Requieren señal: crear cuenta, iniciar una sesión que no está abierta en el dispositivo (incluida la de una cuenta guardada), recuperar contraseña, canjear un código de invitación, sincronizar y subir fotos. | — | Excepción deliberada a offline-first (ADR-0002). | RF-01 a RF-03, RF-05, RF-07, RF-32 a RF-38 | — |
 | LIM-03 | Los pesos son simulados por el ESP32; no hay celdas de carga en este prototipo. | — | No se valida la precisión de la medición, solo su recepción y tratamiento. | RF-20 a RF-24 | Integración con el proyecto IoT. |
 | LIM-04 | El endpoint `POST /pesaje` no tiene autenticación y usa HTTP sin cifrar. | — | Cualquier equipo conectado a la red del hotspot puede enviar pesajes. | RF-20 | Token compartido con el ESP32. |
 | LIM-05 | Los indicadores se calculan sobre la copia local (Room). | — | Reflejan la finca solo hasta la última sincronización; el tablero muestra esa fecha. | RF-39 a RF-43 | — |
-| LIM-06 | Un Operario quitado conserva sus datos locales y puede seguir capturando sin señal hasta su próxima sincronización, que será rechazada. | — | Datos capturados después de la remoción no llegan al servidor. | RF-37 | Borrado remoto de la copia local. |
-| LIM-07 | Solo el celular que comparte el hotspot recibe pesajes, y los guarda a nombre de su Usuario. | — | Los pesajes de una jornada quedan a nombre de una persona aunque varias trabajen. | RF-20, RF-23 | — |
+| LIM-06 | Un Operario quitado puede seguir capturando sin señal hasta su próxima sincronización, que será rechazada; en ese momento su celular borra los datos de la finca. Si su cuenta estaba guardada con la sesión cerrada, los conserva hasta que intente iniciar sesión (RN-28). | — | Datos capturados después de la remoción no llegan al servidor, y los de una cuenta guardada siguen en el celular hasta que se abra. | RF-37 | Borrado remoto de la copia local. |
+| LIM-07 | Solo el celular que comparte el hotspot recibe pesajes, y los guarda a nombre de su Usuario del dispositivo, es decir, de la cuenta con sesión abierta. | — | Los pesajes de una jornada quedan a nombre de una persona aunque varias trabajen. El ESP32 no manda finca: si el celular cambia de cuenta con la báscula conectada, lo que llegue va a la finca que quede abierta. | RF-20, RF-23 | Que el ESP32 mande un identificador de finca. |
 
 ### 2.5 Reglas de negocio
 
@@ -353,6 +354,10 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | RN-22 | Una baja (`fechaBaja`, o `fechaDesasociacion` de una Chapeta) nunca queda como sibling: el servidor la aplica sobre la revisión vigente aunque su `rev_base` sea menor. Si la misma edición cambió otros campos, solo esos pueden quedar como sibling. | EQUIPO (ADR-0004) |
 | RN-23 | Reenviar una edición con un `id_version` ya procesado no crea revisión ni sibling, y recibe la misma respuesta que la primera vez. | EQUIPO (ADR-0004) |
 | RN-24 | Un cambio rechazado se conserva completo, con su motivo, en la bandeja de rechazos, y no se reenvía mientras siga abierto. Si el servidor tiene la fila, la fila local vuelve a la versión del servidor; si no la tiene, sale de su tabla local junto con las filas que dependen de ella (las de un Animal), que también quedan en la bandeja. | EQUIPO (ADR-0004) |
+| RN-25 | Un celular puede guardar los datos de varias cuentas, cada una aislada de las demás. Solo la cuenta con sesión abierta sincroniza y firma lo que se captura. | EQUIPO (ADR-0006) |
+| RN-26 | Al cerrar sesión, la app avisa de los cambios sin subir, pero deja cerrar; quedan en la cuenta guardada hasta que esa cuenta vuelva a iniciar sesión. | EQUIPO (ADR-0006) |
+| RN-27 | Una cuenta guardada solo se quita si no tiene cambios sin subir, fotos sin subir ni cambios rechazados abiertos. | EQUIPO (ADR-0006) |
+| RN-28 | Si el servidor ya no da finca a una cuenta (Operario quitado, o respuesta sin finca al iniciar sesión), el celular borra sus datos, sin subirlos, y lo dice. | EQUIPO (ADR-0006) |
 
 ---
 
@@ -440,15 +445,15 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Objetivo / Fuente | OE3 / EQUIPO (ADR-0002), NORMA (Ley 1581) |
 | Actor | Ganadero |
 | Prioridad / Estado | M / Implementado. La app registra la identidad en Supabase Auth con la finca y la versión de la autorización como metadatos, y un trigger del servidor crea la finca, el primer Usuario y la aceptación. El texto de autorización es el definitivo, versión `1.0` (30-10-2026). |
-| Precondiciones | La app no tiene cuenta en este dispositivo. Hay señal. |
-| Disparador | El usuario abre la app por primera vez. |
+| Precondiciones | La app no tiene una sesión abierta. Hay señal. Las cuentas que el celular ya guarde no se tocan (RN-25). |
+| Disparador | El usuario abre la app sin sesión y elige crear una cuenta. |
 | Flujo principal | 1. La app muestra Crear cuenta.<br>2. El usuario ingresa nombre, nombre de la finca, correo, contraseña y su confirmación.<br>3. La app muestra el texto de autorización de la Ley 1581 y el usuario lo acepta.<br>4. El sistema crea la identidad en Supabase Auth.<br>5. El sistema crea la finca y el Usuario con rol Ganadero, en una sola transacción, y registra la fecha de aceptación.<br>6. La app abre la lista de animales con el nombre de la finca. |
 | Flujos alternos y excepciones | 2a. Contraseña de menos de 6 caracteres, o confirmación distinta: el botón Crear cuenta queda deshabilitado.<br>2b. El usuario tiene un código de invitación: continúa en CU-04.<br>3a. El usuario no acepta: no se crea nada.<br>4a. Sin señal: la app lo indica y no crea nada, ni local ni remoto.<br>4b. El correo ya existe: la app lo indica y ofrece iniciar sesión. |
 | Offline / sincronización | Requiere señal (LIM-02). |
 | Postcondiciones | Identidad en Supabase Auth; PerfilFinca, Usuario y aceptación (con fecha) creados en el servidor; PerfilFinca y Usuario copiados al celular. |
 | Entidades | PerfilFinca, Usuario |
 | Reglas | RN-20, RES-06, RES-07 |
-| Criterios de aceptación | 1. **Dado** un dispositivo sin cuenta y con señal, **cuando** el usuario completa datos válidos y acepta la autorización, **entonces** queda en la lista de animales con el nombre de su finca.<br>2. **Dado** que no acepta la autorización, **entonces** no se crea la cuenta.<br>3. **Dado** que no hay señal, **entonces** la app lo indica y no queda ninguna fila creada.<br>4. **Dado** un correo ya registrado, **entonces** la app lo indica y no crea una segunda finca. |
+| Criterios de aceptación | 1. **Dado** un dispositivo sin sesión abierta y con señal, aunque guarde otras cuentas, **cuando** el usuario completa datos válidos y acepta la autorización, **entonces** queda en la lista de animales con el nombre de su finca.<br>2. **Dado** que no acepta la autorización, **entonces** no se crea la cuenta.<br>3. **Dado** que no hay señal, **entonces** la app lo indica y no queda ninguna fila creada.<br>4. **Dado** un correo ya registrado, **entonces** la app lo indica y no crea una segunda finca. |
 | Trazas | Issues #40, #87 · `CrearCuentaScreen` · `CrearCuentaViewModelTest`, `CrearCuentaTest`, `RoomCuentaRepositoryTest`, `06_crear_finca` |
 
 <a id="cu-02"></a>**CU-02 — Iniciar sesión**
@@ -459,15 +464,15 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Objetivo / Fuente | OE3 / EQUIPO (ADR-0002) |
 | Actor | Ganadero, Operario |
 | Prioridad / Estado | M / Implementado. Valida contra Supabase Auth y guarda la sesión cifrada con una clave AES del Android Keystore. |
-| Precondiciones | El usuario tiene cuenta. Para el primer inicio de sesión en un dispositivo, hay señal. |
-| Disparador | El usuario abre la app en un dispositivo sin sesión, o su sesión fue cerrada. |
-| Flujo principal | 1. El usuario ingresa correo y contraseña.<br>2. Supabase Auth valida las credenciales.<br>3. El sistema guarda la sesión en el almacenamiento seguro del dispositivo (no en Room).<br>4. El sistema descarga la finca, el Usuario y los datos de la finca (RF-36).<br>5. La app abre la lista de animales. |
-| Flujos alternos y excepciones | 2a. Credenciales inválidas: la app lo indica.<br>2b. Sin señal en el primer inicio de sesión: la app lo indica.<br>A. Con sesión guardada, la app abre la lista directamente, aun sin señal.<br>B. La sesión vence sin señal: la app sigue operando; al recuperar señal renueva la sesión.<br>C. El servidor rechaza la renovación (usuario quitado): la app cierra la sesión (ver LIM-06). |
-| Offline / sincronización | El primer inicio de sesión requiere señal (LIM-02); los siguientes no. |
-| Postcondiciones | Sesión guardada de forma segura; datos de la finca disponibles en Room. |
+| Precondiciones | El usuario tiene cuenta. Para iniciar una sesión que no está abierta en el dispositivo, hay señal. |
+| Disparador | El usuario abre la app en un dispositivo sin sesión, o cerró su sesión para entrar con otra cuenta. |
+| Flujo principal | 1. El usuario ingresa correo y contraseña.<br>2. Supabase Auth valida las credenciales.<br>3. El sistema guarda la sesión en el almacenamiento seguro del dispositivo (no en Room).<br>4. El sistema abre los datos de esa cuenta en el celular, o los crea si es la primera vez, y descarga la finca, el Usuario y los datos de la finca (RF-36).<br>5. La app abre la lista de animales. |
+| Flujos alternos y excepciones | 2a. Credenciales inválidas: la app lo indica.<br>2b. Sin señal en el primer inicio de sesión: la app lo indica.<br>A. Con sesión guardada, la app abre la lista directamente, aun sin señal.<br>B. La sesión vence sin señal: la app sigue operando; al recuperar señal renueva la sesión.<br>C. El servidor rechaza la renovación (usuario quitado): la app cierra la sesión y borra los datos de esa cuenta del celular (RN-28, LIM-06).<br>D. Sin sesión, Iniciar sesión lista las cuentas guardadas del celular con la finca, el nombre del Usuario, el rol y cuántos cambios tiene cada una sin subir. Tocar una fila rellena el correo; la contraseña se pide igual.<br>E. Para quitar una cuenta guardada, el usuario toca quitar en su fila y confirma el diálogo, sin contraseña. Si la cuenta tiene cambios sin subir, fotos sin subir o cambios rechazados abiertos, la app no la quita y le indica que inicie sesión y sincronice primero (RN-27).<br>F. Al cerrar sesión, si hay cambios sin subir, el diálogo dice cuántos son y que se subirán la próxima vez que se entre con esa cuenta; el usuario puede cerrar igual (RN-26).<br>G. El servidor responde que la cuenta ya no tiene finca: la app borra sus datos del celular y le dice por qué (RN-28). |
+| Offline / sincronización | Iniciar una sesión que no está abierta requiere señal (LIM-02); abrir la app con la sesión ya abierta, no. |
+| Postcondiciones | Sesión guardada de forma segura; datos de la finca disponibles en Room. Las otras cuentas guardadas del celular quedan como estaban. |
 | Entidades | Usuario, PerfilFinca |
-| Reglas | RN-13 |
-| Criterios de aceptación | 1. **Dado** un usuario con cuenta y con señal, **cuando** ingresa credenciales válidas, **entonces** ve los animales de su finca.<br>2. **Dado** credenciales inválidas, **entonces** no entra.<br>3. **Dado** un usuario que ya inició sesión, **cuando** abre la app en modo avión, **entonces** entra y puede registrar. |
+| Reglas | RN-13, RN-25 a RN-28 |
+| Criterios de aceptación | 1. **Dado** un usuario con cuenta y con señal, **cuando** ingresa credenciales válidas, **entonces** ve los animales de su finca.<br>2. **Dado** credenciales inválidas, **entonces** no entra.<br>3. **Dado** un usuario que ya inició sesión, **cuando** abre la app en modo avión, **entonces** entra y puede registrar.<br>4. **Dado** un celular que guarda la cuenta de otra finca, **cuando** el usuario inicia sesión con otra cuenta, **entonces** entra a su finca sin desinstalar la app y los datos de la otra cuenta quedan intactos.<br>5. **Dado** una cuenta guardada con cambios sin subir, **cuando** el usuario intenta quitarla, **entonces** la app no la quita.<br>6. **Dado** una cuenta guardada sin nada por subir, **cuando** el usuario confirma quitarla, **entonces** sus datos salen del celular. |
 | Trazas | Issues #23, #40 · `LoginScreen`, `SesionCifrada` · `LoginViewModelTest`, `InicioViewModelTest` |
 
 <a id="cu-03"></a>**CU-03 — Recuperar contraseña**
@@ -493,7 +498,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Objetivo / Fuente | OE3 / CAMPO |
 | Actor | Ganadero (invita), Operario (se une) |
 | Prioridad / Estado | M / Implementado |
-| Precondiciones | El Ganadero tiene sesión y señal. El Operario tiene señal. |
+| Precondiciones | El Ganadero tiene sesión y señal. El Operario tiene señal; su celular puede guardar cuentas de otras fincas (RN-25). |
 | Disparador | El Ganadero quiere sumar un trabajador. |
 | Flujo principal | 1. El Ganadero solicita un código de invitación.<br>2. El servidor genera el código y la app lo muestra con su fecha de vencimiento.<br>3. El Ganadero comparte el código por fuera de la app.<br>4. El Operario, en Crear cuenta, elige "Tengo un código" e ingresa su nombre, correo, contraseña y el código, y acepta la autorización de datos.<br>5. El servidor valida el código, crea la identidad y el Usuario con rol Operario asociado a esa finca, y marca el código como usado.<br>6. La app del Operario descarga los datos de la finca y abre la lista de animales. |
 | Flujos alternos y excepciones | 5a. Código vencido, usado o inexistente: la app lo indica y no crea la cuenta.<br>5b. Sin señal: la app lo indica. |
@@ -514,10 +519,10 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Prioridad / Estado | C / Implementado |
 | Precondiciones | Hay señal. La finca tiene al menos un Operario. |
 | Flujo principal | 1. El Ganadero abre la lista de usuarios de la finca y elige un Operario.<br>2. Confirma que lo quita.<br>3. El servidor revoca su acceso a la finca. Sus registros anteriores se conservan con su autoría. |
-| Flujos alternos y excepciones | 3a. El celular del Operario está sin señal: sigue operando hasta su próxima sincronización, que es rechazada (LIM-06). |
+| Flujos alternos y excepciones | 3a. El celular del Operario está sin señal: sigue operando hasta su próxima sincronización, que es rechazada; entonces su celular cierra la sesión y borra los datos de esa finca (RN-28, LIM-06).<br>3b. La cuenta del Operario estaba guardada con la sesión cerrada: al iniciar sesión el servidor responde que no tiene finca, y el celular borra esos datos (RN-28). |
 | Postcondiciones | El Operario ya no puede leer ni escribir datos de la finca en el servidor. |
 | Reglas | RN-04, RN-19 |
-| Criterios de aceptación | 1. **Dado** un Operario quitado, **cuando** su celular sincroniza, **entonces** el servidor rechaza sus escrituras y su sesión se cierra.<br>2. **Dado** que se quitó a un Operario, **entonces** los eventos y pesajes que registró siguen a su nombre. |
+| Criterios de aceptación | 1. **Dado** un Operario quitado, **cuando** su celular sincroniza, **entonces** el servidor rechaza sus escrituras, su sesión se cierra y los datos de esa finca salen de su celular.<br>2. **Dado** que se quitó a un Operario, **entonces** los eventos y pesajes que registró siguen a su nombre. |
 | Trazas | Issue #90 · `OperariosScreen` · `QuitarOperarioTest`, `OperariosViewModelTest`, `09_quitar_operario` |
 
 ##### C2. Animales

@@ -65,7 +65,7 @@ Marcar un `Animal`, `Evento` o `Registro` como retirado: deja de aparecer en las
 _Avoid_: borrar, eliminar
 
 **Usuario**:
-Una persona que opera la app, identificada por `idUsuario` y asociada a un `PerfilFinca` mediante `idPerfilFinca`; tiene un `rol` que distingue su función. Un mismo `PerfilFinca` puede tener varios Usuarios, cada uno con la app en su propio dispositivo; un Usuario pertenece a una sola finca. La sincronización trae al celular a todos los Usuarios de su finca, para saber quién registró cada cosa; el **Usuario del dispositivo** es el que inició sesión en ese celular. Su `rol` es **Ganadero** u **Operario**.
+Una persona que opera la app, identificada por `idUsuario` y asociada a un `PerfilFinca` mediante `idPerfilFinca`; tiene un `rol` que distingue su función. Un mismo `PerfilFinca` puede tener varios Usuarios, cada uno con la app en su propio dispositivo; un Usuario pertenece a una sola finca. La sincronización trae al celular a todos los Usuarios de su finca, para saber quién registró cada cosa; el **Usuario del dispositivo** es el que tiene la sesión abierta en ese celular ahora: firma lo que se captura y es el único que sincroniza. Un celular puede guardar los datos de varios Usuarios (de la misma finca o de fincas distintas), pero solo uno es el Usuario del dispositivo a la vez. Su `rol` es **Ganadero** u **Operario**.
 _Avoid_: Ganadero como nombre de la entidad de datos (es un `rol`, no la entidad)
 
 **Ganadero**:
@@ -76,8 +76,12 @@ _Avoid_: Administrador, dueño
 El `rol` del `Usuario` que trabaja con el ganado: puede ver animales, escanear, registrar `Animal` y `Evento` y asignar un `Pesaje pendiente`, pero no dar de baja, liberar una `Chapeta`, descartar un `Pesaje pendiente` ni gestionar Usuarios.
 
 **Operario quitado**:
-El `Operario` al que un `Ganadero` le revocó el acceso a la finca (se marca su `fecha_quitado`). Su fila de `Usuario` se conserva, así que los `Registro`, `Evento` y `Pesaje pendiente` que creó siguen a su nombre; el servidor deja de darle la finca y su rol, y su celular cierra la sesión en la próxima sincronización, sin subir lo que capturó antes. Un `Ganadero` no se quita.
+El `Operario` al que un `Ganadero` le revocó el acceso a la finca (se marca su `fecha_quitado`). Su fila de `Usuario` se conserva, así que los `Registro`, `Evento` y `Pesaje pendiente` que creó siguen a su nombre; el servidor deja de darle la finca y su rol, y su celular cierra la sesión en la próxima sincronización y borra de ese celular los datos de la finca, sin subir lo que capturó antes. No queda como `Cuenta guardada`. Un `Ganadero` no se quita.
 _Avoid_: Eliminado, borrado, baja (la baja es del `Animal`)
+
+**Cuenta guardada**:
+Un `Usuario` con la sesión cerrada cuyos datos (su finca, sus animales y los cambios sin subir) siguen en este celular. Mientras no vuelva a iniciar sesión no sincroniza, así que sus cambios sin subir esperan. Volver a entrar exige señal y contraseña. Se quita del celular de forma explícita, desde la pantalla de inicio de sesión y sin contraseña, pero solo si no le queda nada por subir: si tiene cambios sin subir, hay que iniciar sesión y sincronizarlos primero.
+_Avoid_: cuenta anterior, perfil (choca con `PerfilFinca`), dispositivo de un solo Usuario
 
 **PerfilFinca**:
 La finca a la que pertenecen un `Usuario` y sus `Animal`, identificada por `idPerfilFinca`, con `nombreFinca`, `latitud` y `longitud`. No incluye el nombre del usuario — ese dato vive en `Usuario`.
