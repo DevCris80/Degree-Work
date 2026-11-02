@@ -23,8 +23,8 @@ class PesajeHttpForegroundService : Service() {
 
     override fun onCreate() {
         super.onCreate()
-        val registrarPesaje = (application as BovinaApplication).container.registrarPesaje
-        server = PesajeHttpServer(PesajeHttpServer.DEFAULT_PORT, registrarPesaje).also { it.start() }
+        val aplicacion = application as BovinaApplication
+        server = PesajeHttpServer(PesajeHttpServer.DEFAULT_PORT) { aplicacion.container.registrarPesaje }.also { it.start() }
         startForeground(NOTIFICATION_ID, buildNotification())
         _isRunning.value = true
     }

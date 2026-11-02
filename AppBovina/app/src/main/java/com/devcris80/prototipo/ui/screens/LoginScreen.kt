@@ -37,13 +37,17 @@ import com.devcris80.prototipo.ui.components.BannerInformativo
 import com.devcris80.prototipo.ui.components.BovinaCard
 import com.devcris80.prototipo.ui.components.BovinaPrimaryButton
 import com.devcris80.prototipo.ui.components.CampoConIcono
+import com.devcris80.prototipo.ui.components.CuentasGuardadasLista
 import com.devcris80.prototipo.ui.components.EncabezadoAuth
+import com.devcris80.prototipo.ui.components.QuitarCuentaDialogo
 import com.devcris80.prototipo.ui.theme.BovinaScreenGutter
 import com.devcris80.prototipo.ui.util.appViewModel
 
 @Composable
 fun LoginScreen(onSesionIniciada: () -> Unit, onCrearCuenta: () -> Unit) {
-    val viewModel = appViewModel { container -> LoginViewModel(container.sesionRepository, container.sincronizacionRepository) }
+    val viewModel = appViewModel { container ->
+        LoginViewModel(container.sesionRepository, container.sincronizacionRepository, container.cuentasGuardadasRepository)
+    }
     val estado by viewModel.estado.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
 
@@ -101,6 +105,14 @@ fun LoginScreen(onSesionIniciada: () -> Unit, onCrearCuenta: () -> Unit) {
         )
     }
 
+    estado.quitarCuenta?.let { quitar ->
+        QuitarCuentaDialogo(
+            estado = quitar,
+            onConfirmar = viewModel::onConfirmarQuitarCuenta,
+            onCancelar = viewModel::onCancelarQuitarCuenta,
+        )
+    }
+
     Scaffold { innerPadding ->
         Column(
             modifier = Modifier
@@ -126,9 +138,17 @@ fun LoginScreen(onSesionIniciada: () -> Unit, onCrearCuenta: () -> Unit) {
                 verticalArrangement = Arrangement.spacedBy(16.dp),
             ) {
                 BannerInformativo(
-                    texto = "La primera vez en este celular hace falta señal. Después la app funciona sin cobertura.",
+                    texto = "Para iniciar sesión hace falta señal. Con la sesión abierta la app funciona sin cobertura.",
                     icon = Icons.Filled.WifiOff,
                 )
+
+                if (estado.cuentasGuardadas.isNotEmpty()) {
+                    CuentasGuardadasLista(
+                        cuentas = estado.cuentasGuardadas,
+                        onCuentaClick = viewModel::onCuentaGuardadaClick,
+                        onQuitarClick = viewModel::onQuitarCuentaClick,
+                    )
+                }
 
                 BovinaCard(modifier = Modifier.fillMaxWidth()) {
                     Column(verticalArrangement = Arrangement.spacedBy(16.dp)) {

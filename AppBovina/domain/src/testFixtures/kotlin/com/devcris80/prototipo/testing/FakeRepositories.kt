@@ -12,11 +12,13 @@ import com.devcris80.prototipo.domain.model.Rechazo
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
+import com.devcris80.prototipo.domain.model.CuentaGuardada
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.repository.CuentasGuardadasRepository
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
@@ -28,6 +30,7 @@ import com.devcris80.prototipo.domain.repository.OperarioRepository
 import com.devcris80.prototipo.domain.repository.ResultadoListaOperarios
 import com.devcris80.prototipo.domain.repository.ResultadoQuitarOperario
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
+import com.devcris80.prototipo.domain.repository.ResultadoQuitarCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoInvitacion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
@@ -296,6 +299,28 @@ class FakeSesionRepository : SesionRepository {
     }
     override suspend fun cerrarSesion() {
         guardada.value = false
+    }
+
+    var cuentasBorradas = 0
+
+    override suspend fun cerrarSesionYBorrarCuenta() {
+        cuentasBorradas++
+        guardada.value = false
+    }
+}
+
+class FakeCuentasGuardadasRepository : CuentasGuardadasRepository {
+    val cuentas = MutableStateFlow<List<CuentaGuardada>>(emptyList())
+    val quitadas = mutableListOf<String>()
+
+    override fun observe(): Flow<List<CuentaGuardada>> = cuentas
+
+    override suspend fun quitar(idUsuario: String): ResultadoQuitarCuenta {
+        val cuenta = cuentas.value.firstOrNull { it.idUsuario == idUsuario } ?: return ResultadoQuitarCuenta.Quitada
+        if (cuenta.tienePendientes) return ResultadoQuitarCuenta.TienePendientes
+        quitadas.add(idUsuario)
+        cuentas.value = cuentas.value - cuenta
+        return ResultadoQuitarCuenta.Quitada
     }
 }
 

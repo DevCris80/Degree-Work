@@ -57,7 +57,7 @@ class PesajeHttpServerIntegracionTest {
             chapetas, animales, registros, pendientes, cuentas, RoomTransaccion(db), clock = { ahora },
         )
         // Puerto 0: el sistema elige uno libre, para no chocar con el servicio real en el 8080.
-        servidor = PesajeHttpServer(0, registrarPesaje).also { it.start() }
+        servidor = PesajeHttpServer(0) { registrarPesaje }.also { it.start() }
     }
 
     @After

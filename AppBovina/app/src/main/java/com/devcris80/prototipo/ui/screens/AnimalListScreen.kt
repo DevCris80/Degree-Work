@@ -237,7 +237,17 @@ fun ListaAnimalesScreen(
         AlertDialog(
             onDismissRequest = { confirmarCierre = false },
             title = { Text("¿Cerrar sesión?") },
-            text = { Text("Los datos de la finca quedan en este celular. Para volver a entrar hará falta señal.") },
+            text = {
+                val sinSubir = estado.cambiosSinSubir
+                Text(
+                    "Los datos de la finca quedan en este celular. Para volver a entrar hará falta señal." +
+                        when (sinSubir) {
+                            0 -> ""
+                            1 -> " Tienes 1 cambio sin subir; se subirá la próxima vez que entres con esta cuenta."
+                            else -> " Tienes $sinSubir cambios sin subir; se subirán la próxima vez que entres con esta cuenta."
+                        },
+                )
+            },
             confirmButton = {
                 TextButton(onClick = {
                     confirmarCierre = false

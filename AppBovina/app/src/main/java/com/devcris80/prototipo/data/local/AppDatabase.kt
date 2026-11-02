@@ -71,23 +71,23 @@ abstract class AppDatabase : RoomDatabase() {
             }
         }
 
-        @Volatile
-        private var instance: AppDatabase? = null
+        /** La base del archivo [nombre], con todas las migraciones. Cada cuenta guardada tiene la suya (ADR-0006). */
+        fun crear(context: Context, nombre: String): AppDatabase = Room.databaseBuilder(
+            context.applicationContext,
+            AppDatabase::class.java,
+            nombre,
+        )
+            // La versión 10 es el primer esquema exportado: desde ahí cada cambio lleva su
+            // Migration. Una instalación anterior no tiene cómo migrarse y se recrea vacía.
+            .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
+            .addMigrations(MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15, MIGRACION_15_16, MIGRACION_16_17, MIGRACION_17_18)
+            .addCallback(CALLBACK_INDICES_CHAPETA)
+            .build()
 
-        fun getInstance(context: Context): AppDatabase =
-            instance ?: synchronized(this) {
-                instance ?: Room.databaseBuilder(
-                    context.applicationContext,
-                    AppDatabase::class.java,
-                    "app-bovina.db",
-                )
-                    // La versión 10 es el primer esquema exportado: desde ahí cada cambio lleva su
-                    // Migration. Una instalación anterior no tiene cómo migrarse y se recrea vacía.
-                    .fallbackToDestructiveMigrationFrom(dropAllTables = true, 1, 2, 3, 4, 5, 6, 7, 8, 9)
-                    .addMigrations(MIGRACION_10_11, MIGRACION_11_12, MIGRACION_12_13, MIGRACION_13_14, MIGRACION_14_15, MIGRACION_15_16, MIGRACION_16_17, MIGRACION_17_18)
-                    .addCallback(CALLBACK_INDICES_CHAPETA)
-                    .build()
-                    .also { instance = it }
-            }
+        /** Una base vacía que no toca el disco, para cuando no hay ninguna cuenta con la sesión abierta. */
+        fun enMemoria(context: Context): AppDatabase =
+            Room.inMemoryDatabaseBuilder(context.applicationContext, AppDatabase::class.java)
+                .addCallback(CALLBACK_INDICES_CHAPETA)
+                .build()
     }
 }

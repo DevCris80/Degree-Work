@@ -128,7 +128,7 @@ class CrearCuentaViewModelTest {
     fun cadaRespuestaDelServidorTieneSuMensaje() {
         val mensajes = listOf(
             ResultadoCreacionCuenta.ContrasenaRechazada,
-            ResultadoCreacionCuenta.OtraCuentaEnElDispositivo,
+            ResultadoCreacionCuenta.CodigoRechazado,
             ResultadoCreacionCuenta.NoSePudo,
         ).map { resultado ->
             sesionRepository.resultadoCreacion = resultado

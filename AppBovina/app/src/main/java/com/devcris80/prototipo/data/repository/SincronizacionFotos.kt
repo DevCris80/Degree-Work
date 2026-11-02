@@ -24,6 +24,7 @@ internal class SincronizacionFotos(
     private val fotos: FotosLocales,
     private val database: AppDatabase,
     private val bandeja: BandejaDeRechazos,
+    private val fotosDeLasDemasCuentas: suspend () -> Set<String> = { emptySet() },
 ) {
     private val animales = database.animalDao()
 
@@ -31,7 +32,8 @@ internal class SincronizacionFotos(
         val finca = database.perfilFincaDao().getOnce()?.idPerfilFinca ?: return
         val subidas = subir(finca)
         bajar(finca, subidas)
-        fotos.limpiar(animales.findFotoUris().toSet())
+        // La carpeta de fotos es una sola: las de las otras cuentas guardadas no son basura de esta.
+        fotos.limpiar(animales.findFotoUris().toSet() + fotosDeLasDemasCuentas())
     }
 
     /** Devuelve el tamaño de cada foto que subió, por Animal. */

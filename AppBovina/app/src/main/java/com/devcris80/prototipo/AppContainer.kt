@@ -2,11 +2,8 @@ package com.devcris80.prototipo
 
 import android.content.Context
 import com.devcris80.prototipo.data.local.AppDatabase
-import com.devcris80.prototipo.data.archivos.FotosEnArchivos
-import com.devcris80.prototipo.data.remote.SesionCifrada
 import com.devcris80.prototipo.data.remote.SupabaseAlmacenFotos
 import com.devcris80.prototipo.data.remote.SupabaseServidorSincronizacion
-import com.devcris80.prototipo.data.remote.crearClienteSupabase
 import com.devcris80.prototipo.data.repository.MotorSincronizacion
 import com.devcris80.prototipo.data.repository.RoomAnimalRepository
 import com.devcris80.prototipo.data.repository.RoomChapetaRepository
@@ -19,11 +16,11 @@ import com.devcris80.prototipo.data.repository.RoomRegistroRepository
 import com.devcris80.prototipo.data.repository.RoomTransaccion
 import com.devcris80.prototipo.data.repository.SupabaseInvitacionRepository
 import com.devcris80.prototipo.data.repository.SupabaseOperarioRepository
-import com.devcris80.prototipo.data.repository.SupabaseSesionRepository
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.repository.CuentasGuardadasRepository
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.InvitacionRepository
 import com.devcris80.prototipo.domain.repository.OperarioRepository
@@ -60,9 +57,13 @@ import com.devcris80.prototipo.service.ProgramadorSincronizacion
 /**
  * Arma a mano los repositorios y casos de uso de la app (ver docs/adr/0001). Es el único lugar,
  * fuera de `data`, que conoce las implementaciones de Room.
+ *
+ * Es el de una cuenta (ADR-0006): [archivo] es la base de la que tiene la sesión abierta, o nulo si ninguna, y
+ * entonces trabaja sobre una base vacía en memoria. La sesión, el cliente de Supabase y las cuentas guardadas son
+ * de [nucleo], comunes a todos.
  */
-class AppContainer(context: Context) {
-    private val database = AppDatabase.getInstance(context)
+class AppContainer(context: Context, nucleo: NucleoApp, archivo: String?) {
+    private val database: AppDatabase = archivo?.let(nucleo.cuentas::base) ?: nucleo.cuentas.vacia
     private val transaccion: Transaccion = RoomTransaccion(database)
 
     val animalRepository: AnimalRepository = RoomAnimalRepository(database.animalDao())
@@ -76,22 +77,18 @@ class AppContainer(context: Context) {
     val conflictoRepository: ConflictoRepository = RoomConflictoRepository(database)
     val rechazoRepository: RechazoRepository = RoomRechazoRepository(database.rechazoDao())
 
-    private val sesionCifrada = SesionCifrada(context)
-    private val supabase = crearClienteSupabase(sesionCifrada)
-    val sesionRepository: SesionRepository = SupabaseSesionRepository(
-        supabase,
-        sesionCifrada,
-        database.perfilFincaDao(),
-        database.usuarioDao(),
-        transaccion,
-    )
+    private val supabase = nucleo.supabase
+    val sesionRepository: SesionRepository = nucleo.sesionRepository
+    val cuentasGuardadasRepository: CuentasGuardadasRepository = nucleo.cuentasGuardadasRepository
     val sincronizacionRepository: SincronizacionRepository = MotorSincronizacion(
         SupabaseServidorSincronizacion(supabase),
         database,
         SupabaseAlmacenFotos(supabase),
-        FotosEnArchivos(context),
+        nucleo.fotos,
         programarTrabajo = ProgramadorSincronizacion(context)::programar,
-        alQuitarCuenta = { sesionRepository.cerrarSesion() },
+        alQuitarCuenta = { sesionRepository.cerrarSesionYBorrarCuenta() },
+        esCuentaActiva = { archivo != null && nucleo.cuentas.activa.value == archivo },
+        fotosDeLasDemasCuentas = { nucleo.cuentas.fotosDeLasDemasCuentas(archivo) },
     )
 
     val registrarPesaje = RegistrarPesaje(

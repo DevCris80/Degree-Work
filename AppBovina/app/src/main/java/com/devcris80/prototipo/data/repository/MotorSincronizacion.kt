@@ -57,17 +57,21 @@ class MotorSincronizacion(
     private val tamanoPagina: Int = TAMANO_PAGINA,
     private val margenSolapamiento: Long = MARGEN_SOLAPAMIENTO,
     private val alQuitarCuenta: suspend () -> Unit = {},
+    private val esCuentaActiva: () -> Boolean = { true },
+    fotosDeLasDemasCuentas: suspend () -> Set<String> = { emptySet() },
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
     private val bandeja = BandejaDeRechazos(database.rechazoDao(), clock, nuevoIdRechazo)
-    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, bandeja)
+    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, bandeja, fotosDeLasDemasCuentas)
     private val enCurso = Mutex()
     private val fotosEnCurso = Mutex()
 
     override suspend fun sincronizar(): ResultadoSincronizacion = enCurso.withLock {
+        // Solo sincroniza la cuenta con la sesión abierta (RN-25): el JWT que hay es de otra, y subiría esta base a su nombre.
+        if (!esCuentaActiva()) return@withLock ResultadoSincronizacion.NoSePudo
         salvoCancelacion(
             bloque = {
-                // Un Operario quitado no sube nada: su sesión se cierra y lo capturado antes se queda en el celular (LIM-06).
+                // Un Operario quitado no sube nada: su sesión se cierra y los datos de su finca se borran del celular (RN-28).
                 if (!servidor.sigoEnLaFinca()) {
                     alQuitarCuenta()
                     return@salvoCancelacion ResultadoSincronizacion.CuentaQuitada
@@ -86,6 +90,7 @@ class MotorSincronizacion(
     // escritura de una foto es una sola sentencia, y los datos leen y guardan una fila entera dentro de una transacción.
     // Lo que no pasó queda por subir o por bajar, y se intenta la próxima vez.
     override suspend fun sincronizarFotos() = fotosEnCurso.withLock {
+        if (!esCuentaActiva()) return@withLock
         salvoCancelacion(bloque = { fotos.sincronizar() }, alFallar = {})
     }
 

@@ -2,7 +2,10 @@ package com.devcris80.prototipo.ui.screens
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.devcris80.prototipo.domain.model.CuentaGuardada
+import com.devcris80.prototipo.domain.repository.CuentasGuardadasRepository
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
+import com.devcris80.prototipo.domain.repository.ResultadoQuitarCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
@@ -26,12 +29,23 @@ data class RecuperacionUiState(
     val puedeEnviar: Boolean get() = correo.isNotBlank() && !enviando && !enviado
 }
 
+/** El diálogo de quitar una cuenta guardada del celular: la cuenta y, si no se pudo, por qué (RN-27). */
+data class QuitarCuentaUiState(
+    val cuenta: CuentaGuardada,
+    val quitando: Boolean = false,
+) {
+    /** Con algo por subir no se ofrece quitarla: hay que iniciar sesión y sincronizar primero. */
+    val puedeQuitar: Boolean get() = !cuenta.tienePendientes && !quitando
+}
+
 data class LoginUiState(
     val correo: String = "",
     val contrasena: String = "",
     val cargando: Boolean = false,
     val error: String? = null,
     val recuperacion: RecuperacionUiState? = null,
+    val cuentasGuardadas: List<CuentaGuardada> = emptyList(),
+    val quitarCuenta: QuitarCuentaUiState? = null,
 ) {
     val puedeIniciar: Boolean get() = correo.isNotBlank() && contrasena.isNotBlank() && !cargando
 }
@@ -40,19 +54,67 @@ sealed interface LoginEvento {
     data object SesionIniciada : LoginEvento
 }
 
-/** Estado de Iniciar sesión: credenciales, inicio de sesión contra Supabase Auth y su error, y el diálogo de recuperar la contraseña. */
+/**
+ * Estado de Iniciar sesión: credenciales, inicio de sesión contra Supabase Auth y su error, el diálogo de recuperar la
+ * contraseña, y las cuentas guardadas en el celular con la forma de quitarlas (ADR-0006).
+ */
 class LoginViewModel(
     private val sesionRepository: SesionRepository,
     private val sincronizacionRepository: SincronizacionRepository,
+    cuentasGuardadasRepository: CuentasGuardadasRepository,
 ) : ViewModel() {
+    private val cuentasGuardadas = cuentasGuardadasRepository
     private val _estado = MutableStateFlow(LoginUiState())
     val estado: StateFlow<LoginUiState> = _estado.asStateFlow()
 
     private val _eventos = Channel<LoginEvento>(Channel.BUFFERED)
     val eventos: Flow<LoginEvento> = _eventos.receiveAsFlow()
 
+    init {
+        viewModelScope.launch {
+            cuentasGuardadas.observe().collect { cuentas ->
+                _estado.update { actual ->
+                    actual.copy(
+                        cuentasGuardadas = cuentas,
+                        // El diálogo sigue la cuenta que muestra: si tenía algo por subir y ya no, se puede quitar.
+                        quitarCuenta = actual.quitarCuenta?.let { dialogo ->
+                            cuentas.firstOrNull { it.idUsuario == dialogo.cuenta.idUsuario }?.let { dialogo.copy(cuenta = it) }
+                        },
+                    )
+                }
+            }
+        }
+    }
+
     fun onCorreoCambiado(valor: String) = _estado.update { it.copy(correo = valor, error = null) }
     fun onContrasenaCambiada(valor: String) = _estado.update { it.copy(contrasena = valor, error = null) }
+
+    /** Tocar una cuenta guardada rellena el correo; la contraseña se pide igual (Q3). */
+    fun onCuentaGuardadaClick(cuenta: CuentaGuardada) {
+        val correo = cuenta.correo ?: return
+        _estado.update { it.copy(correo = correo, contrasena = "", error = null) }
+    }
+
+    fun onQuitarCuentaClick(cuenta: CuentaGuardada) =
+        _estado.update { it.copy(quitarCuenta = QuitarCuentaUiState(cuenta)) }
+
+    fun onCancelarQuitarCuenta() = _estado.update { it.copy(quitarCuenta = null) }
+
+    fun onConfirmarQuitarCuenta() {
+        val dialogo = _estado.value.quitarCuenta ?: return
+        if (!dialogo.puedeQuitar) return
+        _estado.update { it.copy(quitarCuenta = dialogo.copy(quitando = true)) }
+        viewModelScope.launch {
+            // El repositorio vuelve a mirar: entre abrir el diálogo y confirmar pudo llegar algo por subir.
+            val resultado = cuentasGuardadas.quitar(dialogo.cuenta.idUsuario)
+            _estado.update {
+                when (resultado) {
+                    ResultadoQuitarCuenta.Quitada -> it.copy(quitarCuenta = null)
+                    ResultadoQuitarCuenta.TienePendientes -> it.copy(quitarCuenta = dialogo.copy(quitando = false))
+                }
+            }
+        }
+    }
 
     private var envioDeRecuperacion: Job? = null
 
@@ -107,11 +169,10 @@ class LoginViewModel(
 private fun ResultadoInicioSesion.mensaje(): String? = when (this) {
     ResultadoInicioSesion.Exito -> null
     ResultadoInicioSesion.CredencialesInvalidas -> "Correo o contraseña incorrectos."
-    ResultadoInicioSesion.SinConexion ->
-        "Sin conexión. La primera vez en este celular hace falta señal para iniciar sesión."
+    ResultadoInicioSesion.SinConexion -> "Sin conexión. Para iniciar sesión hace falta señal."
     ResultadoInicioSesion.SinFinca -> "Esta cuenta todavía no pertenece a ninguna finca."
-    ResultadoInicioSesion.OtraCuentaEnElDispositivo ->
-        "Este celular tiene los datos de otra cuenta. Desinstala la app para empezar limpio."
+    ResultadoInicioSesion.CuentaQuitada ->
+        "Ya no tienes acceso a esa finca. Borramos sus datos de este celular."
     ResultadoInicioSesion.NoSePudo -> "No se pudo iniciar sesión. Inténtalo de nuevo en un momento."
 }
 
