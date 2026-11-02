@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Política de privacidad · MiGanado</title>
+  <meta name="description" content="Qué datos recoge MiGanado, para qué se usan, dónde se guardan y cómo ejercer sus derechos.">
+  <link rel="stylesheet" href="estilos.css">
+</head>
+<body>
+<main>
+  <h1>Política de privacidad de MiGanado</h1>
+  <p class="vigencia">Versión 1.0 · vigente desde el 2 de noviembre de 2026 · <a href="index.html">Inicio</a></p>
+
+  <p class="resumen">
+    MiGanado guarda los datos de su cuenta y de su finca en su celular y en un servidor para sincronizarlos entre los
+    celulares de la finca. No tiene publicidad, no usa herramientas de analítica ni de seguimiento, y no vende ni
+    comparte sus datos con terceros.
+  </p>
+
+  <h2>1. Quién es el responsable</h2>
+  <p>
+    Los autores del proyecto MiGanado, Cristian Steven Villamil Rodríguez y Mariana Alvarez, en el trabajo de grado
+    ATG202601008 de la Universidad Católica de Colombia. Contacto para cualquier tema de datos personales:
+    <a href="mailto:proyectovacas13@gmail.com">proyectovacas13@gmail.com</a>.
+  </p>
+  <p>
+    Esta política aplica a la aplicación Android MiGanado y se rige por la Ley 1581 de 2012 de Colombia. El texto de
+    autorización que usted acepta al crear la cuenta es el mismo que se resume aquí.
+  </p>
+
+  <h2>2. Qué datos se recogen</h2>
+  <table>
+    <thead>
+      <tr><th>Datos</th><th>Detalle</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Cuenta</td>
+        <td>Nombre, correo electrónico y contraseña. La contraseña la guarda Supabase Auth, protegida: el equipo no
+          puede leerla.</td>
+      </tr>
+      <tr>
+        <td>Finca</td>
+        <td>Nombre de la finca y, solo si usted lo registra, su ubicación (latitud y longitud).</td>
+      </tr>
+      <tr>
+        <td>Registros del ganado</td>
+        <td>Animales (nombre, raza, sexo, fecha de nacimiento, propósito, genealogía), chapetas, pesajes y eventos de
+          vacunación o parto.</td>
+      </tr>
+      <tr>
+        <td>Fotos</td>
+        <td>Las fotos de sus animales, si usted las toma o las elige.</td>
+      </tr>
+      <tr>
+        <td>Usuarios de la finca</td>
+        <td>El nombre y el rol (Ganadero u Operario) de cada Usuario de su finca, para saber quién registró cada cosa.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    No se recogen datos sensibles, ni datos de menores, ni contactos, ni mensajes, ni su historial de navegación.
+    MiGanado no está dirigida a menores de edad.
+  </p>
+
+  <h2>3. Permisos del celular</h2>
+  <table>
+    <thead>
+      <tr><th>Permiso</th><th>Para qué se usa</th></tr>
+    </thead>
+    <tbody>
+      <tr>
+        <td>Cámara</td>
+        <td>La app no pide permiso de cámara: para tomar la foto de un animal abre la cámara de su celular. La foto
+          solo se usa en la ficha del animal.</td>
+      </tr>
+      <tr>
+        <td>NFC</td>
+        <td>Leer el código de una chapeta. Solo se lee su identificador; la app no escribe en las chapetas.</td>
+      </tr>
+      <tr>
+        <td>Ubicación</td>
+        <td>Registrar la ubicación de la finca, solo cuando un Ganadero toca “Registrar ubicación”. La app no sigue su
+          ubicación ni la usa en segundo plano.</td>
+      </tr>
+      <tr>
+        <td>Notificaciones y servicio en primer plano</td>
+        <td>Mostrar la notificación mientras el servicio que recibe los pesajes de la báscula está activo.</td>
+      </tr>
+      <tr>
+        <td>Internet</td>
+        <td>Crear la cuenta, iniciar sesión, recuperar la contraseña, sincronizar y subir las fotos.</td>
+      </tr>
+    </tbody>
+  </table>
+  <p>
+    El dispositivo de pesaje (ESP32) envía cada pesaje al celular por la red local, sin pasar por internet. Los
+    pesajes se suben al servidor solo cuando se sincroniza.
+  </p>
+
+  <h2>4. Para qué se usan</h2>
+  <ul>
+    <li>Crear y administrar su cuenta.</li>
+    <li>Guardar y sincronizar los registros de su finca entre sus celulares y el servidor.</li>
+    <li>Compartirlos con los Usuarios de la misma finca que usted invite.</li>
+    <li>Enviarle los correos que la cuenta necesita, como el de recuperar la contraseña.</li>
+    <li>Evaluar el funcionamiento del sistema en el trabajo de grado, con resultados agregados que no lo identifican.</li>
+  </ul>
+
+  <h2>5. Dónde se guardan y con quién se comparten</h2>
+  <p>
+    Sus datos se guardan en este celular y en servidores de Supabase en São Paulo (Brasil). Supabase actúa como
+    encargado del tratamiento; al aceptar la autorización usted permite esa transmisión de sus datos fuera de
+    Colombia. La conexión viaja cifrada.
+  </p>
+  <p>
+    La sesión se guarda en el celular cifrada con una clave del almacén seguro de Android (Keystore). La app no
+    permite copias de seguridad automáticas de sus datos hacia otros servicios.
+  </p>
+  <p>
+    Sus datos no se venden ni se comparten con otros terceros, salvo que lo ordene una autoridad competente. Los
+    Usuarios de su misma finca sí ven los registros de la finca, porque para eso se sincroniza.
+  </p>
+
+  <h2>6. Cuánto tiempo se conservan</h2>
+  <p>
+    Mientras su cuenta esté activa. Si pide la supresión, se eliminan sus datos personales del servidor, salvo los que
+    deban conservarse por un deber legal. Vea <a href="eliminar-cuenta.html">cómo eliminar su cuenta y sus datos</a>.
+  </p>
+
+  <h2 id="derechos">7. Sus derechos</h2>
+  <p>Como titular de los datos puede:</p>
+  <ul>
+    <li>conocer, actualizar y rectificar sus datos;</li>
+    <li>pedir prueba de la autorización que dio;</li>
+    <li>ser informado del uso que se les da;</li>
+    <li>pedir que se supriman y revocar la autorización, siempre que no exista un deber legal de conservarlos;</li>
+    <li>presentar quejas ante la Superintendencia de Industria y Comercio.</li>
+  </ul>
+  <p>
+    Para ejercerlos escriba a <a href="mailto:proyectovacas13@gmail.com">proyectovacas13@gmail.com</a>. Las consultas
+    se responden en máximo 10 días hábiles y los reclamos en máximo 15 días hábiles (Ley 1581, artículos 14 y 15).
+  </p>
+
+  <h2>8. Cambios en esta política</h2>
+  <p>
+    Si el texto cambia, se publica aquí con una versión nueva y su fecha. La app guarda la fecha en que usted aceptó la
+    autorización y la versión que aceptó.
+  </p>
+
+  <footer>
+    MiGanado · Trabajo de grado ATG202601008, Universidad Católica de Colombia.
+  </footer>
+</main>
+</body>
+</html>
