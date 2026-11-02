@@ -159,9 +159,13 @@ class SupabaseSesionRepository(
 
     override suspend fun cerrarSesionYBorrarCuenta() {
         val abierta = cuentas.activa.value
+        // El aviso se anota antes: al caer la sesión la app navega a Iniciar sesión, que lo pide apenas aparece.
+        if (abierta != null) cuentas.marcarCuentaQuitada()
         cerrarSesion()
         if (abierta != null) withContext(NonCancellable) { cuentas.eliminar(abierta) }
     }
+
+    override suspend fun consumirAvisoDeCuentaQuitada(): Boolean = cuentas.consumirCuentaQuitada()
 
     private suspend fun guardarCuenta(idUsuario: String, correo: String): ResultadoInicioSesion {
         val usuario = filaUnica("usuario", "id_usuario", idUsuario)

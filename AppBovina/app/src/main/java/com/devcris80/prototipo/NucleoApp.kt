@@ -17,10 +17,10 @@ import io.github.jan.supabase.SupabaseClient
  * Supabase y las cuentas guardadas (ADR-0006). Lo que sí depende de la cuenta lo arma [AppContainer].
  */
 class NucleoApp(context: Context) {
-    val sesionCifrada = SesionCifrada(context)
+    private val sesionCifrada = SesionCifrada(context)
     val supabase: SupabaseClient = crearClienteSupabase(sesionCifrada)
     val fotos: FotosLocales = FotosEnArchivos(context)
-    val cuentas = CuentasEnElCelular(context, fotos, haySesionGuardada = sesionCifrada.guardada.value)
+    val cuentas: CuentasEnElCelular = CuentasEnElCelular(context, fotos, sesionCifrada.guardada)
     val sesionRepository: SesionRepository = SupabaseSesionRepository(supabase, sesionCifrada, cuentas)
     val cuentasGuardadasRepository: CuentasGuardadasRepository = RoomCuentasGuardadasRepository(cuentas)
 }

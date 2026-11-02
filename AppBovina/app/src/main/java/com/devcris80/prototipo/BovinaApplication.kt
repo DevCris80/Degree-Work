@@ -14,7 +14,7 @@ class BovinaApplication : Application() {
 
     /**
      * El contenedor de la cuenta con la sesión abierta, o uno sin datos si no hay ninguna (ADR-0006). Cambia al
-     * iniciar o cerrar sesión: quien lo guarde mucho tiempo se queda con el de la cuenta anterior.
+     * iniciar o cerrar sesión: quien lo guarde mucho tiempo se queda con el de una cuenta que ya no es la abierta.
      */
     val container: AppContainer get() = contenedorDe(nucleo.cuentas.activa.value)
 

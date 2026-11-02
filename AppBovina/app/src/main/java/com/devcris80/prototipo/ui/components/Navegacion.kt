@@ -36,6 +36,8 @@ import androidx.compose.ui.draw.clip
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
 import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.R
@@ -95,28 +97,47 @@ data class DestinoBarra(
     val onClick: () -> Unit,
 )
 
-/** Dock inferior blanco y flotante; la pestaña activa va en píldora verde con ícono y etiqueta. */
+/**
+ * Dock inferior blanco y flotante; la pestaña activa va en píldora verde con ícono y etiqueta. Si hay [nombreFinca],
+ * la muestra encima: es la finca de la cuenta con la sesión abierta, a la que van los pesajes del ESP32.
+ */
 @Composable
 fun BovinaBottomBar(
     destinos: List<DestinoBarra>,
     modifier: Modifier = Modifier,
+    nombreFinca: String? = null,
 ) {
-    Surface(
-        modifier = modifier
-            .fillMaxWidth()
-            .windowInsetsPadding(WindowInsets.navigationBars)
-            .padding(horizontal = 16.dp, vertical = 8.dp),
-        shape = RoundedCornerShape(32.dp),
-        color = MaterialTheme.colorScheme.surfaceContainerLowest,
-        shadowElevation = 8.dp,
-    ) {
-        Row(
-            modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
-            horizontalArrangement = Arrangement.SpaceAround,
-            verticalAlignment = Alignment.CenterVertically,
+    Column(modifier = modifier.fillMaxWidth()) {
+        if (nombreFinca != null) {
+            Text(
+                text = nombreFinca,
+                style = MaterialTheme.typography.labelMedium,
+                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                maxLines = 1,
+                overflow = TextOverflow.Ellipsis,
+                textAlign = TextAlign.Center,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 16.dp),
+            )
+        }
+        Surface(
+            modifier = Modifier
+                .fillMaxWidth()
+                .windowInsetsPadding(WindowInsets.navigationBars)
+                .padding(horizontal = 16.dp, vertical = 8.dp),
+            shape = RoundedCornerShape(32.dp),
+            color = MaterialTheme.colorScheme.surfaceContainerLowest,
+            shadowElevation = 8.dp,
         ) {
-            destinos.forEach { destino ->
-                ItemBarra(destino = destino, modifier = Modifier.weight(1f))
+            Row(
+                modifier = Modifier.padding(horizontal = 8.dp, vertical = 8.dp),
+                horizontalArrangement = Arrangement.SpaceAround,
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                destinos.forEach { destino ->
+                    ItemBarra(destino = destino, modifier = Modifier.weight(1f))
+                }
             }
         }
     }

@@ -9,6 +9,7 @@ import com.devcris80.prototipo.domain.repository.ResultadoQuitarCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
 import com.devcris80.prototipo.domain.repository.SincronizacionRepository
+import com.devcris80.prototipo.domain.usecase.QuitarCuentaGuardada
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.Flow
@@ -61,9 +62,9 @@ sealed interface LoginEvento {
 class LoginViewModel(
     private val sesionRepository: SesionRepository,
     private val sincronizacionRepository: SincronizacionRepository,
-    cuentasGuardadasRepository: CuentasGuardadasRepository,
+    private val cuentasGuardadasRepository: CuentasGuardadasRepository,
+    private val quitarCuentaGuardada: QuitarCuentaGuardada,
 ) : ViewModel() {
-    private val cuentasGuardadas = cuentasGuardadasRepository
     private val _estado = MutableStateFlow(LoginUiState())
     val estado: StateFlow<LoginUiState> = _estado.asStateFlow()
 
@@ -72,7 +73,13 @@ class LoginViewModel(
 
     init {
         viewModelScope.launch {
-            cuentasGuardadas.observe().collect { cuentas ->
+            // La cuenta que se quitó con la sesión abierta cayó antes de que alguien pudiera avisarlo.
+            if (sesionRepository.consumirAvisoDeCuentaQuitada()) {
+                _estado.update { it.copy(error = MENSAJE_CUENTA_QUITADA) }
+            }
+        }
+        viewModelScope.launch {
+            cuentasGuardadasRepository.observe().collect { cuentas ->
                 _estado.update { actual ->
                     actual.copy(
                         cuentasGuardadas = cuentas,
@@ -89,7 +96,7 @@ class LoginViewModel(
     fun onCorreoCambiado(valor: String) = _estado.update { it.copy(correo = valor, error = null) }
     fun onContrasenaCambiada(valor: String) = _estado.update { it.copy(contrasena = valor, error = null) }
 
-    /** Tocar una cuenta guardada rellena el correo; la contraseña se pide igual (Q3). */
+    /** Tocar una cuenta guardada rellena el correo; la contraseña se pide igual (ADR-0006). */
     fun onCuentaGuardadaClick(cuenta: CuentaGuardada) {
         val correo = cuenta.correo ?: return
         _estado.update { it.copy(correo = correo, contrasena = "", error = null) }
@@ -105,8 +112,8 @@ class LoginViewModel(
         if (!dialogo.puedeQuitar) return
         _estado.update { it.copy(quitarCuenta = dialogo.copy(quitando = true)) }
         viewModelScope.launch {
-            // El repositorio vuelve a mirar: entre abrir el diálogo y confirmar pudo llegar algo por subir.
-            val resultado = cuentasGuardadas.quitar(dialogo.cuenta.idUsuario)
+            // El caso de uso vuelve a mirar: entre abrir el diálogo y confirmar pudo llegar algo por subir.
+            val resultado = quitarCuentaGuardada(dialogo.cuenta.idUsuario)
             _estado.update {
                 when (resultado) {
                     ResultadoQuitarCuenta.Quitada -> it.copy(quitarCuenta = null)
@@ -166,13 +173,14 @@ class LoginViewModel(
     }
 }
 
+private const val MENSAJE_CUENTA_QUITADA = "Ya no tienes acceso a esa finca. Borramos sus datos de este celular."
+
 private fun ResultadoInicioSesion.mensaje(): String? = when (this) {
     ResultadoInicioSesion.Exito -> null
     ResultadoInicioSesion.CredencialesInvalidas -> "Correo o contraseña incorrectos."
     ResultadoInicioSesion.SinConexion -> "Sin conexión. Para iniciar sesión hace falta señal."
     ResultadoInicioSesion.SinFinca -> "Esta cuenta todavía no pertenece a ninguna finca."
-    ResultadoInicioSesion.CuentaQuitada ->
-        "Ya no tienes acceso a esa finca. Borramos sus datos de este celular."
+    ResultadoInicioSesion.CuentaQuitada -> MENSAJE_CUENTA_QUITADA
     ResultadoInicioSesion.NoSePudo -> "No se pudo iniciar sesión. Inténtalo de nuevo en un momento."
 }
 

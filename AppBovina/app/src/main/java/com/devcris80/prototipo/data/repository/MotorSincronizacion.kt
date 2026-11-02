@@ -62,7 +62,7 @@ class MotorSincronizacion(
 ) : SincronizacionRepository {
     private val tablas = tablasSincronizadas(database)
     private val bandeja = BandejaDeRechazos(database.rechazoDao(), clock, nuevoIdRechazo)
-    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, bandeja, fotosDeLasDemasCuentas)
+    private val fotos = SincronizacionFotos(almacenFotos, fotosLocales, database, bandeja, ::exigirCuentaActiva, fotosDeLasDemasCuentas)
     private val enCurso = Mutex()
     private val fotosEnCurso = Mutex()
 
@@ -86,6 +86,12 @@ class MotorSincronizacion(
 
     override fun programar() = programarTrabajo()
 
+    // El JWT es el de la cuenta con la sesión abierta. Si la persona cierra sesión y entra con otra mientras esta
+    // sincronización corre, lo que falta se detiene antes de llamar al servidor con una sesión que no es de esta base.
+    private fun exigirCuentaActiva() {
+        if (!esCuentaActiva()) throw CuentaCerrada()
+    }
+
     // Con su propio candado, para que una foto lenta no haga esperar a los datos. Puede correr a la vez que ellos: cada
     // escritura de una foto es una sola sentencia, y los datos leen y guardan una fila entera dentro de una transacción.
     // Lo que no pasó queda por subir o por bajar, y se intenta la próxima vez.
@@ -108,6 +114,7 @@ class MotorSincronizacion(
             // Se releen: un lote anterior pudo sacar filas de su tabla junto con un Animal rechazado.
             val lote = ids.mapNotNull { tabla.buscar(it) }.filterNot(tabla::sincronizada)
             if (lote.isEmpty()) continue
+            exigirCuentaActiva()
             val cambios = lote.map { tabla.aCambio(it) }
             val resultados = servidor.subirCambios(JsonArray(cambios))
             check(resultados.size == cambios.size) { "El servidor respondió ${resultados.size} de ${cambios.size} cambios" }
@@ -228,6 +235,7 @@ class MotorSincronizacion(
         var cursor = anterior?.cursorDescarga ?: 0
         var desde = maxOf(0, cursor - margenSolapamiento)
         do {
+            exigirCuentaActiva()
             val pagina = servidor.descargarCambios(desde, tamanoPagina)
             val hasta = pagina.getValue("cursor").jsonPrimitive.long
             val hayMas = pagina.getValue("hay_mas").jsonPrimitive.boolean
@@ -336,3 +344,6 @@ private fun padresPrimero(animales: List<JsonObject>): List<JsonObject> {
 /** Los `id_version` de los Siblings que este cambio nombra en `resuelve`. */
 private fun JsonObject.idsQueResuelve(): List<String> =
     (get("resuelve") as? JsonArray)?.map { it.jsonPrimitive.content }.orEmpty()
+
+/** La cuenta que sincronizaba ya no tiene la sesión abierta: lo que falta no se sube ni se baja con la sesión de otra. */
+internal class CuentaCerrada : Exception("La cuenta ya no tiene la sesión abierta")

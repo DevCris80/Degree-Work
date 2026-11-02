@@ -30,7 +30,6 @@ import com.devcris80.prototipo.domain.repository.OperarioRepository
 import com.devcris80.prototipo.domain.repository.ResultadoListaOperarios
 import com.devcris80.prototipo.domain.repository.ResultadoQuitarOperario
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
-import com.devcris80.prototipo.domain.repository.ResultadoQuitarCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoInvitacion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
@@ -306,7 +305,12 @@ class FakeSesionRepository : SesionRepository {
     override suspend fun cerrarSesionYBorrarCuenta() {
         cuentasBorradas++
         guardada.value = false
+        avisoDeCuentaQuitada = true
     }
+
+    var avisoDeCuentaQuitada = false
+
+    override suspend fun consumirAvisoDeCuentaQuitada(): Boolean = avisoDeCuentaQuitada.also { avisoDeCuentaQuitada = false }
 }
 
 class FakeCuentasGuardadasRepository : CuentasGuardadasRepository {
@@ -315,12 +319,17 @@ class FakeCuentasGuardadasRepository : CuentasGuardadasRepository {
 
     override fun observe(): Flow<List<CuentaGuardada>> = cuentas
 
-    override suspend fun quitar(idUsuario: String): ResultadoQuitarCuenta {
-        val cuenta = cuentas.value.firstOrNull { it.idUsuario == idUsuario } ?: return ResultadoQuitarCuenta.Quitada
-        if (cuenta.tienePendientes) return ResultadoQuitarCuenta.TienePendientes
+    /** Lo que el celular tiene por subir de cada cuenta, aunque su base no tenga Usuario y no salga en [cuentas]. */
+    val pendientesPorCuenta = mutableMapOf<String, Int>()
+
+    override suspend fun pendientes(idUsuario: String): Int = pendientesPorCuenta[idUsuario]
+        ?: cuentas.value.firstOrNull { it.idUsuario == idUsuario }
+            ?.let { it.cambiosSinSubir + it.fotosSinSubir + it.rechazosAbiertos }
+        ?: 0
+
+    override suspend fun quitar(idUsuario: String) {
         quitadas.add(idUsuario)
-        cuentas.value = cuentas.value - cuenta
-        return ResultadoQuitarCuenta.Quitada
+        cuentas.value = cuentas.value.filterNot { it.idUsuario == idUsuario }
     }
 }
 

@@ -46,7 +46,12 @@ import com.devcris80.prototipo.ui.util.appViewModel
 @Composable
 fun LoginScreen(onSesionIniciada: () -> Unit, onCrearCuenta: () -> Unit) {
     val viewModel = appViewModel { container ->
-        LoginViewModel(container.sesionRepository, container.sincronizacionRepository, container.cuentasGuardadasRepository)
+        LoginViewModel(
+            container.sesionRepository,
+            container.sincronizacionRepository,
+            container.cuentasGuardadasRepository,
+            container.quitarCuentaGuardada,
+        )
     }
     val estado by viewModel.estado.collectAsState()
     var passwordVisible by remember { mutableStateOf(false) }
@@ -107,7 +112,8 @@ fun LoginScreen(onSesionIniciada: () -> Unit, onCrearCuenta: () -> Unit) {
 
     estado.quitarCuenta?.let { quitar ->
         QuitarCuentaDialogo(
-            estado = quitar,
+            cuenta = quitar.cuenta,
+            quitando = quitar.quitando,
             onConfirmar = viewModel::onConfirmarQuitarCuenta,
             onCancelar = viewModel::onCancelarQuitarCuenta,
         )

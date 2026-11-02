@@ -5,15 +5,20 @@ import androidx.test.core.app.ApplicationProvider
 import androidx.test.ext.junit.runners.AndroidJUnit4
 import com.devcris80.prototipo.data.local.entity.AnimalEntity
 import com.devcris80.prototipo.data.local.entity.PerfilFincaEntity
+import com.devcris80.prototipo.data.local.entity.RechazoEntity
 import com.devcris80.prototipo.data.local.entity.UsuarioEntity
 import com.devcris80.prototipo.data.repository.FotosLocalesFalsas
 import com.devcris80.prototipo.data.repository.RoomCuentasGuardadasRepository
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.repository.ResultadoQuitarCuenta
+import com.devcris80.prototipo.domain.usecase.QuitarCuentaGuardada
+import kotlinx.coroutines.CoroutineScope
+import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.test.TestScope
 import kotlinx.coroutines.test.advanceUntilIdle
+import kotlinx.coroutines.test.runCurrent
 import kotlinx.coroutines.test.runTest
 import org.junit.After
 import org.junit.Assert.assertEquals
@@ -53,8 +58,10 @@ class CuentasEnElCelularTest {
         context.deleteDatabase("app-bovina.db")
     }
 
-    private fun cuentasEnElCelular(haySesion: Boolean = false, alcance: TestScope? = null) =
-        CuentasEnElCelular(context, fotos, haySesion, alcance ?: TestScope()).also { abiertas += it }
+    private fun cuentasEnElCelular(
+        sesion: MutableStateFlow<Boolean> = MutableStateFlow(false),
+        alcance: CoroutineScope = TestScope(),
+    ) = CuentasEnElCelular(context, fotos, sesion, alcance).also { abiertas += it }
 
     private suspend fun guardarCuenta(
         cuentas: CuentasEnElCelular,
@@ -136,7 +143,7 @@ class CuentasEnElCelularTest {
             close()
         }
 
-        val conSesion = cuentasEnElCelular(haySesion = true)
+        val conSesion = cuentasEnElCelular(MutableStateFlow(true))
         assertEquals("app-bovina.db", conSesion.activa.value)
         assertNull("hasta abrirla no se sabe de quién es", conSesion.entradas.value.single().idUsuario)
         conSesion.resolverIdentidades()
@@ -152,7 +159,7 @@ class CuentasEnElCelularTest {
             close()
         }
 
-        val cuentas = cuentasEnElCelular(haySesion = false)
+        val cuentas = cuentasEnElCelular()
 
         assertNull(cuentas.activa.value)
         assertEquals("u-1", cuentas.entradaDe("u-1")?.idUsuario)
@@ -165,7 +172,7 @@ class CuentasEnElCelularTest {
             usuarioDao().guardar(UsuarioEntity("u-1", "finca-1", "Ana", "Ganadero", true, 1, true))
             close()
         }
-        val cuentas = cuentasEnElCelular(haySesion = false)
+        val cuentas = cuentasEnElCelular()
 
         val entrada = cuentas.abrirCuenta("u-1", "ana@finca.co")
 
@@ -186,9 +193,11 @@ class CuentasEnElCelularTest {
 
         assertEquals(listOf(b), cuentas.entradas.value)
         assertNull("la cuenta eliminada deja de ser la abierta", cuentas.activa.value)
-        assertEquals(listOf("foto://a"), fotos.borradas)
+        assertTrue("sus fotos y su base esperan a que su pantalla deje de leerlas", fotos.borradas.isEmpty())
+        assertTrue(context.getDatabasePath(a.archivo).exists())
         alcance.advanceUntilIdle()
         advanceUntilIdle()
+        assertEquals(listOf("foto://a"), fotos.borradas)
         assertFalse(context.getDatabasePath(a.archivo).exists())
         assertTrue("la otra cuenta no se toca", context.getDatabasePath(b.archivo).exists())
         assertEquals("El Paraíso", cuentas.base(b.archivo).perfilFincaDao().getOnce()?.nombreFinca)
@@ -228,12 +237,42 @@ class CuentasEnElCelularTest {
     fun quitarUnaCuentaConCambiosSinSubir_nolaBorra() = runTest {
         val cuentas = cuentasEnElCelular()
         val a = guardarCuenta(cuentas, "u-a", "La Esperanza", sincronizado = false)
+        val repositorio = RoomCuentasGuardadasRepository(cuentas)
 
-        val resultado = RoomCuentasGuardadasRepository(cuentas).quitar("u-a")
+        val resultado = QuitarCuentaGuardada(repositorio)("u-a")
 
         assertEquals(ResultadoQuitarCuenta.TienePendientes, resultado)
         assertEquals(listOf(a), cuentas.entradas.value)
         assertEquals("La Esperanza", cuentas.base(a.archivo).perfilFincaDao().getOnce()?.nombreFinca)
+    }
+
+    @Test
+    fun conUnaFotoPorSubirOUnRechazoAbierto_tampocoSeQuita() = runTest {
+        val cuentas = cuentasEnElCelular()
+        val a = guardarCuenta(cuentas, "u-a", "La Esperanza")
+        val b = guardarCuenta(cuentas, "u-b", "El Paraíso")
+        val repositorio = RoomCuentasGuardadasRepository(cuentas)
+        cuentas.base(a.archivo).animalDao().insert(animal("animal-a", fotoUri = "foto://a").copy(fotoPorSubir = true))
+        cuentas.base(b.archivo).rechazoDao().insert(rechazoAbierto("rechazo-b"))
+
+        assertEquals(1, repositorio.pendientes("u-a"))
+        assertEquals(1, repositorio.pendientes("u-b"))
+        assertEquals(ResultadoQuitarCuenta.TienePendientes, QuitarCuentaGuardada(repositorio)("u-a"))
+        assertEquals(ResultadoQuitarCuenta.TienePendientes, QuitarCuentaGuardada(repositorio)("u-b"))
+        assertEquals(2, cuentas.entradas.value.size)
+    }
+
+    @Test
+    fun unaBaseSinUsuarioPeroConCambiosSinSubir_tambienCuentaComoPendiente() = runTest {
+        val cuentas = cuentasEnElCelular()
+        val entrada = cuentas.abrirCuenta("u-a", "u-a@finca.co")
+        cuentas.base(entrada.archivo).perfilFincaDao()
+            .guardar(PerfilFincaEntity("finca-u-a", "La Esperanza", sincronizado = false, fechaModificacion = 1))
+        val repositorio = RoomCuentasGuardadasRepository(cuentas)
+
+        assertTrue("sin Usuario no sale en la lista", repositorio.observe().first().isEmpty())
+        assertEquals(1, repositorio.pendientes("u-a"))
+        assertEquals(ResultadoQuitarCuenta.TienePendientes, QuitarCuentaGuardada(repositorio)("u-a"))
     }
 
     @Test
@@ -242,13 +281,81 @@ class CuentasEnElCelularTest {
         val cuentas = cuentasEnElCelular(alcance = alcance)
         val a = guardarCuenta(cuentas, "u-a", "La Esperanza")
 
-        val resultado = RoomCuentasGuardadasRepository(cuentas).quitar("u-a")
+        val resultado = QuitarCuentaGuardada(RoomCuentasGuardadasRepository(cuentas))("u-a")
 
         assertEquals(ResultadoQuitarCuenta.Quitada, resultado)
         assertTrue(cuentas.entradas.value.isEmpty())
         alcance.advanceUntilIdle()
         advanceUntilIdle()
         assertFalse(context.getDatabasePath(a.archivo).exists())
+    }
+
+    @Test
+    fun siLaSesionSePierdeSinCerrarla_laCuentaDejaDeSerLaAbierta() = runTest {
+        val sesion = MutableStateFlow(true)
+        val cuentas = cuentasEnElCelular(sesion, alcance = backgroundScope)
+        val a = guardarCuenta(cuentas, "u-a", "La Esperanza")
+        cuentas.activar(a.archivo)
+        assertTrue(cuentas.esActiva(a.archivo))
+
+        // El servidor rechazó renovar la sesión: SesionCifrada la olvida sin pasar por cerrar sesión.
+        sesion.value = false
+        runCurrent()
+
+        assertNull(cuentas.activa.value)
+        assertFalse(cuentas.esActiva(a.archivo))
+        assertEquals("sus datos se conservan: pudo ser una sesión vencida", listOf(a), cuentas.entradas.value)
+    }
+
+    @Test
+    fun laBaseAnteriorQuitadaNoVuelveAAdoptarseAlReiniciar() = runTest {
+        AppDatabase.crear(context, "app-bovina.db").run {
+            perfilFincaDao().guardar(PerfilFincaEntity("finca-1", "La Esperanza", true, fechaModificacion = 1))
+            usuarioDao().guardar(UsuarioEntity("u-1", "finca-1", "Ana", "Ganadero", true, 1, true))
+            close()
+        }
+        val alcance = TestScope(testScheduler)
+        val antes = cuentasEnElCelular(alcance = alcance)
+        antes.eliminar("app-bovina.db")
+        // La app muere antes de que se borre el archivo.
+
+        val despues = cuentasEnElCelular()
+
+        assertTrue(despues.entradas.value.isEmpty())
+        assertFalse("el archivo sin dueño se borra al arrancar", context.getDatabasePath("app-bovina.db").exists())
+    }
+
+    @Test
+    fun alArrancar_seBorranLasBasesDeCuentasQuitadasQueQuedaronSinBorrar() = runTest {
+        val cuentas = cuentasEnElCelular()
+        val a = guardarCuenta(cuentas, "u-a", "La Esperanza")
+        AppDatabase.crear(context, "cuenta-huerfana.db").close()
+
+        val reiniciada = cuentasEnElCelular()
+
+        assertEquals(listOf(a), reiniciada.entradas.value)
+        assertFalse(context.getDatabasePath("cuenta-huerfana.db").exists())
+        assertTrue(context.getDatabasePath(a.archivo).exists())
+    }
+
+    private fun rechazoAbierto(idRechazo: String) = RechazoEntity(
+        idRechazo = idRechazo,
+        entidad = "animal",
+        idFila = "animal-x",
+        motivo = "codigo duplicado",
+        contenido = "{}",
+        fechaRechazo = 1L,
+    )
+
+    @Test
+    fun elAvisoDeCuentaQuitadaSeDaUnaSolaVez() = runTest {
+        val cuentas = cuentasEnElCelular()
+
+        assertFalse(cuentas.consumirCuentaQuitada())
+        cuentas.marcarCuentaQuitada()
+
+        assertTrue(cuentas.consumirCuentaQuitada())
+        assertFalse(cuentas.consumirCuentaQuitada())
     }
 
     private fun animal(idAnimal: String, fotoUri: String, idFinca: String = "finca-u-a") = AnimalEntity(

@@ -56,6 +56,13 @@ interface SesionRepository {
      * (RN-28): el servidor ya no le da finca.
      */
     suspend fun cerrarSesionYBorrarCuenta()
+
+    /**
+     * Si el celular borró una cuenta desde la última vez que se preguntó (porque el servidor ya no le daba finca), lo
+     * dice una sola vez. La sesión cae y la app navega a Iniciar sesión antes de que nadie pueda avisar: el aviso
+     * espera aquí hasta que esa pantalla lo pide.
+     */
+    suspend fun consumirAvisoDeCuentaQuitada(): Boolean
 }
 
 sealed interface ResultadoCreacionCuenta {

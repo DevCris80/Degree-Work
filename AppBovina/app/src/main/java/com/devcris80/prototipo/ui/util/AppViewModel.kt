@@ -16,11 +16,15 @@ import com.devcris80.prototipo.BovinaApplication
  *
  * El bloque recibe los [CreationExtras], así que un ViewModel que necesite los argumentos de
  * navegación puede pedir `createSavedStateHandle()` ahí mismo.
+ *
+ * El contenedor es el de la cuenta con la sesión abierta cuando se crea el ViewModel (ADR-0006). Uno que vive fuera
+ * de una pantalla, y por eso sobrevive a un cambio de cuenta, pasa una [key] que cambia con la cuenta.
  */
 @Composable
 inline fun <reified VM : ViewModel> appViewModel(
+    key: String? = null,
     noinline crear: CreationExtras.(AppContainer) -> VM,
-): VM = viewModel {
+): VM = viewModel(key = key) {
     val application = checkNotNull(this[APPLICATION_KEY]) as BovinaApplication
     crear(application.container)
 }

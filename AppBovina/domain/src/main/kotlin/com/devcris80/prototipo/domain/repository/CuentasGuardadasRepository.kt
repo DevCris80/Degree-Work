@@ -8,8 +8,14 @@ interface CuentasGuardadasRepository {
     /** Las cuentas guardadas con la sesión cerrada, para elegir cuál abrir o quitar. La que tiene la sesión abierta no sale. */
     fun observe(): Flow<List<CuentaGuardada>>
 
-    /** Borra del celular los datos de la cuenta, salvo que le quede algo por subir (RN-27). */
-    suspend fun quitar(idUsuario: String): ResultadoQuitarCuenta
+    /**
+     * Lo que le queda por subir a la cuenta: cambios, fotos y cambios rechazados abiertos. Cuenta también cuando su
+     * base no tiene Usuario ni finca. Cero si el celular no la guarda.
+     */
+    suspend fun pendientes(idUsuario: String): Int
+
+    /** Borra del celular los datos de la cuenta, sin mirar lo que le quede por subir: de eso se encarga [QuitarCuentaGuardada][com.devcris80.prototipo.domain.usecase.QuitarCuentaGuardada]. */
+    suspend fun quitar(idUsuario: String)
 }
 
 sealed interface ResultadoQuitarCuenta {

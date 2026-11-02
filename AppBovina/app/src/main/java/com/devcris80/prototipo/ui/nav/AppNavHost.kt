@@ -12,6 +12,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalContext
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavType
 import androidx.navigation.compose.NavHost
@@ -19,6 +20,7 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.navArgument
+import com.devcris80.prototipo.BovinaApplication
 import com.devcris80.prototipo.ui.components.BovinaBottomBar
 import com.devcris80.prototipo.ui.components.DestinoBarra
 import com.devcris80.prototipo.ui.screens.AsociarChapetaScreen
@@ -60,6 +62,13 @@ fun AppNavHost() {
     // sesión (cerrarla o que el servidor rechace renovarla) vuelve al Login desde cualquier pantalla. Crear
     // cuenta también se queda: un intento fallido cierra la sesión que abrió, y la persona sigue en su formulario.
     val puedeEntrar by inicioViewModel.puedeEntrar.collectAsState()
+    // La finca se muestra en la barra de abajo: ese ViewModel no es de una pantalla, así que se renueva con la cuenta.
+    val cuentas = (LocalContext.current.applicationContext as BovinaApplication).nucleo.cuentas
+    val cuentaAbierta by cuentas.activa.collectAsState()
+    val fincaActivaViewModel = appViewModel(key = "finca-${cuentaAbierta.orEmpty()}") { container ->
+        FincaActivaViewModel(container.cuentaRepository)
+    }
+    val nombreFinca by fincaActivaViewModel.nombreFinca.collectAsState()
     LaunchedEffect(inicioViewModel) {
         inicioViewModel.sesionPerdida.collect {
             if (navController.currentDestination?.route !in setOf(Rutas.Login.ruta, Rutas.CrearCuenta.ruta)) {
@@ -73,6 +82,7 @@ fun AppNavHost() {
         bottomBar = {
             if (currentRoute in RUTAS_CON_NAV_INFERIOR) {
                 BovinaBottomBar(
+                    nombreFinca = nombreFinca,
                     destinos = listOf(
                         DestinoBarra(
                             etiqueta = "Animales",

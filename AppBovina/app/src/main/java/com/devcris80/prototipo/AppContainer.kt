@@ -45,6 +45,7 @@ import com.devcris80.prototipo.domain.usecase.ObservarBandejaRechazos
 import com.devcris80.prototipo.domain.usecase.ObservarEvolucionPeso
 import com.devcris80.prototipo.domain.usecase.ObservarIndicadoresHato
 import com.devcris80.prototipo.domain.usecase.ObservarPesajesPendientes
+import com.devcris80.prototipo.domain.usecase.QuitarCuentaGuardada
 import com.devcris80.prototipo.domain.usecase.QuitarOperario
 import com.devcris80.prototipo.domain.usecase.RegistrarAnimal
 import com.devcris80.prototipo.domain.usecase.RegistrarEvento
@@ -80,6 +81,7 @@ class AppContainer(context: Context, nucleo: NucleoApp, archivo: String?) {
     private val supabase = nucleo.supabase
     val sesionRepository: SesionRepository = nucleo.sesionRepository
     val cuentasGuardadasRepository: CuentasGuardadasRepository = nucleo.cuentasGuardadasRepository
+    val quitarCuentaGuardada = QuitarCuentaGuardada(cuentasGuardadasRepository)
     val sincronizacionRepository: SincronizacionRepository = MotorSincronizacion(
         SupabaseServidorSincronizacion(supabase),
         database,
@@ -87,7 +89,7 @@ class AppContainer(context: Context, nucleo: NucleoApp, archivo: String?) {
         nucleo.fotos,
         programarTrabajo = ProgramadorSincronizacion(context)::programar,
         alQuitarCuenta = { sesionRepository.cerrarSesionYBorrarCuenta() },
-        esCuentaActiva = { archivo != null && nucleo.cuentas.activa.value == archivo },
+        esCuentaActiva = { nucleo.cuentas.esActiva(archivo) },
         fotosDeLasDemasCuentas = { nucleo.cuentas.fotosDeLasDemasCuentas(archivo) },
     )
 

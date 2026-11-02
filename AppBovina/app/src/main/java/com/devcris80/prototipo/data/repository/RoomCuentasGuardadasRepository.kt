@@ -4,7 +4,6 @@ import com.devcris80.prototipo.data.local.AppDatabase
 import com.devcris80.prototipo.data.local.CuentasEnElCelular
 import com.devcris80.prototipo.domain.model.CuentaGuardada
 import com.devcris80.prototipo.domain.repository.CuentasGuardadasRepository
-import com.devcris80.prototipo.domain.repository.ResultadoQuitarCuenta
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.combine
@@ -30,22 +29,25 @@ class RoomCuentasGuardadasRepository(private val cuentas: CuentasEnElCelular) : 
                 }
             }
 
-    override suspend fun quitar(idUsuario: String): ResultadoQuitarCuenta {
-        val entrada = cuentas.entradaDe(idUsuario) ?: return ResultadoQuitarCuenta.Quitada
-        val cuenta = observarCuenta(entrada).first()
-        if (cuenta != null && cuenta.tienePendientes) return ResultadoQuitarCuenta.TienePendientes
+    override suspend fun pendientes(idUsuario: String): Int {
+        val entrada = cuentas.entradaDe(idUsuario) ?: return 0
+        val base = cuentas.base(entrada.archivo)
+        return cambiosSinSubir(base).first() + fotosSinSubir(base).first() + rechazosAbiertos(base).first()
+    }
+
+    override suspend fun quitar(idUsuario: String) {
+        val entrada = cuentas.entradaDe(idUsuario) ?: return
         cuentas.eliminar(entrada.archivo)
-        return ResultadoQuitarCuenta.Quitada
     }
 
     private fun observarCuenta(entrada: CuentasEnElCelular.Entrada): Flow<CuentaGuardada?> {
-        val base: AppDatabase = cuentas.base(entrada.archivo)
+        val base = cuentas.base(entrada.archivo)
         return combine(
             base.usuarioDao().observe(),
             base.perfilFincaDao().observe(),
-            base.estadoSyncDao().observeCambiosSinSubir(),
-            base.estadoSyncDao().observeFotosSinSubir(),
-            base.rechazoDao().observeAbiertos().map { it.size },
+            cambiosSinSubir(base),
+            fotosSinSubir(base),
+            rechazosAbiertos(base),
         ) { usuario, finca, cambios, fotos, rechazos ->
             if (usuario == null || finca == null) {
                 null
@@ -63,4 +65,10 @@ class RoomCuentasGuardadasRepository(private val cuentas: CuentasEnElCelular) : 
             }
         }
     }
+
+    private fun cambiosSinSubir(base: AppDatabase): Flow<Int> = base.estadoSyncDao().observeCambiosSinSubir()
+
+    private fun fotosSinSubir(base: AppDatabase): Flow<Int> = base.estadoSyncDao().observeFotosSinSubir()
+
+    private fun rechazosAbiertos(base: AppDatabase): Flow<Int> = base.rechazoDao().observeAbiertos().map { it.size }
 }

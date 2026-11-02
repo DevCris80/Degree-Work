@@ -21,7 +21,6 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.unit.dp
 import com.devcris80.prototipo.domain.model.CuentaGuardada
 import com.devcris80.prototipo.domain.model.Rol
-import com.devcris80.prototipo.ui.screens.QuitarCuentaUiState
 
 /**
  * Las cuentas que este celular guarda con la sesión cerrada (ADR-0006). Tocar una rellena el correo; el bote de
@@ -79,8 +78,7 @@ fun CuentasGuardadasLista(
 
 /** Quitar una cuenta no se puede deshacer, y con algo por subir no se ofrece (RN-27). */
 @Composable
-fun QuitarCuentaDialogo(estado: QuitarCuentaUiState, onConfirmar: () -> Unit, onCancelar: () -> Unit) {
-    val cuenta = estado.cuenta
+fun QuitarCuentaDialogo(cuenta: CuentaGuardada, quitando: Boolean, onConfirmar: () -> Unit, onCancelar: () -> Unit) {
     AlertDialog(
         onDismissRequest = onCancelar,
         title = { Text(if (cuenta.tienePendientes) "No se puede quitar todavía" else "¿Quitar de este celular?") },
@@ -99,8 +97,8 @@ fun QuitarCuentaDialogo(estado: QuitarCuentaUiState, onConfirmar: () -> Unit, on
             if (cuenta.tienePendientes) {
                 TextButton(onClick = onCancelar) { Text("Entendido") }
             } else {
-                TextButton(onClick = onConfirmar, enabled = estado.puedeQuitar) {
-                    Text(if (estado.quitando) "Quitando…" else "Quitar")
+                TextButton(onClick = onConfirmar, enabled = !quitando) {
+                    Text(if (quitando) "Quitando…" else "Quitar")
                 }
             }
         },

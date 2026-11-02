@@ -4,6 +4,7 @@ import com.devcris80.prototipo.domain.model.CuentaGuardada
 import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
+import com.devcris80.prototipo.domain.usecase.QuitarCuentaGuardada
 import com.devcris80.prototipo.testing.FakeCuentasGuardadasRepository
 import com.devcris80.prototipo.testing.FakeSesionRepository
 import com.devcris80.prototipo.testing.FakeSincronizacionRepository
@@ -37,7 +38,8 @@ class LoginViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun crearViewModel() = LoginViewModel(sesionRepository, sincronizacionRepository, cuentasGuardadas)
+    private fun crearViewModel() =
+        LoginViewModel(sesionRepository, sincronizacionRepository, cuentasGuardadas, QuitarCuentaGuardada(cuentasGuardadas))
 
     private fun llenado() = crearViewModel().apply {
         onCorreoCambiado("ana@finca.co")
@@ -123,6 +125,17 @@ class LoginViewModelTest {
 
         assertTrue(viewModel.estado.value.error!!.contains("Borramos sus datos"))
         assertEquals(0, sincronizacionRepository.programaciones)
+    }
+
+    @Test
+    fun siElCelularBorroUnaCuentaConLaSesionAbierta_laPantallaLoDiceUnaSolaVez() = runTest {
+        sesionRepository.cerrarSesionYBorrarCuenta()
+
+        val primera = crearViewModel()
+        val segunda = crearViewModel()
+
+        assertTrue(primera.estado.value.error!!.contains("Borramos sus datos"))
+        assertNull("el aviso se da una sola vez", segunda.estado.value.error)
     }
 
     @Test

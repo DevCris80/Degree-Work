@@ -24,6 +24,7 @@ internal class SincronizacionFotos(
     private val fotos: FotosLocales,
     private val database: AppDatabase,
     private val bandeja: BandejaDeRechazos,
+    private val exigirCuentaActiva: () -> Unit = {},
     private val fotosDeLasDemasCuentas: suspend () -> Set<String> = { emptySet() },
 ) {
     private val animales = database.animalDao()
@@ -40,6 +41,7 @@ internal class SincronizacionFotos(
     private suspend fun subir(finca: String): Map<String, Int> {
         val subidas = mutableMapOf<String, Int>()
         for (animal in animales.findFotosPorSubir()) {
+            exigirCuentaActiva()
             val fotoUri = checkNotNull(animal.fotoUri)
             val webp = fotos.comoWebp(fotoUri)
             // Si ya no se puede leer, tampoco se podrá en la próxima. La pantalla la muestra vacía.
@@ -61,7 +63,9 @@ internal class SincronizacionFotos(
     }
 
     private suspend fun bajar(finca: String, subidas: Map<String, Int>) {
+        exigirCuentaActiva()
         for (guardada in almacen.listar(finca)) {
+            exigirCuentaActiva()
             val idAnimal = guardada.nombre.removeSuffix(".webp")
             val local = animales.findById(idAnimal) ?: continue
             if (local.fotoPorSubir || local.fechaFotoServidor == guardada.fechaModificacion) continue
