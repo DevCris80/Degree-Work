@@ -26,7 +26,8 @@ Three layers, `ui → domain ← data`. The why is in `docs/adr/0001-capas-con-d
 - **Revisions** (ADR-0004): a local edit of an `animal`, `evento` or `registro` row is an `@Query` UPDATE that includes `EDICION_LOCAL` (`data/local/dao/EdicionLocal.kt`), and a local insert takes a new `idVersion` from its repository. An `@Update` of `toEntity(...)` resets `rev` and `revBase`, since the domain model doesn't carry them. The sync's own writes (marking a row uploaded, applying a download) leave `EDICION_LOCAL` out.
 - **`ui`** has one ViewModel per screen, created with `appViewModel { container -> ... }`. It exposes a `StateFlow` of screen state; the screen receives state and events, and `AppNavHost` only navigates.
 - **Use cases** exist where there is a business rule. A read with no rule goes from the ViewModel straight to the repository.
-- **`AppContainer`** creates the database and wires repositories and use cases by hand. Register new ones there. It is the only class outside `data` that imports from `data`.
+- **Accounts** (ADR-0006): a phone keeps several accounts, each in its own Room database. `data/local/CuentasEnElCelular` is the only code that opens, activates and deletes those databases; nothing else calls `AppDatabase.crear`. With no account signed in, the container works on an empty in-memory database.
+- **`NucleoApp`** holds what does not depend on the open account (session, Supabase client, saved accounts, `SesionRepository`). **`AppContainer`** is per account: it wires the account's repositories and use cases by hand, so register new ones there. `BovinaApplication.container` returns the one for the open account and changes on sign-in and sign-out, so don't keep it in a long-lived object. `NucleoApp` and `AppContainer` are the only classes outside `data` that import from `data`.
 
 ## Architecture (Supabase)
 

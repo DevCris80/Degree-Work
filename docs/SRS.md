@@ -473,7 +473,7 @@ Un requisito *implementado* cuenta para el KPI de OE3 solo si también es *verif
 | Entidades | Usuario, PerfilFinca |
 | Reglas | RN-13, RN-25 a RN-28 |
 | Criterios de aceptación | 1. **Dado** un usuario con cuenta y con señal, **cuando** ingresa credenciales válidas, **entonces** ve los animales de su finca.<br>2. **Dado** credenciales inválidas, **entonces** no entra.<br>3. **Dado** un usuario que ya inició sesión, **cuando** abre la app en modo avión, **entonces** entra y puede registrar.<br>4. **Dado** un celular que guarda la cuenta de otra finca, **cuando** el usuario inicia sesión con otra cuenta, **entonces** entra a su finca sin desinstalar la app y los datos de la otra cuenta quedan intactos.<br>5. **Dado** una cuenta guardada con cambios sin subir, **cuando** el usuario intenta quitarla, **entonces** la app no la quita.<br>6. **Dado** una cuenta guardada sin nada por subir, **cuando** el usuario confirma quitarla, **entonces** sus datos salen del celular. |
-| Trazas | Issues #23, #40 · `LoginScreen`, `SesionCifrada` · `LoginViewModelTest`, `InicioViewModelTest` |
+| Trazas | Issues #23, #40, #144 · `LoginScreen`, `CuentasGuardadas`, `SesionCifrada`, `CuentasEnElCelular` · `LoginViewModelTest`, `InicioViewModelTest`, `CuentasEnElCelularTest` |
 
 <a id="cu-03"></a>**CU-03 — Recuperar contraseña**
 
