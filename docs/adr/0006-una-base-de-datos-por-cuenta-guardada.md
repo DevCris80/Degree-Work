@@ -21,4 +21,6 @@ Un registro pequeño, fuera de esas bases, lista las `Cuenta guardada` del celul
 - Los pesajes del ESP32 se guardan a nombre del Usuario del dispositivo, es decir, de la cuenta activa. El ESP32 no manda finca, así que cambiar de cuenta con la báscula conectada manda lo que llegue a la finca que quede abierta.
 - Un `Operario quitado`, o una cuenta cuya finca ya no existe en el servidor, pierde su base del celular de inmediato. Ya no hay datos suyos que conservar: lo que capturó no se sube y la finca ya no es suya.
 - Cada cuenta ocupa su propio espacio, incluso cuando dos comparten finca.
-- Mientras más de una base pueda abrirse, hay que cuidar que ninguna parte del código conserve una referencia a la base de la cuenta anterior al cambiar.
+- Mientras más de una base pueda abrirse, hay que cuidar que ninguna parte del código conserve una referencia a la base de otra cuenta al cambiar. La sincronización lo hace comprobando, antes de cada lote y de cada foto, que su cuenta siga siendo la abierta; una llamada ya en vuelo al cambiar de cuenta no se puede detener.
+- Borrar una base espera unos segundos a que la pantalla de la cuenta que sale deje de leerla. Si la app muere en ese lapso, el archivo queda sin dueño y el siguiente arranque lo borra.
+- La sesión que la app pierde (el servidor rechazó renovarla) no borra la cuenta: pudo vencer, y los cambios sin subir se perderían. Solo la borra el servidor al negarle la finca.
