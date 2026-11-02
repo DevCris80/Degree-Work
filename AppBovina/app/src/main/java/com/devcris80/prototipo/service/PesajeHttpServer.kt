@@ -18,7 +18,8 @@ import kotlin.math.floor
  */
 class PesajeHttpServer(
     port: Int,
-    private val registrarPesaje: RegistrarPesaje,
+    // Se pide en cada pesaje: el celular puede cambiar de cuenta con el servicio encendido (ADR-0006).
+    private val registrarPesaje: () -> RegistrarPesaje,
 ) : NanoHTTPD(port) {
 
     override fun serve(session: IHTTPSession): Response {
@@ -42,7 +43,7 @@ class PesajeHttpServer(
         }
 
         return try {
-            when (val resultado = runBlocking { registrarPesaje(pesaje) }) {
+            when (val resultado = runBlocking { registrarPesaje()(pesaje) }) {
                 is RegistrarPesaje.Resultado.Registrado -> jsonResponse(
                     Response.Status.CREATED,
                     JSONObject().put("status", "ok").put("id_registro", resultado.idRegistro).toString(),

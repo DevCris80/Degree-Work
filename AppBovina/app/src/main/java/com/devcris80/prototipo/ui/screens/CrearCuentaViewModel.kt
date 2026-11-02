@@ -95,8 +95,6 @@ private fun ResultadoCreacionCuenta.mensaje(): String? = when (this) {
     ResultadoCreacionCuenta.ContrasenaRechazada ->
         "El servidor no aceptó la contraseña. Usa una más larga, con letras y números."
     ResultadoCreacionCuenta.SinConexion -> "Sin señal. Crear la cuenta necesita conexión a internet."
-    ResultadoCreacionCuenta.OtraCuentaEnElDispositivo ->
-        "Este celular tiene los datos de otra cuenta. Desinstala la app para empezar limpio."
     ResultadoCreacionCuenta.CodigoRechazado ->
         "No se pudo unir a la finca. Revisa que el código esté vigente y sin usar, o inténtalo de nuevo."
     ResultadoCreacionCuenta.NoSePudo -> "No se pudo crear la cuenta. Inténtalo de nuevo en un momento."

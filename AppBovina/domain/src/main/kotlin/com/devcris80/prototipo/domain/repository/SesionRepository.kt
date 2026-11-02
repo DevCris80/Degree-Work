@@ -10,7 +10,10 @@ interface SesionRepository {
     /** Si este dispositivo tiene una sesión guardada. No consulta la red. */
     fun observeSesionGuardada(): Flow<Boolean>
 
-    /** Valida las credenciales y deja en este dispositivo la finca y el Usuario de la cuenta. */
+    /**
+     * Valida las credenciales y deja abierta en este dispositivo la cuenta: sus datos propios, aislados de los de
+     * las demás cuentas guardadas (ADR-0006), con la finca y el Usuario como están en el servidor.
+     */
     suspend fun iniciarSesion(correo: String, contrasena: String): ResultadoInicioSesion
 
     /**
@@ -45,8 +48,21 @@ interface SesionRepository {
         versionAutorizacion: String,
     ): ResultadoCreacionCuenta
 
-    /** Olvida la sesión; los datos de la finca quedan en el dispositivo. */
+    /** Olvida la sesión; los datos de la cuenta quedan en el dispositivo como una Cuenta guardada. */
     suspend fun cerrarSesion()
+
+    /**
+     * Olvida la sesión y borra del dispositivo los datos de la cuenta que la tenía, sin subir lo que le quedara
+     * (RN-28): el servidor ya no le da finca.
+     */
+    suspend fun cerrarSesionYBorrarCuenta()
+
+    /**
+     * Si el celular borró una cuenta desde la última vez que se preguntó (porque el servidor ya no le daba finca), lo
+     * dice una sola vez. La sesión cae y la app navega a Iniciar sesión antes de que nadie pueda avisar: el aviso
+     * espera aquí hasta que esa pantalla lo pide.
+     */
+    suspend fun consumirAvisoDeCuentaQuitada(): Boolean
 }
 
 sealed interface ResultadoCreacionCuenta {
@@ -59,9 +75,6 @@ sealed interface ResultadoCreacionCuenta {
     data object ContrasenaRechazada : ResultadoCreacionCuenta
 
     data object SinConexion : ResultadoCreacionCuenta
-
-    /** El dispositivo ya tiene los datos de otra finca: hay que desinstalar la app para empezar limpio. */
-    data object OtraCuentaEnElDispositivo : ResultadoCreacionCuenta
 
     /** El servidor no aceptó el código de invitación: no existe, ya se usó o venció. */
     data object CodigoRechazado : ResultadoCreacionCuenta
@@ -88,10 +101,10 @@ sealed interface ResultadoInicioSesion {
     data object SinFinca : ResultadoInicioSesion
 
     /**
-     * El dispositivo ya tiene los datos de otra finca o de otro Usuario: hay que desinstalar la app
-     * para empezar limpio (un dispositivo, un Usuario).
+     * La cuenta estaba guardada en el celular, pero el servidor ya no le da finca (la quitaron): sus datos
+     * se borraron del celular (RN-28).
      */
-    data object OtraCuentaEnElDispositivo : ResultadoInicioSesion
+    data object CuentaQuitada : ResultadoInicioSesion
 
     /** El servidor respondió con un error inesperado. */
     data object NoSePudo : ResultadoInicioSesion

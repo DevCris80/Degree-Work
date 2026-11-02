@@ -12,11 +12,13 @@ import com.devcris80.prototipo.domain.model.Rechazo
 import com.devcris80.prototipo.domain.model.Registro
 import com.devcris80.prototipo.domain.model.Sexo
 import com.devcris80.prototipo.domain.model.Sibling
+import com.devcris80.prototipo.domain.model.CuentaGuardada
 import com.devcris80.prototipo.domain.model.Usuario
 import com.devcris80.prototipo.domain.repository.AnimalRepository
 import com.devcris80.prototipo.domain.repository.ChapetaRepository
 import com.devcris80.prototipo.domain.repository.ConflictoRepository
 import com.devcris80.prototipo.domain.repository.CuentaRepository
+import com.devcris80.prototipo.domain.repository.CuentasGuardadasRepository
 import com.devcris80.prototipo.domain.repository.EstadoSincronizacion
 import com.devcris80.prototipo.domain.repository.EventoRepository
 import com.devcris80.prototipo.domain.repository.PesajePendienteRepository
@@ -296,6 +298,38 @@ class FakeSesionRepository : SesionRepository {
     }
     override suspend fun cerrarSesion() {
         guardada.value = false
+    }
+
+    var cuentasBorradas = 0
+
+    override suspend fun cerrarSesionYBorrarCuenta() {
+        cuentasBorradas++
+        guardada.value = false
+        avisoDeCuentaQuitada = true
+    }
+
+    var avisoDeCuentaQuitada = false
+
+    override suspend fun consumirAvisoDeCuentaQuitada(): Boolean = avisoDeCuentaQuitada.also { avisoDeCuentaQuitada = false }
+}
+
+class FakeCuentasGuardadasRepository : CuentasGuardadasRepository {
+    val cuentas = MutableStateFlow<List<CuentaGuardada>>(emptyList())
+    val quitadas = mutableListOf<String>()
+
+    override fun observe(): Flow<List<CuentaGuardada>> = cuentas
+
+    /** Lo que el celular tiene por subir de cada cuenta, aunque su base no tenga Usuario y no salga en [cuentas]. */
+    val pendientesPorCuenta = mutableMapOf<String, Int>()
+
+    override suspend fun pendientes(idUsuario: String): Int = pendientesPorCuenta[idUsuario]
+        ?: cuentas.value.firstOrNull { it.idUsuario == idUsuario }
+            ?.let { it.cambiosSinSubir + it.fotosSinSubir + it.rechazosAbiertos }
+        ?: 0
+
+    override suspend fun quitar(idUsuario: String) {
+        quitadas.add(idUsuario)
+        cuentas.value = cuentas.value.filterNot { it.idUsuario == idUsuario }
     }
 }
 

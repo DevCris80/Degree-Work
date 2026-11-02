@@ -1,7 +1,11 @@
 package com.devcris80.prototipo.ui.screens
 
+import com.devcris80.prototipo.domain.model.CuentaGuardada
+import com.devcris80.prototipo.domain.model.Rol
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
+import com.devcris80.prototipo.domain.usecase.QuitarCuentaGuardada
+import com.devcris80.prototipo.testing.FakeCuentasGuardadasRepository
 import com.devcris80.prototipo.testing.FakeSesionRepository
 import com.devcris80.prototipo.testing.FakeSincronizacionRepository
 import kotlinx.coroutines.CompletableDeferred
@@ -22,6 +26,7 @@ import org.junit.Test
 class LoginViewModelTest {
     private val sesionRepository = FakeSesionRepository()
     private val sincronizacionRepository = FakeSincronizacionRepository()
+    private val cuentasGuardadas = FakeCuentasGuardadasRepository()
 
     @Before
     fun setUp() {
@@ -33,14 +38,34 @@ class LoginViewModelTest {
         Dispatchers.resetMain()
     }
 
-    private fun llenado() = LoginViewModel(sesionRepository, sincronizacionRepository).apply {
+    private fun crearViewModel() =
+        LoginViewModel(sesionRepository, sincronizacionRepository, cuentasGuardadas, QuitarCuentaGuardada(cuentasGuardadas))
+
+    private fun llenado() = crearViewModel().apply {
         onCorreoCambiado("ana@finca.co")
         onContrasenaCambiada("secreta")
     }
 
+    private fun cuenta(
+        idUsuario: String = "u-1",
+        correo: String? = "luis@otra-finca.co",
+        cambiosSinSubir: Int = 0,
+        fotosSinSubir: Int = 0,
+        rechazosAbiertos: Int = 0,
+    ) = CuentaGuardada(
+        idUsuario = idUsuario,
+        correo = correo,
+        nombreUsuario = "Luis",
+        rol = Rol.GANADERO,
+        nombreFinca = "La Esperanza",
+        cambiosSinSubir = cambiosSinSubir,
+        fotosSinSubir = fotosSinSubir,
+        rechazosAbiertos = rechazosAbiertos,
+    )
+
     @Test
     fun sinCorreoOContrasena_noSePuedeIniciar() {
-        val viewModel = LoginViewModel(sesionRepository, sincronizacionRepository)
+        val viewModel = crearViewModel()
         viewModel.onCorreoCambiado("ana@finca.co")
 
         assertFalse(viewModel.estado.value.puedeIniciar)
@@ -92,13 +117,109 @@ class LoginViewModelTest {
     }
 
     @Test
-    fun conDatosDeOtraCuenta_pideDesinstalar() {
-        sesionRepository.resultado = ResultadoInicioSesion.OtraCuentaEnElDispositivo
+    fun siLaCuentaGuardadaYaNoTieneFinca_avisaQueSusDatosSeBorraron() {
+        sesionRepository.resultado = ResultadoInicioSesion.CuentaQuitada
         val viewModel = llenado()
 
         viewModel.onIniciarSesion()
 
-        assertTrue(viewModel.estado.value.error!!.contains("Desinstala"))
+        assertTrue(viewModel.estado.value.error!!.contains("Borramos sus datos"))
+        assertEquals(0, sincronizacionRepository.programaciones)
+    }
+
+    @Test
+    fun siElCelularBorroUnaCuentaConLaSesionAbierta_laPantallaLoDiceUnaSolaVez() = runTest {
+        sesionRepository.cerrarSesionYBorrarCuenta()
+
+        val primera = crearViewModel()
+        val segunda = crearViewModel()
+
+        assertTrue(primera.estado.value.error!!.contains("Borramos sus datos"))
+        assertNull("el aviso se da una sola vez", segunda.estado.value.error)
+    }
+
+    @Test
+    fun lasCuentasGuardadasDelCelularSeMuestranEnLaPantalla() {
+        val viewModel = crearViewModel()
+
+        cuentasGuardadas.cuentas.value = listOf(cuenta())
+
+        assertEquals(listOf(cuenta()), viewModel.estado.value.cuentasGuardadas)
+    }
+
+    @Test
+    fun tocarUnaCuentaGuardada_rellenaElCorreoYPideLaContrasena() {
+        val viewModel = crearViewModel().apply { onContrasenaCambiada("otra") }
+
+        viewModel.onCuentaGuardadaClick(cuenta(correo = "luis@otra-finca.co"))
+
+        assertEquals("luis@otra-finca.co", viewModel.estado.value.correo)
+        assertEquals("la contraseña no se arrastra de otra cuenta", "", viewModel.estado.value.contrasena)
+        assertFalse(viewModel.estado.value.puedeIniciar)
+    }
+
+    @Test
+    fun unaCuentaSinCorreoConocido_noRellenaNada() {
+        val viewModel = llenado()
+
+        viewModel.onCuentaGuardadaClick(cuenta(correo = null))
+
+        assertEquals("ana@finca.co", viewModel.estado.value.correo)
+    }
+
+    @Test
+    fun quitarUnaCuentaSinNadaPorSubir_laBorraDelCelular() = runTest {
+        cuentasGuardadas.cuentas.value = listOf(cuenta())
+        val viewModel = crearViewModel()
+
+        viewModel.onQuitarCuentaClick(cuenta())
+        viewModel.onConfirmarQuitarCuenta()
+
+        assertEquals(listOf("u-1"), cuentasGuardadas.quitadas)
+        assertNull(viewModel.estado.value.quitarCuenta)
+        assertTrue(viewModel.estado.value.cuentasGuardadas.isEmpty())
+    }
+
+    @Test
+    fun conAlgoPorSubir_noSeOfreceQuitarla() = runTest {
+        val conPendientes = listOf(
+            cuenta(cambiosSinSubir = 1),
+            cuenta(fotosSinSubir = 1),
+            cuenta(rechazosAbiertos = 1),
+        )
+        conPendientes.forEach { pendiente ->
+            cuentasGuardadas.cuentas.value = listOf(pendiente)
+            val viewModel = crearViewModel()
+
+            viewModel.onQuitarCuentaClick(pendiente)
+            viewModel.onConfirmarQuitarCuenta()
+
+            assertFalse(viewModel.estado.value.quitarCuenta!!.puedeQuitar)
+            assertTrue(cuentasGuardadas.quitadas.isEmpty())
+        }
+    }
+
+    @Test
+    fun siLaCuentaTerminaDeSubirConElDialogoAbierto_yaSePuedeQuitar() {
+        cuentasGuardadas.cuentas.value = listOf(cuenta(cambiosSinSubir = 2))
+        val viewModel = crearViewModel()
+        viewModel.onQuitarCuentaClick(cuenta(cambiosSinSubir = 2))
+
+        cuentasGuardadas.cuentas.value = listOf(cuenta())
+
+        assertTrue(viewModel.estado.value.quitarCuenta!!.puedeQuitar)
+    }
+
+    @Test
+    fun cancelarElDialogoNoQuitaNada() {
+        cuentasGuardadas.cuentas.value = listOf(cuenta())
+        val viewModel = crearViewModel()
+        viewModel.onQuitarCuentaClick(cuenta())
+
+        viewModel.onCancelarQuitarCuenta()
+
+        assertNull(viewModel.estado.value.quitarCuenta)
+        assertTrue(cuentasGuardadas.quitadas.isEmpty())
     }
 
     @Test
@@ -112,7 +233,7 @@ class LoginViewModelTest {
 
     @Test
     fun enviarLaRecuperacion_pideElCorreoSinEspaciosYConfirmaSinRevelarSiLaCuentaExiste() = runTest {
-        val viewModel = LoginViewModel(sesionRepository, sincronizacionRepository)
+        val viewModel = crearViewModel()
         viewModel.onOlvideContrasena()
         viewModel.onRecuperacionCorreoCambiado("  ana@finca.co ")
 
@@ -130,7 +251,7 @@ class LoginViewModelTest {
 
     @Test
     fun sinCorreoNoSeEnviaLaRecuperacion() {
-        val viewModel = LoginViewModel(sesionRepository, sincronizacionRepository)
+        val viewModel = crearViewModel()
         viewModel.onOlvideContrasena()
 
         viewModel.onEnviarRecuperacion()

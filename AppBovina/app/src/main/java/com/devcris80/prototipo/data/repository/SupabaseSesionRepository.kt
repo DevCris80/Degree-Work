@@ -1,14 +1,13 @@
 package com.devcris80.prototipo.data.repository
 
-import com.devcris80.prototipo.data.local.dao.PerfilFincaDao
-import com.devcris80.prototipo.data.local.dao.UsuarioDao
+import androidx.room.withTransaction
+import com.devcris80.prototipo.data.local.CuentasEnElCelular
 import com.devcris80.prototipo.data.remote.SesionCifrada
 import com.devcris80.prototipo.data.remote.esFaltaDeConexion
 import com.devcris80.prototipo.domain.repository.ResultadoCreacionCuenta
 import com.devcris80.prototipo.domain.repository.ResultadoInicioSesion
 import com.devcris80.prototipo.domain.repository.ResultadoRecuperacion
 import com.devcris80.prototipo.domain.repository.SesionRepository
-import com.devcris80.prototipo.domain.repository.Transaccion
 import io.github.jan.supabase.SupabaseClient
 import io.github.jan.supabase.auth.SignOutScope
 import io.github.jan.supabase.auth.auth
@@ -26,17 +25,15 @@ import kotlinx.serialization.json.buildJsonObject
 import kotlinx.serialization.json.put
 
 /**
- * Inicia sesión o crea la cuenta contra Supabase Auth y deja en Room la finca y el Usuario de la cuenta,
- * tal como están en el servidor. Un dispositivo es de un solo Usuario: si ya tiene los datos de otra finca u
- * otro Usuario, no inicia sesión (hay que desinstalar la app para empezar limpio) y nunca borra
- * datos por su cuenta.
+ * Inicia sesión o crea la cuenta contra Supabase Auth y deja en la base de esa cuenta la finca y el Usuario, tal
+ * como están en el servidor. Un celular guarda varias cuentas, cada una con su base (ADR-0006): entrar con otra
+ * no toca los datos de las demás. Si el servidor ya no le da finca a una cuenta que el celular guardaba, sus
+ * datos se borran (RN-28).
  */
 class SupabaseSesionRepository(
     private val supabase: SupabaseClient,
     private val sesion: SesionCifrada,
-    private val perfilFincaDao: PerfilFincaDao,
-    private val usuarioDao: UsuarioDao,
-    private val transaccion: Transaccion,
+    private val cuentas: CuentasEnElCelular,
 ) : SesionRepository {
     override fun observeSesionGuardada(): Flow<Boolean> = sesion.guardada
 
@@ -45,7 +42,7 @@ class SupabaseSesionRepository(
             email = correo
             password = contrasena
         }
-        val resultado = guardarCuenta(checkNotNull(supabase.auth.currentUserOrNull()).id)
+        val resultado = guardarCuenta(checkNotNull(supabase.auth.currentUserOrNull()).id, correo)
         if (resultado != ResultadoInicioSesion.Exito) cerrarSesion()
         resultado
     } catch (e: CancellationException) {
@@ -93,10 +90,6 @@ class SupabaseSesionRepository(
         conCodigo: Boolean,
         metadatos: JsonObjectBuilder.() -> Unit,
     ): ResultadoCreacionCuenta {
-        // Con datos de otra cuenta en el dispositivo no se crea nada, ni siquiera en el servidor.
-        if (perfilFincaDao.getOnce() != null || usuarioDao.getOnce() != null) {
-            return ResultadoCreacionCuenta.OtraCuentaEnElDispositivo
-        }
         val resultado = try {
             supabase.auth.signUpWith(Email) {
                 email = correo
@@ -105,7 +98,7 @@ class SupabaseSesionRepository(
             }
             // La confirmación de correo está desactivada en el proyecto: el registro deja la sesión abierta.
             val idUsuario = checkNotNull(supabase.auth.currentUserOrNull()) { "El registro no dejó sesión" }.id
-            if (guardarCuenta(idUsuario) == ResultadoInicioSesion.Exito) {
+            if (guardarCuenta(idUsuario, correo) == ResultadoInicioSesion.Exito) {
                 ResultadoCreacionCuenta.Exito
             } else {
                 ResultadoCreacionCuenta.NoSePudo
@@ -156,27 +149,51 @@ class SupabaseSesionRepository(
             // Sin señal el servidor no se entera; la sesión se olvida igual en el dispositivo.
         } finally {
             // signOut no limpia si falla: clearSession olvida el token en memoria y el guardado.
-            withContext(NonCancellable) { supabase.auth.clearSession() }
+            withContext(NonCancellable) {
+                supabase.auth.clearSession()
+                // La cuenta queda guardada, pero ya no es la abierta.
+                cuentas.desactivar()
+            }
         }
     }
 
-    private suspend fun guardarCuenta(idUsuario: String): ResultadoInicioSesion {
-        val usuario = filaUnica("usuario", "id_usuario", idUsuario) ?: return ResultadoInicioSesion.SinFinca
-        val finca = filaUnica("perfil_finca", "id_perfil_finca", usuario.texto("id_perfil_finca"))
-            ?: return ResultadoInicioSesion.SinFinca
-        val fincaLocal = perfilFincaDao.getOnce()
-        val usuarioLocal = usuarioDao.getOnce()
-        if (fincaLocal != null && fincaLocal.idPerfilFinca != usuario.texto("id_perfil_finca") ||
-            usuarioLocal != null && usuarioLocal.idUsuario != idUsuario
-        ) {
-            return ResultadoInicioSesion.OtraCuentaEnElDispositivo
+    override suspend fun cerrarSesionYBorrarCuenta() {
+        val abierta = cuentas.activa.value
+        // El aviso se anota antes: al caer la sesión la app navega a Iniciar sesión, que lo pide apenas aparece.
+        if (abierta != null) cuentas.marcarCuentaQuitada()
+        cerrarSesion()
+        if (abierta != null) withContext(NonCancellable) { cuentas.eliminar(abierta) }
+    }
+
+    override suspend fun consumirAvisoDeCuentaQuitada(): Boolean = cuentas.consumirCuentaQuitada()
+
+    private suspend fun guardarCuenta(idUsuario: String, correo: String): ResultadoInicioSesion {
+        val usuario = filaUnica("usuario", "id_usuario", idUsuario)
+        val finca = usuario?.let { filaUnica("perfil_finca", "id_perfil_finca", it.texto("id_perfil_finca")) }
+        if (usuario == null || finca == null) return sinFinca(idUsuario)
+        val existia = cuentas.entradaDe(idUsuario) != null
+        val entrada = cuentas.abrirCuenta(idUsuario, correo)
+        try {
+            val base = cuentas.base(entrada.archivo)
+            // La finca antes que el Usuario, que la referencia.
+            base.withTransaction {
+                base.perfilFincaDao().guardar(finca.aPerfilFincaEntity())
+                base.usuarioDao().guardar(usuario.aUsuarioEntity(delDispositivo = true))
+            }
+        } catch (e: Exception) {
+            // Una cuenta nueva que no pudo guardarse no deja una base vacía registrada.
+            if (!existia) withContext(NonCancellable) { cuentas.eliminar(entrada.archivo) }
+            throw e
         }
-        // La finca antes que el Usuario, que la referencia.
-        transaccion.ejecutar {
-            perfilFincaDao.guardar(finca.aPerfilFincaEntity())
-            usuarioDao.guardar(usuario.aUsuarioEntity(delDispositivo = true))
-        }
+        cuentas.activar(entrada.archivo)
         return ResultadoInicioSesion.Exito
+    }
+
+    /** Una cuenta que el celular guardaba y el servidor ya no tiene en ninguna finca pierde sus datos aquí (RN-28). */
+    private suspend fun sinFinca(idUsuario: String): ResultadoInicioSesion {
+        val guardada = cuentas.entradaDe(idUsuario) ?: return ResultadoInicioSesion.SinFinca
+        cuentas.eliminar(guardada.archivo)
+        return ResultadoInicioSesion.CuentaQuitada
     }
 
     private suspend fun filaUnica(tabla: String, columna: String, valor: String): JsonObject? =
